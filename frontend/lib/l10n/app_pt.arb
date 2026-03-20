@@ -1,0 +1,18 @@
+{
+  "@@locale": "pt",
+  "appTitle": "Rachae",
+  "loginTitle": "Divida despesas sem atrito",
+  "loginSubtitle": "Entre com Google para continuar.",
+  "signInWithGoogle": "Continuar com Google",
+  "unsupportedPlatformMessage": "O login com Google est\u00e1 dispon\u00edvel apenas para navegadores web e iOS nesta etapa.",
+  "oauthFailed": "N\u00e3o foi poss\u00edvel iniciar o login com Google.",
+  "homeTitle": "Painel",
+  "signOut": "Sair",
+  "authenticatedMessage": "Sess\u00e3o iniciada como {email}",
+  "@authenticatedMessage": {
+    "placeholders": {
+      "email": {}
+    }
+  },
+  "stageOneReady": "A funda\u00e7\u00e3o da etapa 1 est\u00e1 pronta."
+}

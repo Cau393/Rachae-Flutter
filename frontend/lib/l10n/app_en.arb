@@ -1,0 +1,18 @@
+{
+  "@@locale": "en",
+  "appTitle": "Rachae",
+  "loginTitle": "Split expenses without friction",
+  "loginSubtitle": "Sign in with Google to continue.",
+  "signInWithGoogle": "Continue with Google",
+  "unsupportedPlatformMessage": "Google sign-in is only available on web browsers and iOS in this stage.",
+  "oauthFailed": "Google sign-in could not be started.",
+  "homeTitle": "Dashboard",
+  "signOut": "Sign out",
+  "authenticatedMessage": "Signed in as {email}",
+  "@authenticatedMessage": {
+    "placeholders": {
+      "email": {}
+    }
+  },
+  "stageOneReady": "Stage 1 foundation is ready."
+}
