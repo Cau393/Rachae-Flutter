@@ -96,67 +96,1304 @@ abstract class AppLocalizations {
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
     Locale('pt'),
+    Locale('pt', 'BR'),
   ];
 
   /// No description provided for @appTitle.
   ///
-  /// In en, this message translates to:
+  /// In pt_BR, this message translates to:
   /// **'Rachae'**
   String get appTitle;
 
+  /// No description provided for @loadingLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Carregando...'**
+  String get loadingLabel;
+
+  /// No description provided for @errorGeneric.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Algo deu errado. Tente novamente.'**
+  String get errorGeneric;
+
+  /// No description provided for @retryLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Tentar novamente'**
+  String get retryLabel;
+
+  /// No description provided for @cancelLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Cancelar'**
+  String get cancelLabel;
+
+  /// No description provided for @saveLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Salvar'**
+  String get saveLabel;
+
+  /// No description provided for @editLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Editar'**
+  String get editLabel;
+
+  /// No description provided for @deleteLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Excluir'**
+  String get deleteLabel;
+
+  /// No description provided for @confirmLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Confirmar'**
+  String get confirmLabel;
+
+  /// No description provided for @closeLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Fechar'**
+  String get closeLabel;
+
+  /// No description provided for @backLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Voltar'**
+  String get backLabel;
+
+  /// No description provided for @doneLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Concluído'**
+  String get doneLabel;
+
+  /// No description provided for @yesLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Sim'**
+  String get yesLabel;
+
+  /// No description provided for @noLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Não'**
+  String get noLabel;
+
+  /// No description provided for @searchLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Buscar'**
+  String get searchLabel;
+
+  /// No description provided for @noResultsLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Nenhum resultado encontrado.'**
+  String get noResultsLabel;
+
+  /// No description provided for @requiredFieldError.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Este campo é obrigatório.'**
+  String get requiredFieldError;
+
+  /// No description provided for @invalidAmountError.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Valor inválido.'**
+  String get invalidAmountError;
+
+  /// No description provided for @unknownError.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Erro desconhecido. Tente novamente.'**
+  String get unknownError;
+
+  /// No description provided for @networkError.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Sem conexão. Verifique a internet.'**
+  String get networkError;
+
+  /// No description provided for @navDashboard.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Início'**
+  String get navDashboard;
+
+  /// No description provided for @navGroups.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Grupos'**
+  String get navGroups;
+
+  /// No description provided for @navFriends.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Amigos'**
+  String get navFriends;
+
+  /// No description provided for @navProfile.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Perfil'**
+  String get navProfile;
+
+  /// No description provided for @splashLoading.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Carregando...'**
+  String get splashLoading;
+
   /// No description provided for @loginTitle.
   ///
-  /// In en, this message translates to:
-  /// **'Split expenses without friction'**
+  /// In pt_BR, this message translates to:
+  /// **'Divida despesas sem atrito'**
   String get loginTitle;
 
   /// No description provided for @loginSubtitle.
   ///
-  /// In en, this message translates to:
-  /// **'Sign in with Google to continue.'**
+  /// In pt_BR, this message translates to:
+  /// **'Entre com Google para continuar.'**
   String get loginSubtitle;
 
   /// No description provided for @signInWithGoogle.
   ///
-  /// In en, this message translates to:
-  /// **'Continue with Google'**
+  /// In pt_BR, this message translates to:
+  /// **'Continuar com Google'**
   String get signInWithGoogle;
+
+  /// No description provided for @signInWithApple.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Continuar com Apple'**
+  String get signInWithApple;
 
   /// No description provided for @unsupportedPlatformMessage.
   ///
-  /// In en, this message translates to:
-  /// **'Google sign-in is only available on web browsers and iOS in this stage.'**
+  /// In pt_BR, this message translates to:
+  /// **'Login com Google disponível apenas em web e iOS.'**
   String get unsupportedPlatformMessage;
 
   /// No description provided for @oauthFailed.
   ///
-  /// In en, this message translates to:
-  /// **'Google sign-in could not be started.'**
+  /// In pt_BR, this message translates to:
+  /// **'Não foi possível iniciar o login. Tente novamente.'**
   String get oauthFailed;
+
+  /// No description provided for @loginLoading.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Entrando...'**
+  String get loginLoading;
+
+  /// No description provided for @dashboardTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Início'**
+  String get dashboardTitle;
+
+  /// No description provided for @dashboardStubMessage.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Painel completo na fase 18.'**
+  String get dashboardStubMessage;
+
+  /// No description provided for @dashboardYouOwe.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Você deve'**
+  String get dashboardYouOwe;
+
+  /// No description provided for @dashboardYouAreOwed.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Te devem'**
+  String get dashboardYouAreOwed;
+
+  /// No description provided for @dashboardNetBalance.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Saldo líquido'**
+  String get dashboardNetBalance;
+
+  /// No description provided for @dashboardRecentActivity.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Atividade recente'**
+  String get dashboardRecentActivity;
+
+  /// No description provided for @dashboardNoActivity.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Nenhuma atividade ainda.'**
+  String get dashboardNoActivity;
+
+  /// No description provided for @dashboardAddExpense.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Adicionar despesa'**
+  String get dashboardAddExpense;
+
+  /// No description provided for @dashboardPulledToRefresh.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Atualizado'**
+  String get dashboardPulledToRefresh;
+
+  /// No description provided for @activityExpenseAdded.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Despesa adicionada'**
+  String get activityExpenseAdded;
+
+  /// No description provided for @activitySettlementRecorded.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Pagamento registrado'**
+  String get activitySettlementRecorded;
+
+  /// No description provided for @activitySettlementConfirmed.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Pagamento confirmado'**
+  String get activitySettlementConfirmed;
+
+  /// No description provided for @activityPaidBy.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Pago por {name}'**
+  String activityPaidBy(String name);
+
+  /// No description provided for @activityYouPaid.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Você pagou'**
+  String get activityYouPaid;
+
+  /// No description provided for @activityAwaitingConfirmation.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Aguardando confirmação'**
+  String get activityAwaitingConfirmation;
+
+  /// No description provided for @groupsTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Grupos'**
+  String get groupsTitle;
+
+  /// No description provided for @groupsEmpty.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Nenhum grupo ainda. Crie um!'**
+  String get groupsEmpty;
+
+  /// No description provided for @groupsCreateFab.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Novo grupo'**
+  String get groupsCreateFab;
+
+  /// No description provided for @groupMemberCount.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'{count} membros'**
+  String groupMemberCount(int count);
+
+  /// No description provided for @groupYourBalance.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Seu saldo'**
+  String get groupYourBalance;
+
+  /// No description provided for @groupBalancePositive.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Te devem R\$ {amount}'**
+  String groupBalancePositive(String amount);
+
+  /// No description provided for @groupBalanceNegative.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Você deve R\$ {amount}'**
+  String groupBalanceNegative(String amount);
+
+  /// No description provided for @groupBalanceZero.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Quite'**
+  String get groupBalanceZero;
+
+  /// No description provided for @createGroupTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Novo grupo'**
+  String get createGroupTitle;
+
+  /// No description provided for @createGroupNameLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Nome do grupo'**
+  String get createGroupNameLabel;
+
+  /// No description provided for @createGroupNameHint.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Ex: Viagem para o Rio'**
+  String get createGroupNameHint;
+
+  /// No description provided for @createGroupTypeLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Tipo'**
+  String get createGroupTypeLabel;
+
+  /// No description provided for @createGroupTypeHome.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Casa'**
+  String get createGroupTypeHome;
+
+  /// No description provided for @createGroupTypeTrip.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Viagem'**
+  String get createGroupTypeTrip;
+
+  /// No description provided for @createGroupTypeCouple.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Casal'**
+  String get createGroupTypeCouple;
+
+  /// No description provided for @createGroupTypeOther.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Outro'**
+  String get createGroupTypeOther;
+
+  /// No description provided for @createGroupCurrencyLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Moeda do grupo'**
+  String get createGroupCurrencyLabel;
+
+  /// No description provided for @createGroupAddMembers.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Adicionar membros'**
+  String get createGroupAddMembers;
+
+  /// No description provided for @createGroupMemberSearchHint.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Buscar por e-mail ou telefone'**
+  String get createGroupMemberSearchHint;
+
+  /// No description provided for @createGroupSimplifyDebts.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Simplificar dívidas automaticamente'**
+  String get createGroupSimplifyDebts;
+
+  /// No description provided for @createGroupButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Criar grupo'**
+  String get createGroupButton;
+
+  /// No description provided for @createGroupSuccess.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Grupo criado com sucesso!'**
+  String get createGroupSuccess;
+
+  /// No description provided for @createGroupError.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Erro ao criar grupo. Tente novamente.'**
+  String get createGroupError;
+
+  /// No description provided for @groupDetailTabExpenses.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Despesas'**
+  String get groupDetailTabExpenses;
+
+  /// No description provided for @groupDetailTabBalances.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Saldos'**
+  String get groupDetailTabBalances;
+
+  /// No description provided for @groupDetailTabMembers.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Membros'**
+  String get groupDetailTabMembers;
+
+  /// No description provided for @groupDetailTabActivity.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Atividade'**
+  String get groupDetailTabActivity;
+
+  /// No description provided for @groupDetailNoExpenses.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Nenhuma despesa ainda.'**
+  String get groupDetailNoExpenses;
+
+  /// No description provided for @groupDetailAddExpense.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Adicionar despesa'**
+  String get groupDetailAddExpense;
+
+  /// No description provided for @groupDetailSettleUp.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Acertar contas'**
+  String get groupDetailSettleUp;
+
+  /// No description provided for @groupDetailSettings.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Configurações do grupo'**
+  String get groupDetailSettings;
+
+  /// No description provided for @groupDetailSimplifiedDebts.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Dívidas simplificadas'**
+  String get groupDetailSimplifiedDebts;
+
+  /// No description provided for @groupDetailNoDebts.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Todos estão quite!'**
+  String get groupDetailNoDebts;
+
+  /// No description provided for @groupDetailOwes.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'{payer} deve {amount} para {receiver}'**
+  String groupDetailOwes(String payer, String amount, String receiver);
+
+  /// No description provided for @groupDetailRoleAdmin.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Admin'**
+  String get groupDetailRoleAdmin;
+
+  /// No description provided for @groupDetailRoleMember.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Membro'**
+  String get groupDetailRoleMember;
+
+  /// No description provided for @groupDetailRoleViewer.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Visualizador'**
+  String get groupDetailRoleViewer;
+
+  /// No description provided for @groupMemberCurrentUserSuffix.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'(Você)'**
+  String get groupMemberCurrentUserSuffix;
+
+  /// No description provided for @groupSettingsTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Configurações do grupo'**
+  String get groupSettingsTitle;
+
+  /// No description provided for @groupSettingsDeleteGroup.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Excluir grupo'**
+  String get groupSettingsDeleteGroup;
+
+  /// No description provided for @groupSettingsDeleteConfirm.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Tem certeza que deseja excluir o grupo? Esta ação não pode ser desfeita.'**
+  String get groupSettingsDeleteConfirm;
+
+  /// No description provided for @groupSettingsLeaveGroup.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Sair do grupo'**
+  String get groupSettingsLeaveGroup;
+
+  /// No description provided for @groupSettingsLeaveConfirm.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Tem certeza que deseja sair do grupo?'**
+  String get groupSettingsLeaveConfirm;
+
+  /// No description provided for @groupSettingsRemoveMember.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Remover membro'**
+  String get groupSettingsRemoveMember;
+
+  /// No description provided for @groupSettingsRemoveMemberConfirm.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Remover {name} do grupo?'**
+  String groupSettingsRemoveMemberConfirm(String name);
+
+  /// No description provided for @groupSettingsChangeRole.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Alterar função'**
+  String get groupSettingsChangeRole;
+
+  /// No description provided for @groupSettingsSaveSuccess.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Configurações salvas.'**
+  String get groupSettingsSaveSuccess;
+
+  /// No description provided for @groupSettingsDangerZone.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Zona de perigo'**
+  String get groupSettingsDangerZone;
+
+  /// No description provided for @addExpenseTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Nova despesa'**
+  String get addExpenseTitle;
+
+  /// No description provided for @addExpenseAmountLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Valor'**
+  String get addExpenseAmountLabel;
+
+  /// No description provided for @addExpenseAmountHint.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'0,00'**
+  String get addExpenseAmountHint;
+
+  /// No description provided for @addExpenseDescriptionLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Descrição'**
+  String get addExpenseDescriptionLabel;
+
+  /// No description provided for @addExpenseDescriptionHint.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Ex: Jantar no restaurante'**
+  String get addExpenseDescriptionHint;
+
+  /// No description provided for @addExpensePaidByLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Pago por'**
+  String get addExpensePaidByLabel;
+
+  /// No description provided for @addExpenseDateLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Data'**
+  String get addExpenseDateLabel;
+
+  /// No description provided for @addExpenseCategoryLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Categoria'**
+  String get addExpenseCategoryLabel;
+
+  /// No description provided for @addExpenseSplitMethodLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Forma de divisão'**
+  String get addExpenseSplitMethodLabel;
+
+  /// No description provided for @addExpenseSplitMethodEqual.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Igualmente'**
+  String get addExpenseSplitMethodEqual;
+
+  /// No description provided for @addExpenseSplitMethodExact.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Valores exatos'**
+  String get addExpenseSplitMethodExact;
+
+  /// No description provided for @addExpenseSplitMethodPercentage.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Porcentagem'**
+  String get addExpenseSplitMethodPercentage;
+
+  /// No description provided for @addExpenseSplitMethodShares.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Partes'**
+  String get addExpenseSplitMethodShares;
+
+  /// No description provided for @addExpenseReceiptLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Adicionar recibo'**
+  String get addExpenseReceiptLabel;
+
+  /// No description provided for @addExpenseSaveButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Salvar despesa'**
+  String get addExpenseSaveButton;
+
+  /// No description provided for @addExpenseSuccess.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Despesa adicionada!'**
+  String get addExpenseSuccess;
+
+  /// No description provided for @addExpenseError.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Erro ao salvar. Tente novamente.'**
+  String get addExpenseError;
+
+  /// No description provided for @addExpenseSplitDoesNotMatch.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'A divisão não bate com o valor total.'**
+  String get addExpenseSplitDoesNotMatch;
+
+  /// No description provided for @addExpenseCurrencyLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Moeda'**
+  String get addExpenseCurrencyLabel;
+
+  /// No description provided for @addExpenseConvertedPreview.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'≈ {amount} {currency} na moeda do grupo'**
+  String addExpenseConvertedPreview(String amount, String currency);
+
+  /// No description provided for @categoryGeral.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Geral'**
+  String get categoryGeral;
+
+  /// No description provided for @categoryComida.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Comida'**
+  String get categoryComida;
+
+  /// No description provided for @categoryTransporte.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Transporte'**
+  String get categoryTransporte;
+
+  /// No description provided for @categoryMoradia.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Moradia'**
+  String get categoryMoradia;
+
+  /// No description provided for @categoryLazer.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Lazer'**
+  String get categoryLazer;
+
+  /// No description provided for @categoryViagem.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Viagem'**
+  String get categoryViagem;
+
+  /// No description provided for @categoryUtilidades.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Utilidades'**
+  String get categoryUtilidades;
+
+  /// No description provided for @expenseDetailTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Detalhes da despesa'**
+  String get expenseDetailTitle;
+
+  /// No description provided for @expenseDetailPaidBy.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Pago por {name}'**
+  String expenseDetailPaidBy(String name);
+
+  /// No description provided for @expenseDetailSplitBreakdown.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Divisão'**
+  String get expenseDetailSplitBreakdown;
+
+  /// No description provided for @expenseDetailReceipts.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Recibos'**
+  String get expenseDetailReceipts;
+
+  /// No description provided for @expenseDetailNoReceipts.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Nenhum recibo anexado.'**
+  String get expenseDetailNoReceipts;
+
+  /// No description provided for @expenseDetailEditButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Editar'**
+  String get expenseDetailEditButton;
+
+  /// No description provided for @expenseDetailDeleteButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Excluir'**
+  String get expenseDetailDeleteButton;
+
+  /// No description provided for @expenseDetailDeleteConfirm.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Excluir esta despesa? Esta ação não pode ser desfeita.'**
+  String get expenseDetailDeleteConfirm;
+
+  /// No description provided for @expenseDetailDeleteSuccess.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Despesa excluída.'**
+  String get expenseDetailDeleteSuccess;
+
+  /// No description provided for @expenseDetailOwes.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'{name} deve {amount}'**
+  String expenseDetailOwes(String name, String amount);
+
+  /// No description provided for @expenseDetailSettled.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Acertado'**
+  String get expenseDetailSettled;
+
+  /// No description provided for @expenseDetailLastModified.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Última modificação: {date}'**
+  String expenseDetailLastModified(String date);
+
+  /// No description provided for @settleUpTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Acertar contas'**
+  String get settleUpTitle;
+
+  /// No description provided for @settleUpReceiverLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Pagar para'**
+  String get settleUpReceiverLabel;
+
+  /// No description provided for @settleUpAmountLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Valor'**
+  String get settleUpAmountLabel;
+
+  /// No description provided for @settleUpNoteLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Nota (opcional)'**
+  String get settleUpNoteLabel;
+
+  /// No description provided for @settleUpNoteHint.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Ex: Divisão do aluguel'**
+  String get settleUpNoteHint;
+
+  /// No description provided for @settleUpRecordButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Registrar pagamento'**
+  String get settleUpRecordButton;
+
+  /// No description provided for @settleUpSuccess.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Pagamento registrado! Aguardando confirmação.'**
+  String get settleUpSuccess;
+
+  /// No description provided for @settleUpError.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Erro ao registrar pagamento.'**
+  String get settleUpError;
+
+  /// No description provided for @settleUpConfirmButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Confirmar recebimento'**
+  String get settleUpConfirmButton;
+
+  /// No description provided for @settleUpDisputeButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Contestar'**
+  String get settleUpDisputeButton;
+
+  /// No description provided for @settleUpDisputeConfirm.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Contestar este pagamento?'**
+  String get settleUpDisputeConfirm;
+
+  /// No description provided for @settleUpAwaitingConfirmation.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Aguardando confirmação'**
+  String get settleUpAwaitingConfirmation;
+
+  /// No description provided for @settleUpConfirmed.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Confirmado'**
+  String get settleUpConfirmed;
+
+  /// No description provided for @settleUpDisputed.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Contestado'**
+  String get settleUpDisputed;
+
+  /// No description provided for @settleUpSuggestedAmount.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Sugestão: {amount}'**
+  String settleUpSuggestedAmount(String amount);
+
+  /// No description provided for @friendsTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Amigos'**
+  String get friendsTitle;
+
+  /// No description provided for @friendsEmpty.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Nenhum amigo ainda. Convide alguém!'**
+  String get friendsEmpty;
+
+  /// No description provided for @friendsInviteButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Convidar amigo'**
+  String get friendsInviteButton;
+
+  /// No description provided for @friendsOwes.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Deve {amount}'**
+  String friendsOwes(String amount);
+
+  /// No description provided for @friendsOwed.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Te deve {amount}'**
+  String friendsOwed(String amount);
+
+  /// No description provided for @friendsEven.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Quite'**
+  String get friendsEven;
+
+  /// No description provided for @friendsSearchHint.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Buscar amigos'**
+  String get friendsSearchHint;
+
+  /// No description provided for @friendInviteTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Convidar amigo'**
+  String get friendInviteTitle;
+
+  /// No description provided for @friendInviteEmailLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'E-mail (opcional)'**
+  String get friendInviteEmailLabel;
+
+  /// No description provided for @friendInvitePhoneLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Telefone'**
+  String get friendInvitePhoneLabel;
+
+  /// No description provided for @friendInviteButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Enviar convite'**
+  String get friendInviteButton;
+
+  /// No description provided for @friendInviteSuccess.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Convite enviado!'**
+  String get friendInviteSuccess;
+
+  /// No description provided for @friendInviteLinkCopied.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Link de convite copiado!'**
+  String get friendInviteLinkCopied;
+
+  /// No description provided for @friendAcceptInviteButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Aceitar convite'**
+  String get friendAcceptInviteButton;
+
+  /// No description provided for @friendAcceptSuccess.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Convite aceito! Agora vocês são amigos.'**
+  String get friendAcceptSuccess;
+
+  /// No description provided for @friendDetailTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Detalhes'**
+  String get friendDetailTitle;
+
+  /// No description provided for @friendDetailNetBalance.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Saldo entre vocês'**
+  String get friendDetailNetBalance;
+
+  /// No description provided for @friendDetailSharedExpenses.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Despesas compartilhadas'**
+  String get friendDetailSharedExpenses;
+
+  /// No description provided for @friendDetailSharedGroups.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Grupos em comum'**
+  String get friendDetailSharedGroups;
+
+  /// No description provided for @friendDetailNoSharedExpenses.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Nenhuma despesa compartilhada.'**
+  String get friendDetailNoSharedExpenses;
+
+  /// No description provided for @friendDetailSettleUpButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Acertar contas'**
+  String get friendDetailSettleUpButton;
+
+  /// No description provided for @profileTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Perfil'**
+  String get profileTitle;
+
+  /// No description provided for @profileDisplayNameLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Nome de exibição'**
+  String get profileDisplayNameLabel;
+
+  /// No description provided for @profileEmailLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'E-mail'**
+  String get profileEmailLabel;
+
+  /// No description provided for @profileEmailReadOnly.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Gerenciado pelo Google'**
+  String get profileEmailReadOnly;
+
+  /// No description provided for @profileDefaultCurrencyLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Moeda padrão'**
+  String get profileDefaultCurrencyLabel;
+
+  /// No description provided for @profileSaveButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Salvar alterações'**
+  String get profileSaveButton;
+
+  /// No description provided for @profileSaveSuccess.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Perfil atualizado!'**
+  String get profileSaveSuccess;
+
+  /// No description provided for @profileAvatarChangeButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Alterar foto'**
+  String get profileAvatarChangeButton;
+
+  /// No description provided for @profileSignOutButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Sair'**
+  String get profileSignOutButton;
+
+  /// No description provided for @profileSignOutConfirm.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Tem certeza que deseja sair?'**
+  String get profileSignOutConfirm;
+
+  /// No description provided for @profileDeleteAccountButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Excluir minha conta'**
+  String get profileDeleteAccountButton;
+
+  /// No description provided for @profileDeleteAccountConfirm.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Excluir sua conta é permanente e não pode ser desfeito. Continuar?'**
+  String get profileDeleteAccountConfirm;
+
+  /// No description provided for @profileDeleteAccountSuccess.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Conta excluída.'**
+  String get profileDeleteAccountSuccess;
+
+  /// No description provided for @profileNotificationsSection.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Notificações'**
+  String get profileNotificationsSection;
+
+  /// No description provided for @profilePushExpenseCreated.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Nova despesa adicionada'**
+  String get profilePushExpenseCreated;
+
+  /// No description provided for @profilePushSettlementRecorded.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Pagamento registrado'**
+  String get profilePushSettlementRecorded;
+
+  /// No description provided for @profilePushGroupInvitation.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Convite de grupo'**
+  String get profilePushGroupInvitation;
+
+  /// No description provided for @profileEmailExpenseCreated.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'E-mail: nova despesa'**
+  String get profileEmailExpenseCreated;
+
+  /// No description provided for @profileEmailSettlementRecorded.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'E-mail: pagamento registrado'**
+  String get profileEmailSettlementRecorded;
+
+  /// No description provided for @profileEmailWeeklyDigest.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Resumo semanal por e-mail'**
+  String get profileEmailWeeklyDigest;
+
+  /// No description provided for @profileAdFreeSection.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Plano sem anúncios'**
+  String get profileAdFreeSection;
+
+  /// No description provided for @profileAdFreeActive.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Plano ativo — obrigado pelo suporte!'**
+  String get profileAdFreeActive;
+
+  /// No description provided for @profileAdFreeExpires.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Válido até {date}'**
+  String profileAdFreeExpires(String date);
+
+  /// No description provided for @profileUpgradeButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Remover anúncios'**
+  String get profileUpgradeButton;
+
+  /// No description provided for @profileManageSubscriptionButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Gerenciar assinatura'**
+  String get profileManageSubscriptionButton;
+
+  /// No description provided for @profileExportButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Exportar dados'**
+  String get profileExportButton;
+
+  /// No description provided for @exportTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Exportar dados'**
+  String get exportTitle;
+
+  /// No description provided for @exportDateFromLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Data inicial'**
+  String get exportDateFromLabel;
+
+  /// No description provided for @exportDateToLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Data final'**
+  String get exportDateToLabel;
+
+  /// No description provided for @exportGroupLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Grupo (opcional)'**
+  String get exportGroupLabel;
+
+  /// No description provided for @exportAllGroups.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Todos os grupos'**
+  String get exportAllGroups;
+
+  /// No description provided for @exportGenerateButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Gerar relatório'**
+  String get exportGenerateButton;
+
+  /// No description provided for @exportGenerating.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Gerando relatório...'**
+  String get exportGenerating;
+
+  /// No description provided for @exportSuccess.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Relatório gerado com sucesso!'**
+  String get exportSuccess;
+
+  /// No description provided for @exportError.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Erro ao gerar relatório. Tente novamente.'**
+  String get exportError;
+
+  /// No description provided for @adBannerFallback.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **''**
+  String get adBannerFallback;
+
+  /// No description provided for @adFreeUpgradeTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Remover anúncios'**
+  String get adFreeUpgradeTitle;
+
+  /// No description provided for @adFreeUpgradeDescription.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Aproveite o Rachae sem interrupções. Um preço justo, sem rastreamento.'**
+  String get adFreeUpgradeDescription;
+
+  /// No description provided for @adFreeMonthlyPlan.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Mensal'**
+  String get adFreeMonthlyPlan;
+
+  /// No description provided for @adFreeYearlyPlan.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Anual'**
+  String get adFreeYearlyPlan;
+
+  /// No description provided for @adFreeUpgradeButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Assinar'**
+  String get adFreeUpgradeButton;
+
+  /// No description provided for @adFreeCancelAnytime.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Cancele quando quiser.'**
+  String get adFreeCancelAnytime;
+
+  /// No description provided for @stageOneReady.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Base da fase 1 pronta.'**
+  String get stageOneReady;
 
   /// No description provided for @homeTitle.
   ///
-  /// In en, this message translates to:
-  /// **'Dashboard'**
+  /// In pt_BR, this message translates to:
+  /// **'Início'**
   String get homeTitle;
 
   /// No description provided for @signOut.
   ///
-  /// In en, this message translates to:
-  /// **'Sign out'**
+  /// In pt_BR, this message translates to:
+  /// **'Sair'**
   String get signOut;
 
   /// No description provided for @authenticatedMessage.
   ///
-  /// In en, this message translates to:
-  /// **'Signed in as {email}'**
-  String authenticatedMessage(Object email);
-
-  /// No description provided for @stageOneReady.
-  ///
-  /// In en, this message translates to:
-  /// **'Stage 1 foundation is ready.'**
-  String get stageOneReady;
+  /// In pt_BR, this message translates to:
+  /// **'Logado como {email}'**
+  String authenticatedMessage(String email);
 }
 
 class _AppLocalizationsDelegate
@@ -177,6 +1414,18 @@ class _AppLocalizationsDelegate
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {
+  // Lookup logic when language+country codes are specified.
+  switch (locale.languageCode) {
+    case 'pt':
+      {
+        switch (locale.countryCode) {
+          case 'BR':
+            return AppLocalizationsPtBr();
+        }
+        break;
+      }
+  }
+
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
     case 'en':

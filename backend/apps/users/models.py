@@ -10,6 +10,10 @@ class FriendInviteStatus(models.TextChoices):
 
 
 class User(BaseModel):
+    # Django AUTH_USER_MODEL contract (django.contrib.auth.checks.check_user_model)
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS: list[str] = []
+
     supabase_uid = models.UUIDField(unique=True, db_index=True)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, unique=True, null=True, blank=True)

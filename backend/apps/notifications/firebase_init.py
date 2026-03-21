@@ -8,6 +8,7 @@ Celery workers share the same default app before ``notification_tasks`` sends pu
 from __future__ import annotations
 
 import logging
+import sys
 from pathlib import Path
 
 from django.conf import settings
@@ -48,7 +49,13 @@ def ensure_firebase_initialized() -> None:
         import firebase_admin
         from firebase_admin import credentials
     except ImportError as exc:
-        logger.warning("firebase_admin not installed: %s", exc)
+        logger.warning(
+            "firebase_admin not installed (%s). Use the same interpreter as your venv "
+            "(e.g. python -m uvicorn …) or run: %s -m pip install firebase-admin. "
+            "To skip FCM init locally, set FIREBASE_SKIP_INIT=1 in .env.",
+            exc,
+            sys.executable,
+        )
         _done = True
         return
 

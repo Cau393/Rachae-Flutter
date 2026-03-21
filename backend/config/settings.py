@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "apps.expenses",
     "apps.splits",
     "apps.transactions",
+    "apps.ledger",
     "apps.currencies",
     "apps.users",
     "apps.ads",
@@ -153,8 +154,9 @@ if _firebase_cred_raw:
 else:
     FIREBASE_CREDENTIALS_PATH = None
 
-# Tests set FIREBASE_SKIP_INIT via config.test_settings
-FIREBASE_SKIP_INIT = False
+# Skip Firebase Admin init (FCM) — tests override via config.test_settings.
+# Set FIREBASE_SKIP_INIT=1 in .env if credentials exist but firebase-admin is not installed in this interpreter.
+FIREBASE_SKIP_INIT = env.bool("FIREBASE_SKIP_INIT", default=False)
 
 AUTH_PASSWORD_VALIDATORS = []
 

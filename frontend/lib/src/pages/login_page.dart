@@ -82,12 +82,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         SnackBar(content: Text(localizations.oauthFailed)),
       );
     } finally {
-      if (!mounted) {
-        return;
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
       }
-      setState(() {
-        _isSubmitting = false;
-      });
     }
   }
 }

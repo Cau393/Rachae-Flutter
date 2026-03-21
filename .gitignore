@@ -29,6 +29,7 @@ build/
 *.ipr
 *.iws
 
+
 # iOS
 ios/Runner/GoogleService-Info.plist
 *.xcuserstate
@@ -38,6 +39,8 @@ ios/Runner/GoogleService-Info.plist
 .vscode/
 *.swp
 *.swo
+.cursor*/*
+.cursor*
 
 # Secrets
 *.pem

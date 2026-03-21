@@ -10,6 +10,8 @@ urlpatterns = [
     path(API_V1_PREFIX, include("apps.users.urls")),
     path(API_V1_PREFIX, include("apps.expenses.urls")),
     path(API_V1_PREFIX, include("apps.transactions.urls")),
+    path(API_V1_PREFIX, include("apps.ledger.urls")),
+    path(API_V1_PREFIX, include("apps.currencies.urls")),
     path(API_V1_PREFIX, include("apps.ads.urls")),
     path(f"{API_V1_PREFIX}notifications/", include("apps.notifications.urls")),
 ]

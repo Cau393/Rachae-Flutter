@@ -1,4 +1,5 @@
 from decimal import Decimal
+from uuid import UUID
 
 from django.core.cache import cache
 
@@ -122,3 +123,82 @@ class ActivityService:
             item.pop("_sort_at", None)
 
         return activity_items
+
+    @staticmethod
+    def get_user_activity_feed(
+        user,
+        *,
+        group_id: UUID | None = None,
+        page: int = 1,
+        limit: int = 20,
+    ) -> list[dict]:
+        if group_id is not None:
+            group_ids = [group_id]
+        else:
+            group_ids = list(
+                GroupMember.objects.filter(
+                    user=user,
+                    is_deleted=False,
+                    group__is_deleted=False,
+                ).values_list("group_id", flat=True)
+            )
+        if not group_ids:
+            return []
+
+        expense_items = [
+            {
+                "type": "expense",
+                "id": str(expense.id),
+                "group_id": str(expense.group_id) if expense.group_id else None,
+                "description": expense.description,
+                "amount": expense.amount_in_group_currency,
+                "currency": expense.group.currency if expense.group else expense.currency,
+                "paid_by_id": str(expense.paid_by_id),
+                "paid_by_name": expense.paid_by.display_name,
+                "created_at": expense.created_at.isoformat(),
+                "_sort_at": expense.created_at,
+            }
+            for expense in Expense.objects.filter(
+                group_id__in=group_ids,
+                is_deleted=False,
+            )
+            .select_related("paid_by", "group")
+            .order_by("-created_at")
+        ]
+
+        try:
+            from apps.transactions.models import Transaction
+        except ImportError:
+            transaction_items = []
+        else:
+            transaction_items = [
+                {
+                    "type": "transaction",
+                    "id": str(transaction.id),
+                    "group_id": str(transaction.group_id) if transaction.group_id else None,
+                    "amount": transaction.amount,
+                    "currency": transaction.currency,
+                    "payer_id": str(transaction.payer_id),
+                    "payer_name": transaction.payer.display_name,
+                    "receiver_id": str(transaction.receiver_id),
+                    "receiver_name": transaction.receiver.display_name,
+                    "note": transaction.note,
+                    "is_confirmed": transaction.is_confirmed,
+                    "created_at": transaction.created_at.isoformat(),
+                    "_sort_at": transaction.created_at,
+                }
+                for transaction in Transaction.objects.filter(
+                    group_id__in=group_ids,
+                )
+                .select_related("payer", "receiver", "group")
+                .order_by("-created_at")
+            ]
+
+        activity_items = expense_items + transaction_items
+        activity_items.sort(key=lambda item: item["_sort_at"], reverse=True)
+
+        for item in activity_items:
+            item.pop("_sort_at", None)
+
+        offset = (page - 1) * limit
+        return activity_items[offset : offset + limit]

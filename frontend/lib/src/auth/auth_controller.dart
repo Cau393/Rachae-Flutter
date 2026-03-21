@@ -34,7 +34,7 @@ class AuthController extends ChangeNotifier {
   Future<void> signInWithGoogle() async {
     await _client.auth.signInWithOAuth(
       OAuthProvider.google,
-      redirectTo: kIsWeb ? null : AppConfig.iosRedirectUrl,
+      redirectTo: AppConfig.oauthRedirectUri(),
       authScreenLaunchMode: kIsWeb
           ? LaunchMode.platformDefault
           : LaunchMode.externalApplication,
