@@ -22,9 +22,6 @@ from apps.expenses.serializers import (
 from apps.expenses.services import ExpenseService, ReceiptService
 from apps.groups.models import GroupRole
 from apps.users.permissions import ActiveUserPermission
-from core.storage import resolve_cloudfront_url
-
-
 def _response_data(payload, *, status_code=status.HTTP_200_OK):
     return Response({"data": payload}, status=status_code)
 
@@ -216,13 +213,7 @@ class ExpenseReceiptConfirmView(ExpenseBaseView):
         except ValueError as exc:
             raise ValidationError({"detail": str(exc)}) from exc
 
-        return _response_data(
-            {
-                "receipt_urls": [
-                    resolve_cloudfront_url(file_key) for file_key in (expense.receipt_urls or [])
-                ]
-            }
-        )
+        return _response_data(_expense_detail_payload(expense))
 
 
 class ExpenseReceiptDeleteView(ExpenseBaseView):

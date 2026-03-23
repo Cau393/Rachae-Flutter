@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:frontend/core/network/api_client.dart';
 import 'package:frontend/features/dashboard/models/activity_item_model.dart';
 import 'package:frontend/features/dashboard/models/balance_summary_model.dart';
+import 'package:frontend/features/dashboard/models/pairwise_balance_row_model.dart';
 
 class DashboardRepository {
   const DashboardRepository(this._dio);
@@ -27,10 +28,7 @@ class DashboardRepository {
     String? groupId,
   }) async {
     try {
-      final queryParameters = <String, dynamic>{
-        'page': page,
-        'limit': limit,
-      };
+      final queryParameters = <String, dynamic>{'page': page, 'limit': limit};
       if (groupId != null) {
         queryParameters['group_id'] = groupId;
       }
@@ -52,6 +50,29 @@ class DashboardRepository {
 
   Future<List<ActivityItemModel>> fetchNextActivityPage(int page) =>
       fetchActivity(page: page);
+
+  Future<List<PairwiseBalanceRowModel>> fetchPairwiseBalances() async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/users/me/pairwise-balances/',
+      );
+      final data = response.data;
+      if (data == null) {
+        return [];
+      }
+      final inner = data['data'] as Map<String, dynamic>?;
+      final list = inner?['balances'] as List<dynamic>? ?? const <dynamic>[];
+      return list
+          .map(
+            (e) => PairwiseBalanceRowModel.fromJson(
+              e as Map<String, dynamic>,
+            ),
+          )
+          .toList();
+    } on DioException catch (e) {
+      throw _mapDioToApi(e);
+    }
+  }
 
   ApiException _mapDioToApi(DioException e) {
     final status = e.response?.statusCode ?? 0;

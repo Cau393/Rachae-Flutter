@@ -2,6 +2,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from django.core.cache import cache
+from django.db.models import Q
 
 from apps.expenses.models import Expense
 from apps.groups.models import GroupMember
@@ -72,6 +73,7 @@ class ActivityService:
                 "type": "expense",
                 "id": str(expense.id),
                 "group_id": str(expense.group_id) if expense.group_id else None,
+                "group_name": expense.group.name if expense.group else None,
                 "description": expense.description,
                 "amount": expense.amount_in_group_currency,
                 "currency": expense.group.currency if expense.group else expense.currency,
@@ -145,11 +147,25 @@ class ActivityService:
         if not group_ids:
             return []
 
+        expenses = list(
+            Expense.objects.filter(
+                Q(group_id__in=group_ids)
+                | Q(group_id__isnull=True, paid_by=user)
+                | Q(group_id__isnull=True, created_by=user)
+                | Q(group_id__isnull=True, splits__user=user),
+                is_deleted=False,
+            )
+            .select_related("paid_by", "group")
+            .distinct()
+            .order_by("-created_at")
+        )
+
         expense_items = [
             {
                 "type": "expense",
                 "id": str(expense.id),
                 "group_id": str(expense.group_id) if expense.group_id else None,
+                "group_name": expense.group.name if expense.group else None,
                 "description": expense.description,
                 "amount": expense.amount_in_group_currency,
                 "currency": expense.group.currency if expense.group else expense.currency,
@@ -158,12 +174,7 @@ class ActivityService:
                 "created_at": expense.created_at.isoformat(),
                 "_sort_at": expense.created_at,
             }
-            for expense in Expense.objects.filter(
-                group_id__in=group_ids,
-                is_deleted=False,
-            )
-            .select_related("paid_by", "group")
-            .order_by("-created_at")
+            for expense in expenses
         ]
 
         try:

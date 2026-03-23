@@ -21,6 +21,8 @@ import 'package:frontend/features/groups/models/group_member_model.dart';
 import 'package:frontend/features/groups/models/settlement_suggestion_model.dart';
 import 'package:frontend/features/groups/providers/group_balances_provider.dart';
 import 'package:frontend/features/groups/providers/group_detail_provider.dart';
+import 'package:frontend/features/expenses/providers/expense_repository_provider.dart';
+import 'package:frontend/features/expenses/repositories/expense_repository.dart';
 import 'package:frontend/features/groups/providers/group_members_provider.dart';
 import 'package:frontend/features/groups/screens/group_detail_screen.dart';
 import 'package:frontend/features/groups/widgets/group_expense_list.dart';
@@ -40,6 +42,8 @@ class MockUser extends Mock implements User {}
 
 class _MockDashboardRepository extends Mock implements DashboardRepository {}
 
+class _MockExpenseRepository extends Mock implements ExpenseRepository {}
+
 void main() {
   const gid = '11111111-1111-1111-1111-111111111111';
   const adminUid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
@@ -47,6 +51,7 @@ void main() {
 
   late MockUser mockUser;
   late _MockDashboardRepository mockDashboard;
+  late _MockExpenseRepository mockExpenseRepo;
 
   GroupDetailModel detailForRole(String currentUid, String currentRole) {
     return GroupDetailModel.fromJson(<String, dynamic>{
@@ -107,6 +112,7 @@ void main() {
       ),
       authNotifierProvider.overrideWith(() => FakeAuthNotifier(authState)),
       dashboardRepositoryProvider.overrideWithValue(mockDashboard),
+      expenseRepositoryProvider.overrideWithValue(mockExpenseRepo),
       adStatusProvider.overrideWithValue(const AdStatus(isAdFree: false)),
     ];
   }
@@ -160,9 +166,21 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  setUpAll(() {
+    registerFallbackValue(1);
+  });
+
   setUp(() {
     mockUser = MockUser();
     mockDashboard = _MockDashboardRepository();
+    mockExpenseRepo = _MockExpenseRepository();
+    when(
+      () => mockExpenseRepo.fetchGroupExpenses(
+        any(),
+        page: any(named: 'page'),
+        limit: any(named: 'limit'),
+      ),
+    ).thenAnswer((_) async => []);
     when(() => mockUser.id).thenReturn(adminUid);
     when(
       () => mockDashboard.fetchActivity(
@@ -206,6 +224,7 @@ void main() {
               () => FakeAuthNotifier(AuthState.authenticated(user: mockUser)),
             ),
             dashboardRepositoryProvider.overrideWithValue(mockDashboard),
+            expenseRepositoryProvider.overrideWithValue(mockExpenseRepo),
           ],
           child: MaterialApp.router(
             theme: AppTheme.light,

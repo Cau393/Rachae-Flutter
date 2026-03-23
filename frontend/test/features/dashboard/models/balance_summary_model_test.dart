@@ -4,6 +4,7 @@ import 'package:frontend/features/dashboard/models/balance_summary_model.dart';
 
 void main() {
   const sampleJson = {
+    'id': '11111111-1111-1111-1111-111111111111',
     'total_owed': '45.00',
     'total_owing': '120.50',
     'net_balance': '-75.50',
@@ -14,6 +15,7 @@ void main() {
     'fromJson parses total_owed, total_owing, net_balance, and currency',
     () {
       final model = BalanceSummaryModel.fromJson(sampleJson);
+      expect(model.userId, '11111111-1111-1111-1111-111111111111');
       expect(model.totalOwed, '45.00');
       expect(model.totalOwing, '120.50');
       expect(model.netBalance, '-75.50');
@@ -92,7 +94,7 @@ void main() {
     expect(model.isNetNegative, isFalse);
   });
 
-  test('equality compares all four fields', () {
+  test('equality compares all fields including userId', () {
     final a = BalanceSummaryModel.fromJson(sampleJson);
     final b = BalanceSummaryModel.fromJson(
       Map<String, dynamic>.from(sampleJson),
@@ -102,6 +104,7 @@ void main() {
       a,
       equals(
         BalanceSummaryModel(
+          userId: a.userId,
           totalOwed: a.totalOwed,
           totalOwing: a.totalOwing,
           netBalance: a.netBalance,
@@ -122,11 +125,13 @@ void main() {
 
   test('fromJson coerces numeric JSON values to String via toString', () {
     final model = BalanceSummaryModel.fromJson({
+      'id': '22222222-2222-2222-2222-222222222222',
       'total_owed': 45.0,
       'total_owing': 120.5,
       'net_balance': -75.5,
       'currency': 'BRL',
     });
+    expect(model.userId, '22222222-2222-2222-2222-222222222222');
     expect(model.totalOwed, '45.0');
     expect(model.totalOwing, '120.5');
     expect(model.netBalance, '-75.5');

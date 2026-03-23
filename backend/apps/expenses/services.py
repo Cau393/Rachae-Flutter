@@ -410,6 +410,11 @@ class ExpenseService:
 
         if filters.get("group_id"):
             queryset = queryset.filter(group_id=filters["group_id"])
+        if filters.get("with_user"):
+            queryset = queryset.filter(
+                Q(paid_by=requesting_user, splits__user_id=filters["with_user"])
+                | Q(paid_by_id=filters["with_user"], splits__user=requesting_user)
+            )
         if filters.get("date_from"):
             queryset = queryset.filter(expense_date__gte=filters["date_from"])
         if filters.get("date_to"):
@@ -418,6 +423,13 @@ class ExpenseService:
             queryset = queryset.filter(category=filters["category"])
         if filters.get("q"):
             queryset = queryset.filter(description__icontains=filters["q"])
+        if filters.get("owed_to_me"):
+            queryset = (
+                queryset.filter(paid_by=requesting_user)
+                .filter(splits__is_deleted=False)
+                .exclude(splits__user=requesting_user)
+                .distinct()
+            )
 
         return queryset.order_by("-expense_date", "-created_at")
 

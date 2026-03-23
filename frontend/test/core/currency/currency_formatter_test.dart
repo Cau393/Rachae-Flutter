@@ -111,6 +111,32 @@ void main() {
     });
   });
 
+  group('CurrencyFormatter.formatRawDecimalForDisplay', () {
+    test('BRL replaces dot with comma for decimals', () {
+      expect(
+        CurrencyFormatter.formatRawDecimalForDisplay('10.50', 'BRL'),
+        '10,50',
+      );
+    });
+
+    test('non-BRL leaves raw string unchanged', () {
+      expect(
+        CurrencyFormatter.formatRawDecimalForDisplay('10.50', 'USD'),
+        '10.50',
+      );
+    });
+  });
+
+  group('CurrencyFormatter.normalizeDecimalInput', () {
+    test('comma becomes dot for API', () {
+      expect(CurrencyFormatter.normalizeDecimalInput('150,50'), '150.50');
+    });
+
+    test('trims whitespace', () {
+      expect(CurrencyFormatter.normalizeDecimalInput('  10.5  '), '10.5');
+    });
+  });
+
   group('CurrencyFormatter.symbolFor', () {
     test('BRL symbol is R\$', () {
       expect(CurrencyFormatter.symbolFor('BRL'), equals(r'R$'));

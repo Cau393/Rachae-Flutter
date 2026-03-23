@@ -31,7 +31,7 @@ class SignInOnGoogleAuthNotifier extends AuthNotifier {
   Future<AuthState> build() async => const AuthState.unauthenticated();
 
   @override
-  Future<void> signInWithGoogle() async {
+  Future<void> signInWithGoogle({String? inviteToken}) async {
     state = AsyncData(AuthState.authenticated(user: _user));
   }
 }

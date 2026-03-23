@@ -24,6 +24,7 @@ class GroupListScreen extends ConsumerWidget {
         title: Text(context.l10n.groupsTitle),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_group_list_create',
         onPressed: () => context.go('/groups/new'),
         tooltip: context.l10n.groupsCreateFab,
         child: const Icon(Icons.add),

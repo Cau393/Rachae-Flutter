@@ -85,4 +85,16 @@ class CurrencyFormatter {
     };
     return locales[currencyCode] ?? _defaultLocale;
   }
+
+  /// Raw decimal strings from the API/state use `.` (e.g. `"10.50"`).
+  /// For BRL, show `,` as the decimal separator in text fields and inline labels.
+  /// Does not change stored/submitted values — pair with [normalizeDecimalInput].
+  static String formatRawDecimalForDisplay(String raw, String currencyCode) {
+    if (currencyCode != 'BRL') return raw;
+    return raw.replaceAll('.', ',');
+  }
+
+  /// Normalizes typed input for API/state: `,` → `.` (Brazilian keyboard).
+  static String normalizeDecimalInput(String raw) =>
+      raw.trim().replaceAll(',', '.');
 }

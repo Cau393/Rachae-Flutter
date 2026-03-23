@@ -157,6 +157,10 @@ class AddMemberSerializer(serializers.Serializer):
     role = serializers.ChoiceField(choices=GroupRole.choices, required=False, default=GroupRole.MEMBER)
 
 
+class EligibleFriendGroupsQuerySerializer(serializers.Serializer):
+    user_id = serializers.UUIDField()
+
+
 class MemberRoleChangeSerializer(serializers.Serializer):
     role = serializers.ChoiceField(choices=GroupRole.choices)
 

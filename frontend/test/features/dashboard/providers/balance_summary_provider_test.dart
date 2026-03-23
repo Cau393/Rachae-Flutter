@@ -16,6 +16,7 @@ void main() {
   late ProviderContainer container;
 
   const fixedModel = BalanceSummaryModel(
+    userId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     totalOwed: '45.00',
     totalOwing: '120.50',
     netBalance: '-75.50',

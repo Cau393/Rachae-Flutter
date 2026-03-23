@@ -7,7 +7,10 @@ from rest_framework.views import APIView
 
 from apps.transactions.filters import TransactionFilter
 from apps.transactions.models import Transaction
+from apps.transactions.proof_service import TransactionProofService
 from apps.transactions.serializers import (
+    ProofFileKeySerializer,
+    ProofUploadURLQuerySerializer,
     TransactionCreateSerializer,
     TransactionOutputSerializer,
 )
@@ -74,6 +77,38 @@ class TransactionListCreateView(TransactionBaseView):
 class TransactionDetailView(TransactionBaseView):
     def get(self, request, transaction_id):
         transaction = TransactionService.get(str(transaction_id), request.user)
+        return _response_data(TransactionOutputSerializer(transaction).data)
+
+
+class TransactionProofUploadURLView(TransactionBaseView):
+    def get(self, request, transaction_id):
+        transaction = TransactionService.get(str(transaction_id), request.user)
+
+        serializer = ProofUploadURLQuerySerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+
+        payload = TransactionProofService.generate_upload_url(
+            transaction,
+            request.user,
+            content_type=serializer.validated_data["content_type"],
+        )
+
+        return _response_data(payload)
+
+
+class TransactionProofConfirmView(TransactionBaseView):
+    def patch(self, request, transaction_id):
+        transaction = TransactionService.get(str(transaction_id), request.user)
+
+        serializer = ProofFileKeySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        transaction = TransactionProofService.confirm_upload(
+            transaction,
+            serializer.validated_data["file_key"],
+            request.user,
+        )
+
         return _response_data(TransactionOutputSerializer(transaction).data)
 
 

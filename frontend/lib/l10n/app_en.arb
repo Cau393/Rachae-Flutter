@@ -45,12 +45,25 @@
   "dashboardRecentActivity": "Recent activity",
   "dashboardNoActivity": "No activity yet.",
   "dashboardAddExpense": "Add expense",
+  "dashboardShortcutPendingApprovals": "Pending payments to approve",
+  "dashboardShortcutOwedToYou": "Expenses others owe you",
+  "dashboardShortcutPendingSettlements": "Pending settlements",
+  "dashboardPendingApprovalsTitle": "Pending approvals",
+  "dashboardPendingApprovalsEmpty": "No payments waiting for your confirmation.",
+  "dashboardOwedToYouTitle": "Expenses others owe you",
+  "dashboardOwedToYouEmpty": "No expenses where you paid and others owe you yet.",
+  "dashboardPendingSettlementsTitle": "Pending settlements",
+  "dashboardPendingOutgoingSection": "Payments you recorded (awaiting their confirmation)",
+  "dashboardYouOweSection": "Balances you owe",
+  "dashboardYouOweEmpty": "You do not owe anyone right now.",
+  "dashboardYouOweSubtitle": "Tap to settle up",
   "dashboardPulledToRefresh": "Refreshed",
   "activityExpenseAdded": "Expense added",
   "activitySettlementRecorded": "Payment recorded",
   "activitySettlementConfirmed": "Payment confirmed",
   "activityPaidBy": "Paid by {name}",
   "@activityPaidBy": { "placeholders": { "name": { "type": "String" } } },
+  "activitySourcePersonal": "Personal",
   "activityYouPaid": "You paid",
   "activityAwaitingConfirmation": "Awaiting confirmation",
 
@@ -134,7 +147,26 @@
   "addExpenseSaveButton": "Save expense",
   "addExpenseSuccess": "Expense added!",
   "addExpenseError": "Error saving. Try again.",
+  "addExpenseFriendLabel": "Friend",
+  "addExpenseFriendHint": "Choose the friend involved in this expense",
+  "addExpenseFriendRequired": "Choose a friend for this expense.",
+  "addExpenseNoFriendsAvailable": "Add a friend first to create a personal shared expense.",
+  "addExpenseAmountInvalid": "Enter an amount greater than zero.",
   "addExpenseSplitDoesNotMatch": "Split does not match the total amount.",
+  "addExpenseSplitAutoChip": "Auto",
+  "addExpenseSplitTotalExact": "Total: {sum} / {total}",
+  "@addExpenseSplitTotalExact": {
+    "placeholders": {
+      "sum": { "type": "String" },
+      "total": { "type": "String" }
+    }
+  },
+  "addExpenseSplitTotalPercentage": "{percentage}%",
+  "@addExpenseSplitTotalPercentage": {
+    "placeholders": {
+      "percentage": { "type": "String" }
+    }
+  },
   "addExpenseCurrencyLabel": "Currency",
   "addExpenseConvertedPreview": "≈ {amount} {currency} in group currency",
   "@addExpenseConvertedPreview": {
@@ -159,6 +191,7 @@
   "expenseDetailReceipts": "Receipts",
   "expenseDetailNoReceipts": "No receipts attached.",
   "expenseDetailEditButton": "Edit",
+  "expenseDetailEditComingSoon": "Editing is not available yet.",
   "expenseDetailDeleteButton": "Delete",
   "expenseDetailDeleteConfirm": "Delete this expense? This cannot be undone.",
   "expenseDetailDeleteSuccess": "Expense deleted.",
@@ -174,6 +207,7 @@
   "@expenseDetailLastModified": { "placeholders": { "date": { "type": "String" } } },
 
   "settleUpTitle": "Settle up",
+  "settleUpPayerLabel": "From:",
   "settleUpReceiverLabel": "Pay to",
   "settleUpAmountLabel": "Amount",
   "settleUpNoteLabel": "Note (optional)",
@@ -189,6 +223,15 @@
   "settleUpDisputed": "Disputed",
   "settleUpSuggestedAmount": "Suggested: {amount}",
   "@settleUpSuggestedAmount": { "placeholders": { "amount": { "type": "String" } } },
+  "settleUpPaymentProofSection": "Payment proof (optional)",
+  "settleUpAddProofLabel": "Add proof",
+  "settleUpProofUploadError": "Could not upload payment proof.",
+
+  "pendingSettlementYouPaidBeforeAmount": "You paid ",
+  "pendingSettlementYouPaidAfterAmount": " to {receiverName}",
+  "@pendingSettlementYouPaidAfterAmount": { "placeholders": { "receiverName": { "type": "String" } } },
+  "pendingSettlementReceivedBeforeAmount": "{payerName} sent you ",
+  "@pendingSettlementReceivedBeforeAmount": { "placeholders": { "payerName": { "type": "String" } } },
 
   "friendsTitle": "Friends",
   "friendsEmpty": "No friends yet. Invite someone!",
@@ -200,20 +243,32 @@
   "friendsEven": "Even",
   "friendsSearchHint": "Search friends",
   "friendInviteTitle": "Invite friend",
-  "friendInviteEmailLabel": "Email (optional)",
-  "friendInvitePhoneLabel": "Phone",
-  "friendInviteButton": "Send invite",
+  "friendInviteBody": "We create a unique link. Share it in any app—the other person opens it, signs in, and accepts.",
+  "friendInviteButton": "Generate invite link",
   "friendInviteSuccess": "Invite sent!",
   "friendInviteLinkCopied": "Invite link copied!",
   "friendAcceptInviteButton": "Accept invite",
   "friendAcceptSuccess": "Invite accepted! You are now friends.",
+  "inviteGetTheAppHint": "Prefer the app? Get it here.",
+  "inviteAppStoreButton": "App Store",
+  "invitePlayStoreButton": "Google Play",
 
   "friendDetailTitle": "Details",
   "friendDetailNetBalance": "Balance between you",
+  "friendDetailPendingSettlements": "Pending settlements",
   "friendDetailSharedExpenses": "Shared expenses",
   "friendDetailSharedGroups": "Groups in common",
   "friendDetailNoSharedExpenses": "No shared expenses.",
   "friendDetailSettleUpButton": "Settle up",
+  "friendDetailAddToGroupButton": "Add to group",
+  "friendDetailNoEligibleGroups": "No groups available for this friend.",
+  "friendDetailAddedToGroupSuccess": "{friendName} was added to {groupName}.",
+  "@friendDetailAddedToGroupSuccess": {
+    "placeholders": {
+      "friendName": { "type": "String" },
+      "groupName": { "type": "String" }
+    }
+  },
 
   "profileTitle": "Profile",
   "profileDisplayNameLabel": "Display name",

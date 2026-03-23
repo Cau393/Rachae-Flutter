@@ -1,7 +1,6 @@
 import secrets
 from decimal import Decimal
 from datetime import timedelta
-from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import UUID, uuid4
 
@@ -14,8 +13,8 @@ from apps.users.queries import (
     convert_amount,
     get_balance_expenses_for_user,
     get_pairwise_expenses,
-    get_pairwise_transactions,
     get_pending_invite_by_token,
+    get_pairwise_transactions,
     get_transactions_for_user,
     list_friends,
     search_users,
@@ -24,6 +23,13 @@ from core.storage import generate_presigned_upload_url
 
 
 class UserService:
+    @staticmethod
+    def _normalized_supabase_phone(phone: str | None) -> str | None:
+        if phone is None:
+            return None
+        normalized = str(phone).strip()
+        return normalized or None
+
     @staticmethod
     def sync_from_supabase_claims(payload: dict) -> User:
         supabase_uid = UUID(payload["sub"])
@@ -40,7 +46,7 @@ class UserService:
         )
         defaults = {
             "email": email,
-            "phone": payload.get("phone"),
+            "phone": UserService._normalized_supabase_phone(payload.get("phone")),
             "display_name": display_name[:100],
             "avatar_url": user_metadata.get("avatar_url"),
         }
@@ -172,67 +178,29 @@ class BalanceService:
 
     @classmethod
     def get_pairwise_balance(cls, current_user: User, other_user: User) -> dict:
-        from django.db.models import Sum
-
-        from apps.groups.models import GroupMember
-        from apps.splits.models import Split
-
-        shared_group_ids = set(
-            GroupMember.objects.filter(user=current_user).values_list("group_id", flat=True)
-        ) & set(GroupMember.objects.filter(user=other_user).values_list("group_id", flat=True))
-
-        if not shared_group_ids:
-            return {
-                "balance": Decimal("0.00"),
-                "currency": cls.REPORT_CURRENCY,
-            }
-
-        b_owes_a = (
-            Split.objects.filter(
-                expense__group_id__in=shared_group_ids,
-                expense__paid_by=current_user,
-                expense__is_deleted=False,
-                user=other_user,
-                is_settled=False,
-            ).aggregate(total=Sum("amount_owed"))["total"]
-        ) or Decimal("0")
-        a_owes_b = (
-            Split.objects.filter(
-                expense__group_id__in=shared_group_ids,
-                expense__paid_by=other_user,
-                expense__is_deleted=False,
-                user=current_user,
-                is_settled=False,
-            ).aggregate(total=Sum("amount_owed"))["total"]
-        ) or Decimal("0")
-
-        try:
-            from apps.transactions.models import Transaction
-
-            a_paid_b = (
-                Transaction.objects.filter(
-                    group_id__in=shared_group_ids,
-                    payer=current_user,
-                    receiver=other_user,
-                    is_confirmed=True,
-                ).aggregate(total=Sum("amount"))["total"]
-            ) or Decimal("0")
-            b_paid_a = (
-                Transaction.objects.filter(
-                    group_id__in=shared_group_ids,
-                    payer=other_user,
-                    receiver=current_user,
-                    is_confirmed=True,
-                ).aggregate(total=Sum("amount"))["total"]
-            ) or Decimal("0")
-        except ImportError:
-            a_paid_b = b_paid_a = Decimal("0")
-
-        net = b_owes_a - a_owes_b - a_paid_b + b_paid_a
+        balances = cls._build_pairwise_balances(current_user.id, other_user.id)
+        net = balances.get(other_user.id, Decimal("0.00"))
         return {
             "balance": net,
             "currency": cls.REPORT_CURRENCY,
         }
+
+    @classmethod
+    def list_pairwise_nonzero(cls, user: User) -> list[dict]:
+        raw = cls._build_pairwise_balances(user.id)
+        out = []
+        for uid, amount in raw.items():
+            if amount == Decimal("0.00"):
+                continue
+            other = User.objects.get(id=uid)
+            out.append(
+                {
+                    "user": other,
+                    "balance": amount.quantize(Decimal("0.01")),
+                    "currency": cls.REPORT_CURRENCY,
+                }
+            )
+        return sorted(out, key=lambda row: row["user"].display_name.lower())
 
     @classmethod
     def _build_pairwise_balances(cls, user_id, other_user_id=None):
@@ -246,7 +214,7 @@ class BalanceService:
             get_pairwise_transactions(user_id, other_user_id)
             if other_user_id
             else get_transactions_for_user(user_id)
-        )
+        ).filter(is_confirmed=True)
 
         for expense in expenses:
             base_currency = expense.group.currency if expense.group_id else expense.currency
@@ -263,7 +231,7 @@ class BalanceService:
         for settlement in transactions:
             converted_amount = convert_amount(settlement.amount, settlement.currency, cls.REPORT_CURRENCY)
             if settlement.payer_id == user_id:
-                balances[settlement.receiver_id] = balances.get(settlement.receiver_id, Decimal("0.00")) + converted_amount
+                balances[settlement.receiver_id] = balances.get(settlement.receiver_id, Decimal("0.00")) - converted_amount
             else:
                 balances[settlement.payer_id] = balances.get(settlement.payer_id, Decimal("0.00")) - converted_amount
 
@@ -275,7 +243,7 @@ class InvitationService:
     TOKEN_QUERY_PARAM = "invite_token"
 
     @classmethod
-    def create_invite(cls, inviter: User, *, email: str | None = None, phone: str) -> dict:
+    def create_invite(cls, inviter: User, *, email: str | None = None, phone: str | None = None) -> dict:
         token = secrets.token_urlsafe(32)
         invite = FriendInvite.objects.create(
             inviter=inviter,
@@ -307,10 +275,16 @@ class InvitationService:
             invite.save(update_fields=["status", "updated_at"])
             raise ValueError("Friend invite has expired.")
 
-        email_matches = bool(invite.email and invite.email == user.email)
-        phone_matches = bool(user.phone and invite.phone == user.phone)
-        if not email_matches and not phone_matches:
-            raise ValueError("This invite does not belong to the authenticated user.")
+        if invite.inviter_id == user.id:
+            raise ValueError("You cannot accept your own friend invite.")
+
+        invite_has_email = bool(invite.email)
+        invite_has_phone = bool(invite.phone)
+        if invite_has_email or invite_has_phone:
+            email_matches = invite_has_email and invite.email == user.email
+            phone_matches = invite_has_phone and bool(user.phone) and invite.phone == user.phone
+            if not email_matches and not phone_matches:
+                raise ValueError("This invite does not belong to the authenticated user.")
 
         invite.status = FriendInviteStatus.ACCEPTED
         invite.accepted_by = user

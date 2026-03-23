@@ -8,10 +8,12 @@ from apps.users.views import (
     FriendInviteView,
     FriendListView,
     UserBalanceView,
+    UserPairwiseBalancesView,
     UserSearchView,
 )
 
 urlpatterns = [
+    path("users/me/pairwise-balances/", UserPairwiseBalancesView.as_view(), name="users-me-pairwise-balances"),
     path("users/me/", CurrentUserView.as_view(), name="users-me"),
     path("users/search/", UserSearchView.as_view(), name="users-search"),
     path("users/friends/", FriendListView.as_view(), name="users-friends"),

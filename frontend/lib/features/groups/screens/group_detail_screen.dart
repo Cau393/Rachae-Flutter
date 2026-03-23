@@ -5,8 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:frontend/core/widgets/ad_banner.dart';
 import 'package:frontend/features/auth/auth_state.dart';
 import 'package:frontend/features/auth/auth_notifier.dart';
-import 'package:frontend/features/dashboard/providers/activity_feed_provider.dart';
-import 'package:frontend/features/dashboard/widgets/activity_feed.dart';
 import 'package:frontend/features/groups/models/group_detail_model.dart';
 import 'package:frontend/features/groups/providers/group_balances_provider.dart';
 import 'package:frontend/features/groups/providers/group_detail_provider.dart';
@@ -36,7 +34,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_onTabTick);
   }
 
@@ -70,7 +68,6 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     ref.invalidate(groupDetailProvider(_groupId));
     ref.invalidate(groupMembersProvider(_groupId));
     ref.invalidate(groupBalancesProvider(_groupId));
-    ref.invalidate(groupActivityFeedProvider(_groupId));
     await ref.read(groupDetailProvider(_groupId).future);
   }
 
@@ -122,6 +119,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   }) {
     if (tabIndex == 0) {
       return FloatingActionButton(
+        heroTag: 'fab_group_detail_add_expense',
         onPressed: () {
           final uri = Uri(
             path: '/expenses/new',
@@ -135,6 +133,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     }
     if (tabIndex == 2 && role == 'ADMIN') {
       return FloatingActionButton(
+        heroTag: 'fab_group_detail_add_member',
         onPressed: () => _showAddMemberSheet(l10n),
         tooltip: l10n.createGroupAddMembers,
         child: const Icon(Icons.person_add_outlined),
@@ -150,7 +149,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverFillRemaining(
-            hasScrollBody: false,
+            hasScrollBody: true,
             child: Column(
               children: [
                 Expanded(child: GroupExpenseList(groupId: _groupId)),
@@ -277,13 +276,6 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     );
   }
 
-  Widget _activityTab() {
-    return RefreshIndicator(
-      onRefresh: _onRefresh,
-      child: ActivityFeed(groupId: _groupId),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -324,7 +316,6 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                   Tab(text: l10n.groupDetailTabExpenses),
                   Tab(text: l10n.groupDetailTabBalances),
                   Tab(text: l10n.groupDetailTabMembers),
-                  Tab(text: l10n.groupDetailTabActivity),
                 ],
               ),
               Expanded(
@@ -334,7 +325,6 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                     _expensesTab(l10n),
                     _balancesTab(l10n, userId),
                     _membersTab(l10n, userId, role),
-                    _activityTab(),
                   ],
                 ),
               ),

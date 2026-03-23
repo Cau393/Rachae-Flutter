@@ -17,6 +17,17 @@ class GroupRepository {
     return GroupSummaryModel.fromJsonList(list);
   }
 
+  Future<List<GroupSummaryModel>> fetchEligibleGroupsForFriend(
+    String userId,
+  ) async {
+    final response = await _dio.get<dynamic>(
+      '/groups/eligible-friend-groups/',
+      queryParameters: <String, dynamic>{'user_id': userId},
+    );
+    final list = response.data! as List<dynamic>;
+    return GroupSummaryModel.fromJsonList(list);
+  }
+
   Future<GroupDetailModel> fetchGroupDetail(String groupId) async {
     final response = await _dio.get<Map<String, dynamic>>('/groups/$groupId/');
     return GroupDetailModel.fromJson(response.data!);
@@ -31,9 +42,10 @@ class GroupRepository {
   }
 
   Future<({List<GroupBalanceModel> balances, String currency})>
-      fetchGroupBalances(String groupId) async {
-    final response =
-        await _dio.get<Map<String, dynamic>>('/groups/$groupId/balances/');
+  fetchGroupBalances(String groupId) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/groups/$groupId/balances/',
+    );
     final data = response.data!;
     final raw = data['balances'] as List<dynamic>;
     final currency = data['currency'] as String;
@@ -44,9 +56,10 @@ class GroupRepository {
   }
 
   Future<({bool simplifyDebts, List<SettlementSuggestionModel> suggestions})>
-      fetchSimplifiedBalances(String groupId) async {
-    final response = await _dio
-        .get<Map<String, dynamic>>('/groups/$groupId/balances/simplified/');
+  fetchSimplifiedBalances(String groupId) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/groups/$groupId/balances/simplified/',
+    );
     final data = response.data!;
     final simplifyDebts = data['simplify_debts'] as bool;
     final currency = data['currency'] as String;

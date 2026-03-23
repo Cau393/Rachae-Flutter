@@ -34,6 +34,7 @@ void main() {
         ).thenAnswer(
           (_) async => Response<Map<String, dynamic>>(
             data: {
+              'id': '33333333-3333-3333-3333-333333333333',
               'total_owed': '45.00',
               'total_owing': '120.50',
               'net_balance': '-75.50',
@@ -49,6 +50,7 @@ void main() {
         final result = await repo.fetchBalanceSummary();
 
         expect(result, isA<BalanceSummaryModel>());
+        expect(result.userId, '33333333-3333-3333-3333-333333333333');
         expect(result.totalOwed, '45.00');
         expect(result.totalOwing, '120.50');
         expect(result.netBalance, '-75.50');

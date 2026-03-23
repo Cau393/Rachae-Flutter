@@ -31,6 +31,7 @@ class Transaction(models.Model):
     )
     currency = models.CharField(max_length=3, default="BRL")
     note = models.TextField(null=True, blank=True)
+    proof_urls = models.JSONField(default=list, blank=True)
     is_confirmed = models.BooleanField(default=False)
     is_disputed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -3,7 +3,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:dio/dio.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide Headers;
 
-// import 'package:frontend/core/network/api_client.dart'; // TODO: GREEN — ensure single import
 import 'package:frontend/core/network/api_client.dart';
 
 class MockSupabaseClient extends Mock implements SupabaseClient {}
@@ -45,7 +44,7 @@ void main() {
       );
       final handler = RequestInterceptorHandler();
       interceptor.onRequest(options, handler);
-      await handler.future;
+      await pumpEventQueue();
 
       expect(options.headers['Authorization'], 'Bearer test_token');
     });
@@ -63,7 +62,7 @@ void main() {
       );
       final handler = RequestInterceptorHandler();
       interceptor.onRequest(options, handler);
-      await handler.future;
+      await pumpEventQueue();
 
       expect(options.headers['Authorization'], isNull);
     });

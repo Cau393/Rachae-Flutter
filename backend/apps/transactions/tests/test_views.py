@@ -131,6 +131,32 @@ class TransactionViewTests(TransactionTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual([item["id"] for item in response.json()["data"]], [str(pending.id)])
 
+    def test_list_transactions_with_user_returns_only_pairwise_rows(self):
+        pairwise = self.create_transaction(
+            payer=self.user,
+            receiver=self.member_user,
+            amount="9.00",
+        )
+        self.create_transaction(
+            payer=self.user,
+            receiver=self.third_user,
+            amount="7.00",
+        )
+        reverse_pairwise = self.create_transaction(
+            payer=self.member_user,
+            receiver=self.user,
+            amount="4.00",
+        )
+        self.authenticate(self.user)
+
+        response = self.client.get(f"/api/v1/transactions/?with_user={self.member_user.id}")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [item["id"] for item in response.json()["data"]],
+            [str(reverse_pairwise.id), str(pairwise.id)],
+        )
+
     @patch("tasks.email_tasks.send_settlement_confirmation.delay")
     @patch("tasks.ledger_tasks.recalculate_group_ledger.delay")
     def test_patch_confirm_as_receiver_returns_200_and_marks_confirmed(

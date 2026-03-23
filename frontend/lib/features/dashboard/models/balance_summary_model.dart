@@ -5,12 +5,15 @@ import 'package:frontend/core/currency/money_amount.dart';
 @immutable
 class BalanceSummaryModel {
   const BalanceSummaryModel({
+    required this.userId,
     required this.totalOwed,
     required this.totalOwing,
     required this.netBalance,
     required this.currency,
   });
 
+  /// Django `User.id` from `GET /users/me/` (not Supabase `sub`).
+  final String userId;
   final String totalOwed;
   final String totalOwing;
   final String netBalance;
@@ -18,6 +21,7 @@ class BalanceSummaryModel {
 
   factory BalanceSummaryModel.fromJson(Map<String, dynamic> json) {
     return BalanceSummaryModel(
+      userId: json['id'].toString(),
       totalOwed: json['total_owed'].toString(),
       totalOwing: json['total_owing'].toString(),
       netBalance: json['net_balance'].toString(),
@@ -43,11 +47,12 @@ class BalanceSummaryModel {
   @override
   bool operator ==(Object other) =>
       other is BalanceSummaryModel &&
+      other.userId == userId &&
       other.totalOwed == totalOwed &&
       other.totalOwing == totalOwing &&
       other.netBalance == netBalance &&
       other.currency == currency;
 
   @override
-  int get hashCode => Object.hash(totalOwed, totalOwing, netBalance, currency);
+  int get hashCode => Object.hash(userId, totalOwed, totalOwing, netBalance, currency);
 }

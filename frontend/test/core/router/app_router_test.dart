@@ -20,14 +20,14 @@ void main() {
   group('computeRedirect', () {
     test('unauthenticated user at /dashboard redirects to /login', () {
       expect(
-        computeRedirect(AuthState.unauthenticated(), '/dashboard'),
+        computeRedirect(AuthState.unauthenticated(), Uri.parse('/dashboard')),
         '/login',
       );
     });
 
     test('unauthenticated user at /login returns null (no redirect)', () {
       expect(
-        computeRedirect(AuthState.unauthenticated(), '/login'),
+        computeRedirect(AuthState.unauthenticated(), Uri.parse('/login')),
         isNull,
       );
     });
@@ -36,9 +36,19 @@ void main() {
       expect(
         computeRedirect(
           AuthState.authenticated(user: authenticatedUser),
-          '/login',
+          Uri.parse('/login'),
         ),
         '/dashboard',
+      );
+    });
+
+    test('authenticated user at /login with invite_token stays on login', () {
+      expect(
+        computeRedirect(
+          AuthState.authenticated(user: authenticatedUser),
+          Uri.parse('/login?invite_token=abc'),
+        ),
+        isNull,
       );
     });
 
@@ -46,7 +56,7 @@ void main() {
       expect(
         computeRedirect(
           AuthState.authenticated(user: authenticatedUser),
-          '/dashboard',
+          Uri.parse('/dashboard'),
         ),
         isNull,
       );
@@ -54,7 +64,7 @@ void main() {
 
     test('splash / with unauthenticated state redirects to /login', () {
       expect(
-        computeRedirect(AuthState.unauthenticated(), '/'),
+        computeRedirect(AuthState.unauthenticated(), Uri.parse('/')),
         '/login',
       );
     });
@@ -63,7 +73,7 @@ void main() {
       expect(
         computeRedirect(
           AuthState.authenticated(user: authenticatedUser),
-          '/',
+          Uri.parse('/'),
         ),
         '/dashboard',
       );
@@ -78,7 +88,20 @@ void main() {
       final router = container.read(appRouterProvider);
       final paths = _collectGoRoutePaths(router.configuration.routes);
 
-      expect(paths, containsAll(<String>['/', '/login', '/dashboard']));
+      expect(
+        paths,
+        containsAll(<String>[
+          '/',
+          '/login',
+          '/invite',
+          '/dashboard',
+          'pending-approvals',
+          'owed-to-me',
+          'pending-settlements',
+          '/friends/:id',
+          '/settle',
+        ]),
+      );
     });
   });
 

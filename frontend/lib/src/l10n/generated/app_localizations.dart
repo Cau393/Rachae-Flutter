@@ -339,6 +339,78 @@ abstract class AppLocalizations {
   /// **'Adicionar despesa'**
   String get dashboardAddExpense;
 
+  /// No description provided for @dashboardShortcutPendingApprovals.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Pagamentos pendentes para aprovar'**
+  String get dashboardShortcutPendingApprovals;
+
+  /// No description provided for @dashboardShortcutOwedToYou.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Despesas que outros te devem'**
+  String get dashboardShortcutOwedToYou;
+
+  /// No description provided for @dashboardShortcutPendingSettlements.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Acertos pendentes'**
+  String get dashboardShortcutPendingSettlements;
+
+  /// No description provided for @dashboardPendingApprovalsTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Aprovações pendentes'**
+  String get dashboardPendingApprovalsTitle;
+
+  /// No description provided for @dashboardPendingApprovalsEmpty.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Nenhum pagamento aguardando sua confirmação.'**
+  String get dashboardPendingApprovalsEmpty;
+
+  /// No description provided for @dashboardOwedToYouTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Despesas que outros te devem'**
+  String get dashboardOwedToYouTitle;
+
+  /// No description provided for @dashboardOwedToYouEmpty.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Ainda não há despesas em que você pagou e outros te devem.'**
+  String get dashboardOwedToYouEmpty;
+
+  /// No description provided for @dashboardPendingSettlementsTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Acertos pendentes'**
+  String get dashboardPendingSettlementsTitle;
+
+  /// No description provided for @dashboardPendingOutgoingSection.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Pagamentos que você registrou (aguardando confirmação)'**
+  String get dashboardPendingOutgoingSection;
+
+  /// No description provided for @dashboardYouOweSection.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Saldos que você deve'**
+  String get dashboardYouOweSection;
+
+  /// No description provided for @dashboardYouOweEmpty.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Você não deve nada a ninguém no momento.'**
+  String get dashboardYouOweEmpty;
+
+  /// No description provided for @dashboardYouOweSubtitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Toque para acertar'**
+  String get dashboardYouOweSubtitle;
+
   /// No description provided for @dashboardPulledToRefresh.
   ///
   /// In pt_BR, this message translates to:
@@ -368,6 +440,12 @@ abstract class AppLocalizations {
   /// In pt_BR, this message translates to:
   /// **'Pago por {name}'**
   String activityPaidBy(String name);
+
+  /// No description provided for @activitySourcePersonal.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Pessoal'**
+  String get activitySourcePersonal;
 
   /// No description provided for @activityYouPaid.
   ///
@@ -771,11 +849,59 @@ abstract class AppLocalizations {
   /// **'Erro ao salvar. Tente novamente.'**
   String get addExpenseError;
 
+  /// No description provided for @addExpenseFriendLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Amigo'**
+  String get addExpenseFriendLabel;
+
+  /// No description provided for @addExpenseFriendHint.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Escolha o amigo envolvido nesta despesa'**
+  String get addExpenseFriendHint;
+
+  /// No description provided for @addExpenseFriendRequired.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Escolha um amigo para esta despesa.'**
+  String get addExpenseFriendRequired;
+
+  /// No description provided for @addExpenseNoFriendsAvailable.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Adicione um amigo primeiro para criar uma despesa pessoal compartilhada.'**
+  String get addExpenseNoFriendsAvailable;
+
+  /// No description provided for @addExpenseAmountInvalid.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Informe um valor maior que zero.'**
+  String get addExpenseAmountInvalid;
+
   /// No description provided for @addExpenseSplitDoesNotMatch.
   ///
   /// In pt_BR, this message translates to:
   /// **'A divisão não bate com o valor total.'**
   String get addExpenseSplitDoesNotMatch;
+
+  /// No description provided for @addExpenseSplitAutoChip.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Automático'**
+  String get addExpenseSplitAutoChip;
+
+  /// No description provided for @addExpenseSplitTotalExact.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Total: {sum} / {total}'**
+  String addExpenseSplitTotalExact(String sum, String total);
+
+  /// No description provided for @addExpenseSplitTotalPercentage.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'{percentage}%'**
+  String addExpenseSplitTotalPercentage(String percentage);
 
   /// No description provided for @addExpenseCurrencyLabel.
   ///
@@ -867,6 +993,12 @@ abstract class AppLocalizations {
   /// **'Editar'**
   String get expenseDetailEditButton;
 
+  /// No description provided for @expenseDetailEditComingSoon.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Edição em breve.'**
+  String get expenseDetailEditComingSoon;
+
   /// No description provided for @expenseDetailDeleteButton.
   ///
   /// In pt_BR, this message translates to:
@@ -908,6 +1040,12 @@ abstract class AppLocalizations {
   /// In pt_BR, this message translates to:
   /// **'Acertar contas'**
   String get settleUpTitle;
+
+  /// No description provided for @settleUpPayerLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'De:'**
+  String get settleUpPayerLabel;
 
   /// No description provided for @settleUpReceiverLabel.
   ///
@@ -993,6 +1131,42 @@ abstract class AppLocalizations {
   /// **'Sugestão: {amount}'**
   String settleUpSuggestedAmount(String amount);
 
+  /// No description provided for @settleUpPaymentProofSection.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Comprovante de pagamento (opcional)'**
+  String get settleUpPaymentProofSection;
+
+  /// No description provided for @settleUpAddProofLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Adicionar comprovante'**
+  String get settleUpAddProofLabel;
+
+  /// No description provided for @settleUpProofUploadError.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Não foi possível enviar o comprovante.'**
+  String get settleUpProofUploadError;
+
+  /// No description provided for @pendingSettlementYouPaidBeforeAmount.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Você pagou '**
+  String get pendingSettlementYouPaidBeforeAmount;
+
+  /// No description provided for @pendingSettlementYouPaidAfterAmount.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **' para {receiverName}'**
+  String pendingSettlementYouPaidAfterAmount(String receiverName);
+
+  /// No description provided for @pendingSettlementReceivedBeforeAmount.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'{payerName} te enviou '**
+  String pendingSettlementReceivedBeforeAmount(String payerName);
+
   /// No description provided for @friendsTitle.
   ///
   /// In pt_BR, this message translates to:
@@ -1041,22 +1215,16 @@ abstract class AppLocalizations {
   /// **'Convidar amigo'**
   String get friendInviteTitle;
 
-  /// No description provided for @friendInviteEmailLabel.
+  /// No description provided for @friendInviteBody.
   ///
   /// In pt_BR, this message translates to:
-  /// **'E-mail (opcional)'**
-  String get friendInviteEmailLabel;
-
-  /// No description provided for @friendInvitePhoneLabel.
-  ///
-  /// In pt_BR, this message translates to:
-  /// **'Telefone'**
-  String get friendInvitePhoneLabel;
+  /// **'Geramos um link exclusivo. Envie por qualquer app para a pessoa entrar e aceitar depois de entrar na conta.'**
+  String get friendInviteBody;
 
   /// No description provided for @friendInviteButton.
   ///
   /// In pt_BR, this message translates to:
-  /// **'Enviar convite'**
+  /// **'Gerar link de convite'**
   String get friendInviteButton;
 
   /// No description provided for @friendInviteSuccess.
@@ -1083,6 +1251,24 @@ abstract class AppLocalizations {
   /// **'Convite aceito! Agora vocês são amigos.'**
   String get friendAcceptSuccess;
 
+  /// No description provided for @inviteGetTheAppHint.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Prefere o app? Baixe aqui.'**
+  String get inviteGetTheAppHint;
+
+  /// No description provided for @inviteAppStoreButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'App Store'**
+  String get inviteAppStoreButton;
+
+  /// No description provided for @invitePlayStoreButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Google Play'**
+  String get invitePlayStoreButton;
+
   /// No description provided for @friendDetailTitle.
   ///
   /// In pt_BR, this message translates to:
@@ -1094,6 +1280,12 @@ abstract class AppLocalizations {
   /// In pt_BR, this message translates to:
   /// **'Saldo entre vocês'**
   String get friendDetailNetBalance;
+
+  /// No description provided for @friendDetailPendingSettlements.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Pagamentos pendentes'**
+  String get friendDetailPendingSettlements;
 
   /// No description provided for @friendDetailSharedExpenses.
   ///
@@ -1118,6 +1310,24 @@ abstract class AppLocalizations {
   /// In pt_BR, this message translates to:
   /// **'Acertar contas'**
   String get friendDetailSettleUpButton;
+
+  /// No description provided for @friendDetailAddToGroupButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Adicionar ao grupo'**
+  String get friendDetailAddToGroupButton;
+
+  /// No description provided for @friendDetailNoEligibleGroups.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Nenhum grupo disponível para este amigo.'**
+  String get friendDetailNoEligibleGroups;
+
+  /// No description provided for @friendDetailAddedToGroupSuccess.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'{friendName} foi adicionado a {groupName}.'**
+  String friendDetailAddedToGroupSuccess(String friendName, String groupName);
 
   /// No description provided for @profileTitle.
   ///

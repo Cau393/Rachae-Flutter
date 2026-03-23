@@ -23,13 +23,13 @@ class BalanceSummaryCard extends StatelessWidget {
           children: [
             _AmountRow(
               label: l10n.dashboardYouOwe,
-              amount: model.totalOwedAsAmount,
+              amount: model.totalOwingAsAmount,
               colorCoded: false,
             ),
             const SizedBox(height: 12),
             _AmountRow(
               label: l10n.dashboardYouAreOwed,
-              amount: model.totalOwingAsAmount,
+              amount: model.totalOwedAsAmount,
               colorCoded: false,
             ),
             const SizedBox(height: 12),

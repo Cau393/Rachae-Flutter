@@ -128,6 +128,31 @@ class ExpenseViewTests(ExpenseTestMixin, TestCase):
         self.assertIn("data", body)
         self.assertIn("pagination", body)
         self.assertEqual(len(body["data"]), 2)
+
+    def test_list_expenses_with_user_returns_only_pairwise_expenses(self):
+        shared = self.create_expense(group=None, paid_by=self.user, description="Shared lunch")
+        self.create_split(shared, self.member_user, "15.00")
+
+        unrelated = self.create_expense(group=None, paid_by=self.user, description="Shared taxi")
+        self.create_split(unrelated, self.third_user, "10.00")
+
+        reverse_shared = self.create_expense(
+            group=None,
+            paid_by=self.member_user,
+            created_by=self.member_user,
+            description="Coffee",
+        )
+        self.create_split(reverse_shared, self.user, "8.00")
+
+        self.authenticate(self.user)
+
+        response = self.client.get(f"/api/v1/expenses/?with_user={self.member_user.id}")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [item["id"] for item in response.json()["data"]],
+            [str(reverse_shared.id), str(shared.id)],
+        )
     
     @patch("apps.expenses.serializers.get_exchange_rate")
     def test_create_expense_endpoint_creates_expense(self, mock_rate):

@@ -10,6 +10,7 @@ import 'package:frontend/src/l10n/generated/app_localizations.dart';
 void main() {
   group('BalanceSummaryCard', () {
     final negativeNetModel = BalanceSummaryModel.fromJson({
+      'id': 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
       'total_owed': '45.00',
       'total_owing': '120.50',
       'net_balance': '-75.50',
@@ -65,6 +66,7 @@ void main() {
 
     testWidgets('positive net_balance still renders structural contract', (tester) async {
       final positiveNet = BalanceSummaryModel.fromJson({
+        'id': 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
         'total_owed': '100.00',
         'total_owing': '20.00',
         'net_balance': '50.00',
@@ -78,6 +80,7 @@ void main() {
 
     testWidgets('zero net balance uses colorCoded net row for neutral styling', (tester) async {
       final zeroNet = BalanceSummaryModel.fromJson({
+        'id': 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
         'total_owed': '0.00',
         'total_owing': '0.00',
         'net_balance': '0.00',

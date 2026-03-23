@@ -48,6 +48,16 @@ class LedgerActivityFeedTests(GroupTestMixin, TestCase):
             description="B",
             created_by=self.user,
         )
+        personal_expense = Expense.objects.create(
+            group=None,
+            paid_by=self.user,
+            amount="5.00",
+            currency="BRL",
+            exchange_rate_to_group_currency="1.000000",
+            amount_in_group_currency="5.00",
+            description="Personal",
+            created_by=self.user,
+        )
         self.client.force_authenticate(user=self.user)
         response = self.client.get(self._url(page=1, limit=20))
         self.assertEqual(response.status_code, 200)
@@ -55,6 +65,32 @@ class LedgerActivityFeedTests(GroupTestMixin, TestCase):
         ids = {a["id"] for a in activities}
         self.assertIn(str(expense_a.id), ids)
         self.assertIn(str(expense_b.id), ids)
+        self.assertIn(str(personal_expense.id), ids)
+        personal_item = next(
+            item for item in activities if item["id"] == str(personal_expense.id)
+        )
+        self.assertIsNone(personal_item["group_id"])
+        self.assertIsNone(personal_item["group_name"])
+
+    def test_group_activity_includes_group_name(self):
+        expense = Expense.objects.create(
+            group=self.group,
+            paid_by=self.user,
+            amount="10.00",
+            currency="BRL",
+            exchange_rate_to_group_currency="1.000000",
+            amount_in_group_currency="10.00",
+            description="Named group expense",
+            created_by=self.user,
+        )
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self._url(page=1, limit=20))
+        self.assertEqual(response.status_code, 200)
+        activity = next(
+            item for item in response.json()["data"]["activities"]
+            if item["id"] == str(expense.id)
+        )
+        self.assertEqual(activity["group_name"], self.group.name)
 
     def test_group_filter_returns_only_that_group(self):
         expense_a = Expense.objects.create(

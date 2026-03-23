@@ -6,6 +6,7 @@ from rest_framework import serializers
 from apps.groups.models import Group, GroupMember
 from apps.transactions.models import Transaction
 from apps.users.models import User
+from core.storage import resolve_cloudfront_url
 
 
 class UserMiniSerializer(serializers.ModelSerializer):
@@ -70,6 +71,23 @@ class TransactionCreateSerializer(serializers.Serializer):
         return attrs
 
 
+class ProofUploadURLQuerySerializer(serializers.Serializer):
+    content_type = serializers.ChoiceField(
+        choices=[
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "application/pdf",
+        ],
+        required=False,
+        default="image/jpeg",
+    )
+
+
+class ProofFileKeySerializer(serializers.Serializer):
+    file_key = serializers.CharField(max_length=1024)
+
+
 class TransactionOutputSerializer(serializers.ModelSerializer):
     group_id = serializers.UUIDField(read_only=True, allow_null=True)
     payer = UserMiniSerializer(read_only=True)
@@ -80,6 +98,7 @@ class TransactionOutputSerializer(serializers.ModelSerializer):
         coerce_to_string=True,
         read_only=True,
     )
+    proof_urls = serializers.SerializerMethodField()
 
     class Meta:
         model = Transaction
@@ -91,7 +110,11 @@ class TransactionOutputSerializer(serializers.ModelSerializer):
             "amount",
             "currency",
             "note",
+            "proof_urls",
             "is_confirmed",
             "is_disputed",
             "created_at",
         ]
+
+    def get_proof_urls(self, obj):
+        return [resolve_cloudfront_url(key) for key in (obj.proof_urls or [])]

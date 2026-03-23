@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:frontend/features/dashboard/models/balance_summary_model.dart';
 import 'package:frontend/features/dashboard/providers/activity_feed_provider.dart';
 import 'package:frontend/features/dashboard/providers/balance_summary_provider.dart';
+import 'package:frontend/features/dashboard/providers/dashboard_shortcuts_providers.dart';
 import 'package:frontend/features/dashboard/widgets/activity_feed.dart';
 import 'package:frontend/features/dashboard/widgets/balance_summary_card.dart';
 import 'package:frontend/src/l10n/generated/app_localizations.dart';
@@ -27,6 +28,7 @@ class DashboardScreen extends ConsumerWidget {
         title: Text(context.l10n.dashboardTitle),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_dashboard_add_expense',
         onPressed: () => context.go('/expenses/new'),
         tooltip: context.l10n.dashboardAddExpense,
         child: const Icon(Icons.add),
@@ -35,6 +37,10 @@ class DashboardScreen extends ConsumerWidget {
         onRefresh: () async {
           ref.invalidate(balanceSummaryProvider);
           ref.invalidate(activityFeedProvider);
+          ref.invalidate(pendingIncomingSettlementsProvider);
+          ref.invalidate(pendingOutgoingSettlementsProvider);
+          ref.invalidate(pairwiseBalancesProvider);
+          ref.invalidate(owedToMeExpensesProvider);
           await Future.wait([
             ref.read(balanceSummaryProvider.future),
             ref.read(activityFeedProvider.future),
@@ -57,6 +63,7 @@ class DashboardScreen extends ConsumerWidget {
             ? constraints.maxHeight
             : MediaQuery.sizeOf(context).height;
 
+        final l10n = context.l10n;
         if (wide) {
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -71,7 +78,14 @@ class DashboardScreen extends ConsumerWidget {
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: balanceAsync.when(
-                          data: (m) => BalanceSummaryCard(model: m),
+                          data: (m) => Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              BalanceSummaryCard(model: m),
+                              const SizedBox(height: 12),
+                              _DashboardShortcuts(l10n: l10n),
+                            ],
+                          ),
                           loading: () => const _BalanceCardSkeleton(),
                           error: (Object e, StackTrace st) =>
                               const _BalanceErrorWidget(),
@@ -98,7 +112,14 @@ class DashboardScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               sliver: SliverToBoxAdapter(
                 child: balanceAsync.when(
-                  data: (m) => BalanceSummaryCard(model: m),
+                  data: (m) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      BalanceSummaryCard(model: m),
+                      const SizedBox(height: 12),
+                      _DashboardShortcuts(l10n: l10n),
+                    ],
+                  ),
                   loading: () => const _BalanceCardSkeleton(),
                   error: (Object e, StackTrace st) => const _BalanceErrorWidget(),
                 ),
@@ -114,6 +135,35 @@ class DashboardScreen extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _DashboardShortcuts extends StatelessWidget {
+  const _DashboardShortcuts({required this.l10n});
+
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        OutlinedButton(
+          onPressed: () => context.push('/dashboard/pending-approvals'),
+          child: Text(l10n.dashboardShortcutPendingApprovals),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton(
+          onPressed: () => context.push('/dashboard/owed-to-me'),
+          child: Text(l10n.dashboardShortcutOwedToYou),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton(
+          onPressed: () => context.push('/dashboard/pending-settlements'),
+          child: Text(l10n.dashboardShortcutPendingSettlements),
+        ),
+      ],
     );
   }
 }

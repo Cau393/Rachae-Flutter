@@ -12,6 +12,7 @@ void main() {
     id: 'e1',
     type: 'expense',
     groupId: null,
+    groupName: null,
     amount: '60.00',
     currency: 'BRL',
     createdAt: DateTime.utc(2024, 1, 1),
@@ -48,6 +49,24 @@ void main() {
     testWidgets('subtitle contains paid-by name via activityPaidBy', (tester) async {
       await pumpTile(tester, item: model, onTap: () {});
       expect(find.textContaining('Ana'), findsOneWidget);
+      expect(find.textContaining('Pessoal'), findsOneWidget);
+    });
+
+    testWidgets('group source name is shown when available', (tester) async {
+      final groupItem = ExpenseActivity(
+        id: 'e2',
+        type: 'expense',
+        groupId: 'g1',
+        groupName: 'Trip Group',
+        amount: '40.00',
+        currency: 'BRL',
+        createdAt: DateTime.utc(2024, 1, 2),
+        description: 'Hotel',
+        paidById: 'a1',
+        paidByName: 'Ana',
+      );
+      await pumpTile(tester, item: groupItem, onTap: () {});
+      expect(find.textContaining('Trip Group'), findsOneWidget);
     });
 
     testWidgets('shows one CurrencyFormatterWidget with amount raw 60.00', (tester) async {

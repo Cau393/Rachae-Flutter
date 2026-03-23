@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supa;
 
@@ -6,6 +5,7 @@ import 'package:frontend/core/providers/core_providers.dart';
 import 'package:frontend/src/config/app_config.dart';
 
 import 'auth_state.dart';
+import 'pending_friend_invite_token_storage.dart';
 
 final authNotifierProvider = AsyncNotifierProvider<AuthNotifier, AuthState>(
   AuthNotifier.new,
@@ -50,15 +50,16 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     state = AsyncData(AuthState.unauthenticated());
   }
 
-  Future<void> signInWithGoogle() async {
+  Future<void> signInWithGoogle({String? inviteToken}) async {
     final client = ref.read(supabaseClientProvider);
     final redirect = AppConfig.oauthRedirectUri();
+    persistPendingFriendInviteToken(inviteToken);
+    // Use platform default on iOS (in-app browser). Full Safari
+    // (`externalApplication`) often fails to open custom-scheme OAuth redirects.
+    // supabase_flutter already forces external browser for Google on Android.
     await client.auth.signInWithOAuth(
       supa.OAuthProvider.google,
       redirectTo: redirect,
-      authScreenLaunchMode: kIsWeb
-          ? supa.LaunchMode.platformDefault
-          : supa.LaunchMode.externalApplication,
       queryParams: const {'prompt': 'select_account'},
     );
   }
@@ -69,9 +70,6 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     await client.auth.signInWithOAuth(
       supa.OAuthProvider.apple,
       redirectTo: redirect,
-      authScreenLaunchMode: kIsWeb
-          ? supa.LaunchMode.platformDefault
-          : supa.LaunchMode.externalApplication,
     );
   }
 }

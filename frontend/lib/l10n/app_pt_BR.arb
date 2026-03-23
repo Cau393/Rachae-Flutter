@@ -45,12 +45,25 @@
   "dashboardRecentActivity": "Atividade recente",
   "dashboardNoActivity": "Nenhuma atividade ainda.",
   "dashboardAddExpense": "Adicionar despesa",
+  "dashboardShortcutPendingApprovals": "Pagamentos pendentes para aprovar",
+  "dashboardShortcutOwedToYou": "Despesas que outros te devem",
+  "dashboardShortcutPendingSettlements": "Acertos pendentes",
+  "dashboardPendingApprovalsTitle": "Aprovações pendentes",
+  "dashboardPendingApprovalsEmpty": "Nenhum pagamento aguardando sua confirmação.",
+  "dashboardOwedToYouTitle": "Despesas que outros te devem",
+  "dashboardOwedToYouEmpty": "Ainda não há despesas em que você pagou e outros te devem.",
+  "dashboardPendingSettlementsTitle": "Acertos pendentes",
+  "dashboardPendingOutgoingSection": "Pagamentos que você registrou (aguardando confirmação)",
+  "dashboardYouOweSection": "Saldos que você deve",
+  "dashboardYouOweEmpty": "Você não deve nada a ninguém no momento.",
+  "dashboardYouOweSubtitle": "Toque para acertar",
   "dashboardPulledToRefresh": "Atualizado",
   "activityExpenseAdded": "Despesa adicionada",
   "activitySettlementRecorded": "Pagamento registrado",
   "activitySettlementConfirmed": "Pagamento confirmado",
   "activityPaidBy": "Pago por {name}",
   "@activityPaidBy": { "placeholders": { "name": { "type": "String" } } },
+  "activitySourcePersonal": "Pessoal",
   "activityYouPaid": "Você pagou",
   "activityAwaitingConfirmation": "Aguardando confirmação",
 
@@ -134,7 +147,26 @@
   "addExpenseSaveButton": "Salvar despesa",
   "addExpenseSuccess": "Despesa adicionada!",
   "addExpenseError": "Erro ao salvar. Tente novamente.",
+  "addExpenseFriendLabel": "Amigo",
+  "addExpenseFriendHint": "Escolha o amigo envolvido nesta despesa",
+  "addExpenseFriendRequired": "Escolha um amigo para esta despesa.",
+  "addExpenseNoFriendsAvailable": "Adicione um amigo primeiro para criar uma despesa pessoal compartilhada.",
+  "addExpenseAmountInvalid": "Informe um valor maior que zero.",
   "addExpenseSplitDoesNotMatch": "A divisão não bate com o valor total.",
+  "addExpenseSplitAutoChip": "Automático",
+  "addExpenseSplitTotalExact": "Total: {sum} / {total}",
+  "@addExpenseSplitTotalExact": {
+    "placeholders": {
+      "sum": { "type": "String" },
+      "total": { "type": "String" }
+    }
+  },
+  "addExpenseSplitTotalPercentage": "{percentage}%",
+  "@addExpenseSplitTotalPercentage": {
+    "placeholders": {
+      "percentage": { "type": "String" }
+    }
+  },
   "addExpenseCurrencyLabel": "Moeda",
   "addExpenseConvertedPreview": "≈ {amount} {currency} na moeda do grupo",
   "@addExpenseConvertedPreview": {
@@ -159,6 +191,7 @@
   "expenseDetailReceipts": "Recibos",
   "expenseDetailNoReceipts": "Nenhum recibo anexado.",
   "expenseDetailEditButton": "Editar",
+  "expenseDetailEditComingSoon": "Edição em breve.",
   "expenseDetailDeleteButton": "Excluir",
   "expenseDetailDeleteConfirm": "Excluir esta despesa? Esta ação não pode ser desfeita.",
   "expenseDetailDeleteSuccess": "Despesa excluída.",
@@ -174,6 +207,7 @@
   "@expenseDetailLastModified": { "placeholders": { "date": { "type": "String" } } },
 
   "settleUpTitle": "Acertar contas",
+  "settleUpPayerLabel": "De:",
   "settleUpReceiverLabel": "Pagar para",
   "settleUpAmountLabel": "Valor",
   "settleUpNoteLabel": "Nota (opcional)",
@@ -189,6 +223,15 @@
   "settleUpDisputed": "Contestado",
   "settleUpSuggestedAmount": "Sugestão: {amount}",
   "@settleUpSuggestedAmount": { "placeholders": { "amount": { "type": "String" } } },
+  "settleUpPaymentProofSection": "Comprovante de pagamento (opcional)",
+  "settleUpAddProofLabel": "Adicionar comprovante",
+  "settleUpProofUploadError": "Não foi possível enviar o comprovante.",
+
+  "pendingSettlementYouPaidBeforeAmount": "Você pagou ",
+  "pendingSettlementYouPaidAfterAmount": " para {receiverName}",
+  "@pendingSettlementYouPaidAfterAmount": { "placeholders": { "receiverName": { "type": "String" } } },
+  "pendingSettlementReceivedBeforeAmount": "{payerName} te enviou ",
+  "@pendingSettlementReceivedBeforeAmount": { "placeholders": { "payerName": { "type": "String" } } },
 
   "friendsTitle": "Amigos",
   "friendsEmpty": "Nenhum amigo ainda. Convide alguém!",
@@ -200,20 +243,32 @@
   "friendsEven": "Quite",
   "friendsSearchHint": "Buscar amigos",
   "friendInviteTitle": "Convidar amigo",
-  "friendInviteEmailLabel": "E-mail (opcional)",
-  "friendInvitePhoneLabel": "Telefone",
-  "friendInviteButton": "Enviar convite",
+  "friendInviteBody": "Geramos um link exclusivo. Envie por qualquer app para a pessoa entrar e aceitar depois de entrar na conta.",
+  "friendInviteButton": "Gerar link de convite",
   "friendInviteSuccess": "Convite enviado!",
   "friendInviteLinkCopied": "Link de convite copiado!",
   "friendAcceptInviteButton": "Aceitar convite",
   "friendAcceptSuccess": "Convite aceito! Agora vocês são amigos.",
+  "inviteGetTheAppHint": "Prefere o app? Baixe aqui.",
+  "inviteAppStoreButton": "App Store",
+  "invitePlayStoreButton": "Google Play",
 
   "friendDetailTitle": "Detalhes",
   "friendDetailNetBalance": "Saldo entre vocês",
+  "friendDetailPendingSettlements": "Pagamentos pendentes",
   "friendDetailSharedExpenses": "Despesas compartilhadas",
   "friendDetailSharedGroups": "Grupos em comum",
   "friendDetailNoSharedExpenses": "Nenhuma despesa compartilhada.",
   "friendDetailSettleUpButton": "Acertar contas",
+  "friendDetailAddToGroupButton": "Adicionar ao grupo",
+  "friendDetailNoEligibleGroups": "Nenhum grupo disponível para este amigo.",
+  "friendDetailAddedToGroupSuccess": "{friendName} foi adicionado a {groupName}.",
+  "@friendDetailAddedToGroupSuccess": {
+    "placeholders": {
+      "friendName": { "type": "String" },
+      "groupName": { "type": "String" }
+    }
+  },
 
   "profileTitle": "Perfil",
   "profileDisplayNameLabel": "Nome de exibição",

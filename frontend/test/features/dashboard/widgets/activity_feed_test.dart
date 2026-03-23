@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:frontend/core/theme/app_theme.dart';
 import 'package:frontend/features/dashboard/models/activity_item_model.dart';
@@ -19,6 +20,7 @@ void main() {
     id: 'exp-1',
     type: 'expense',
     groupId: null,
+    groupName: null,
     amount: '10.00',
     currency: 'BRL',
     createdAt: createdAt,
@@ -31,6 +33,7 @@ void main() {
     id: 'txn-1',
     type: 'transaction',
     groupId: null,
+    groupName: null,
     amount: '30.00',
     currency: 'BRL',
     createdAt: createdAt,
@@ -139,6 +142,47 @@ void main() {
       await tester.pump();
       expect(find.byType(ExpenseListTile), findsOneWidget);
       expect(find.byType(SettlementListTile), findsOneWidget);
+    });
+
+    testWidgets('expense tile tap navigates to expense detail', (tester) async {
+      final router = GoRouter(
+        initialLocation: '/dashboard',
+        routes: [
+          GoRoute(
+            path: '/dashboard',
+            builder: (context, state) => ProviderScope(
+              overrides: [
+                activityFeedProvider.overrideWith(
+                  () => _ListActivityFeed([expenseItem]),
+                ),
+              ],
+              child: const Scaffold(body: ActivityFeed()),
+            ),
+          ),
+          GoRoute(
+            path: '/expenses/:id',
+            builder: (context, state) =>
+                Text('EXPENSE_${state.pathParameters['id']}'),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp.router(
+          theme: AppTheme.light,
+          locale: const Locale('pt', 'BR'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(ExpenseListTile));
+      await tester.pumpAndSettle();
+
+      expect(router.state.uri.path, '/expenses/exp-1');
+      expect(find.text('EXPENSE_exp-1'), findsOneWidget);
     });
   });
 }

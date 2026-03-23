@@ -15,12 +15,27 @@ TESTING = "test" in sys.argv or "pytest" in sys.modules
 env = environ.Env(
     DJANGO_DEBUG=(bool, False),
     DJANGO_ALLOWED_HOSTS=(str, "localhost,127.0.0.1"),
+    CORS_ALLOWED_ORIGINS=(str, "http://localhost:3000,http://127.0.0.1:3000,http://localhost:61523,http://127.0.0.1:61523,http://192.168.1.114:61523"),
+    CORS_ALLOWED_ORIGIN_REGEXES=(str, r"^https?://192\.168\.\d+\.\d+(:\d+)?$"),
 )
 environ.Env.read_env(ROOT_DIR / ".env")
 
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 DEBUG = env("DJANGO_DEBUG")
 ALLOWED_HOSTS = [host.strip() for host in env("DJANGO_ALLOWED_HOSTS").split(",") if host.strip()]
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in env("CORS_ALLOWED_ORIGINS").split(",") if origin.strip()]
+CORS_ALLOWED_ORIGIN_REGEXES = [pattern.strip() for pattern in env("CORS_ALLOWED_ORIGIN_REGEXES").split(",") if pattern.strip()]
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -29,6 +44,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "corsheaders",
     "rest_framework",
     "django_celery_beat",
     "core",
@@ -47,6 +63,7 @@ AUTH_USER_MODEL = "users.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",

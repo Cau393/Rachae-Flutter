@@ -26,6 +26,29 @@ class GroupViewTests(GroupTestMixin, TestCase):
         self.assertEqual(len(response.json()), 1)
         self.assertEqual(response.json()[0]["id"], str(self.group.id))
 
+    def test_get_eligible_friend_groups_returns_admin_groups_without_existing_friend_membership(self):
+        eligible_group = self.create_group(name="Eligible Group")
+        self.add_membership(eligible_group, self.user, GroupRole.ADMIN)
+
+        already_joined_group = self.create_group(name="Already Joined")
+        self.add_membership(already_joined_group, self.user, GroupRole.ADMIN)
+        self.add_membership(already_joined_group, self.other_user, GroupRole.MEMBER)
+
+        member_only_group = self.create_group(name="Member Only")
+        self.add_membership(member_only_group, self.user, GroupRole.MEMBER)
+
+        self.authenticate(self.user)
+
+        response = self.client.get(
+            f"/api/v1/groups/eligible-friend-groups/?user_id={self.other_user.id}"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [item["id"] for item in response.json()],
+            [str(eligible_group.id), str(self.group.id)],
+        )
+
     @patch("tasks.ledger_tasks.recalculate_group_ledger.delay")
     def test_post_groups_creates_group_and_admin_membership(self, mock_delay):
         self.authenticate(self.user)

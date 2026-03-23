@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import 'oauth_redirect_uri.dart';
+
 class AppConfig {
   static const supabaseUrl = 'https://tjjaojtwsmnwmxfqorse.supabase.co';
   static const supabaseAnonKey =
@@ -11,10 +13,15 @@ class AppConfig {
   /// `http://localhost:**` for local web, plus [iosRedirectUrl] for native).
   ///
   /// On **web**, `redirectTo: null` uses the dashboard **Site URL** (often
-  /// `http://localhost:3000`), which breaks when `flutter run -d chrome` uses
-  /// another port — so we use the current origin ([Uri.base]).
+  /// `http://localhost:3000`). [Uri.base] can also differ from the real address
+  /// bar (LAN IP, port), so Supabase rejects `redirect_to` and falls back to
+  /// Site URL — use [window.location] via [webOAuthRedirectUri] instead.
   static String oauthRedirectUri() {
     if (kIsWeb) {
+      final fromWindow = webOAuthRedirectUri();
+      if (fromWindow.isNotEmpty) {
+        return fromWindow;
+      }
       final b = Uri.base;
       if (b.scheme == 'http' || b.scheme == 'https') {
         final noFragment = b.hasFragment ? b.replace(fragment: '') : b;
@@ -27,5 +34,15 @@ class AppConfig {
   static const apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'https://your-backend.railway.app/api/v1/',
+  );
+
+  /// Public app listing URLs (optional overrides via `--dart-define`).
+  static const iosAppStoreListingUrl = String.fromEnvironment(
+    'IOS_APP_STORE_URL',
+    defaultValue: 'https://apps.apple.com/',
+  );
+  static const androidPlayStoreListingUrl = String.fromEnvironment(
+    'ANDROID_PLAY_STORE_URL',
+    defaultValue: 'https://play.google.com/',
   );
 }

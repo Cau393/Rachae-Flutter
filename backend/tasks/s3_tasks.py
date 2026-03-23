@@ -60,6 +60,21 @@ def s3_confirm_upload(self, file_key: str):
                 for expense in expenses:
                     expense.receipt_urls = [k for k in expense.receipt_urls if k != file_key]
                     expense.save(update_fields=["receipt_urls"])
+
+                from apps.transactions.models import Transaction
+
+                try:
+                    txns = list(Transaction.objects.filter(proof_urls__contains=[file_key]))
+                except NotSupportedError:
+                    txns = [
+                        txn
+                        for txn in Transaction.objects.all()
+                        if file_key in (txn.proof_urls or [])
+                    ]
+
+                for txn in txns:
+                    txn.proof_urls = [k for k in (txn.proof_urls or []) if k != file_key]
+                    txn.save(update_fields=["proof_urls"])
             else:
                 raise
     except Exception as exc:
@@ -76,15 +91,15 @@ def cleanup_orphan_s3_files(self):
         s3 = get_s3_client()
 
         s3_keys: set[str] = set()
-        kwargs: dict = {"Bucket": settings.AWS_S3_BUCKET, "Prefix": "receipts/"}
-
-        while True:
-            response = s3.list_objects_v2(**kwargs)
-            for obj in response.get("Contents", []):
-                s3_keys.add(obj["Key"])
-            if not response.get("IsTruncated"):
-                break
-            kwargs["ContinuationToken"] = response["NextContinuationToken"]
+        for prefix in ("receipts/", "settlement-proofs/"):
+            kwargs: dict = {"Bucket": settings.AWS_S3_BUCKET, "Prefix": prefix}
+            while True:
+                response = s3.list_objects_v2(**kwargs)
+                for obj in response.get("Contents", []):
+                    s3_keys.add(obj["Key"])
+                if not response.get("IsTruncated"):
+                    break
+                kwargs["ContinuationToken"] = response["NextContinuationToken"]
 
         if not s3_keys:
             logger.info("[s3_tasks] cleanup_orphan_s3_files: bucket empty, nothing to do")
@@ -92,6 +107,12 @@ def cleanup_orphan_s3_files(self):
 
         referenced_keys: set[str] = set()
         for urls in Expense.objects.filter(is_deleted=False).values_list("receipt_urls", flat=True):
+            if urls:
+                referenced_keys.update(urls)
+
+        from apps.transactions.models import Transaction
+
+        for urls in Transaction.objects.values_list("proof_urls", flat=True):
             if urls:
                 referenced_keys.update(urls)
 

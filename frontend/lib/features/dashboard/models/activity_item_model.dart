@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:frontend/core/currency/money_amount.dart';
+import 'package:frontend/features/expenses/models/expense_list_model.dart';
 
 @immutable
 sealed class ActivityItemModel {
@@ -7,6 +8,7 @@ sealed class ActivityItemModel {
     required this.id,
     required this.type,
     required this.groupId,
+    required this.groupName,
     required this.amount,
     required this.currency,
     required this.createdAt,
@@ -15,6 +17,7 @@ sealed class ActivityItemModel {
   final String id;
   final String type;
   final String? groupId;
+  final String? groupName;
   final String amount;
   final String currency;
   final DateTime createdAt;
@@ -45,6 +48,7 @@ final class ExpenseActivity extends ActivityItemModel {
     required super.id,
     required super.type,
     required super.groupId,
+    required super.groupName,
     required super.amount,
     required super.currency,
     required super.createdAt,
@@ -62,12 +66,28 @@ final class ExpenseActivity extends ActivityItemModel {
       id: json['id'] as String,
       type: json['type'] as String,
       groupId: json['group_id'] as String?,
+      groupName: json['group_name'] as String?,
       amount: json['amount'].toString(),
       currency: json['currency'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
       description: json['description'] as String,
       paidById: json['paid_by_id'] as String,
       paidByName: json['paid_by_name'] as String,
+    );
+  }
+
+  factory ExpenseActivity.fromExpenseListModel(ExpenseListModel m) {
+    return ExpenseActivity(
+      id: m.id,
+      type: 'expense',
+      groupId: m.groupId,
+      groupName: null,
+      amount: m.amount,
+      currency: m.currency,
+      createdAt: m.createdAt,
+      description: m.description,
+      paidById: m.paidBy.userId,
+      paidByName: m.paidBy.displayName,
     );
   }
 }
@@ -78,6 +98,7 @@ final class TransactionActivity extends ActivityItemModel {
     required super.id,
     required super.type,
     required super.groupId,
+    required super.groupName,
     required super.amount,
     required super.currency,
     required super.createdAt,
@@ -101,6 +122,7 @@ final class TransactionActivity extends ActivityItemModel {
       id: json['id'] as String,
       type: json['type'] as String,
       groupId: json['group_id'] as String?,
+      groupName: json['group_name'] as String?,
       amount: json['amount'].toString(),
       currency: json['currency'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),

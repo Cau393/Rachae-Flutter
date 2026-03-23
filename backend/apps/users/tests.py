@@ -75,6 +75,39 @@ class UsersPhaseThreeTests(TestCase):
         self.assertTrue(User.objects.filter(supabase_uid=supabase_uid).exists())
         self.assertEqual(response.json()["email"], "oauth@example.com")
 
+    @patch("core.authentication.verify_supabase_token")
+    def test_users_me_normalizes_blank_supabase_phone_to_null(self, mock_verify):
+        first_uid = uuid.uuid4()
+        second_uid = uuid.uuid4()
+        mock_verify.side_effect = [
+            {
+                "sub": str(first_uid),
+                "email": "oauth1@example.com",
+                "phone": "",
+                "user_metadata": {"full_name": "OAuth One"},
+            },
+            {
+                "sub": str(second_uid),
+                "email": "oauth2@example.com",
+                "phone": "",
+                "user_metadata": {"full_name": "OAuth Two"},
+            },
+        ]
+
+        response_one = self.client.get(
+            "/api/v1/users/me/",
+            HTTP_AUTHORIZATION="Bearer mocked-token-one",
+        )
+        response_two = self.client.get(
+            "/api/v1/users/me/",
+            HTTP_AUTHORIZATION="Bearer mocked-token-two",
+        )
+
+        self.assertEqual(response_one.status_code, 200)
+        self.assertEqual(response_two.status_code, 200)
+        self.assertIsNone(User.objects.get(supabase_uid=first_uid).phone)
+        self.assertIsNone(User.objects.get(supabase_uid=second_uid).phone)
+
     def test_users_me_patch_updates_profile(self):
         self.authenticate()
 
@@ -178,6 +211,64 @@ class UsersPhaseThreeTests(TestCase):
         invite = FriendInvite.objects.get(phone="+5511555555555")
         self.assertIsNone(invite.email)
         self.assertEqual(response.json()["invite_url"], f"http://localhost:3000/login?invite_token={invite.token}")
+
+    def test_users_friends_invite_open_link_without_phone_or_email(self):
+        self.authenticate()
+
+        response = self.client.post(
+            "/api/v1/users/friends/invite/",
+            data={},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        body = response.json()
+        invite = FriendInvite.objects.get(id=body["id"])
+        self.assertIsNone(invite.email)
+        self.assertIsNone(invite.phone)
+        self.assertEqual(body["invite_url"], f"http://localhost:3000/login?invite_token={invite.token}")
+
+    def test_users_friends_accept_open_invite(self):
+        invite = FriendInvite.objects.create(
+            inviter=self.user,
+            email=None,
+            phone=None,
+            token="open-invite-token",
+            expires_at=timezone.now() + timedelta(days=1),
+        )
+        self.authenticate(self.other_user)
+
+        response = self.client.post(
+            "/api/v1/users/friends/accept/",
+            data={"token": "open-invite-token"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        invite.refresh_from_db()
+        self.assertEqual(invite.status, FriendInviteStatus.ACCEPTED)
+        self.assertEqual(invite.accepted_by, self.other_user)
+
+    def test_users_friends_accept_open_invite_inviter_cannot_accept(self):
+        FriendInvite.objects.create(
+            inviter=self.user,
+            email=None,
+            phone=None,
+            token="own-open-invite",
+            expires_at=timezone.now() + timedelta(days=1),
+        )
+        self.authenticate()
+
+        response = self.client.post(
+            "/api/v1/users/friends/accept/",
+            data={"token": "own-open-invite"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        raw_detail = response.json()["detail"]
+        detail_msg = raw_detail[0] if isinstance(raw_detail, list) else raw_detail
+        self.assertIn("cannot accept your own", str(detail_msg).lower())
 
     def test_users_friends_accept_marks_invite_as_accepted(self):
         self.authenticate(self.other_user)

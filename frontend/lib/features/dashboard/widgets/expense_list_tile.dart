@@ -17,10 +17,13 @@ class ExpenseListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final sourceLabel = item.groupName?.trim().isNotEmpty == true
+        ? item.groupName!
+        : l10n.activitySourcePersonal;
     return ListTile(
       leading: const Icon(Icons.receipt_long),
       title: Text(item.description),
-      subtitle: Text(l10n.activityPaidBy(item.paidByName)),
+      subtitle: Text('${l10n.activityPaidBy(item.paidByName)} • $sourceLabel'),
       trailing: CurrencyFormatterWidget(amount: item.amountAsMoneyAmount),
       onTap: onTap,
     );

@@ -29,6 +29,7 @@ class ActivityItemSerializer(serializers.Serializer):
     type = serializers.ChoiceField(choices=["expense", "transaction"])
     id = serializers.UUIDField()
     group_id = serializers.UUIDField(allow_null=True)
+    group_name = serializers.CharField(required=False, allow_null=True)
     amount = serializers.DecimalField(max_digits=12, decimal_places=2)
     currency = serializers.CharField(max_length=3)
     created_at = serializers.DateTimeField()

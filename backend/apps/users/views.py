@@ -14,6 +14,7 @@ from apps.users.serializers import (
     BalanceSerializer,
     BalanceSummarySerializer,
     CurrentUserSerializer,
+    PairwiseBalanceItemSerializer,
     CurrentUserUpdateSerializer,
     FriendInviteAcceptSerializer,
     FriendInviteCreateResponseSerializer,
@@ -72,8 +73,13 @@ class FriendInviteView(APIView):
     def post(self, request):
         serializer = FriendInviteCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
         try:
-            payload = InvitationService.create_invite(request.user, **serializer.validated_data)
+            payload = InvitationService.create_invite(
+                request.user,
+                email=data.get("email"),
+                phone=data.get("phone"),
+            )
         except ValueError as exc:
             raise ValidationError({"detail": str(exc)}) from exc
         return Response(FriendInviteCreateResponseSerializer(payload).data, status=status.HTTP_201_CREATED)
@@ -99,6 +105,20 @@ class UserBalanceView(APIView):
         other_user = get_object_or_404(User, id=user_id)
         balance = BalanceService.get_pairwise_balance(request.user, other_user)
         return Response(BalanceSerializer(balance).data)
+
+
+class UserPairwiseBalancesView(APIView):
+    permission_classes = [ActiveUserPermission]
+
+    def get(self, request):
+        rows = BalanceService.list_pairwise_nonzero(request.user)
+        return Response(
+            {
+                "data": {
+                    "balances": PairwiseBalanceItemSerializer(rows, many=True).data,
+                }
+            }
+        )
 
 
 class AvatarUploadUrlView(APIView):

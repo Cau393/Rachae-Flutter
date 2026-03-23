@@ -9,14 +9,19 @@ class CurrencyDropdown extends ConsumerWidget {
     super.key,
     required this.value,
     required this.onChanged,
+    this.currencyLabel,
   });
 
   final String value;
   final ValueChanged<String> onChanged;
 
+  /// When null, uses [AppLocalizations.createGroupCurrencyLabel].
+  final String? currencyLabel;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final label = currencyLabel ?? l10n.createGroupCurrencyLabel;
     final async = ref.watch(currencyListProvider);
 
     return async.when(
@@ -27,7 +32,7 @@ class CurrencyDropdown extends ConsumerWidget {
           isExpanded: true,
           // ignore: deprecated_member_use — parent-driven selection; initialValue is one-shot only.
           value: effective,
-          decoration: InputDecoration(labelText: l10n.createGroupCurrencyLabel),
+          decoration: InputDecoration(labelText: label),
           items: currencies
               .map(
                 (c) => DropdownMenuItem<String>(
@@ -48,7 +53,7 @@ class CurrencyDropdown extends ConsumerWidget {
         isExpanded: true,
         // ignore: deprecated_member_use
         value: value,
-        decoration: InputDecoration(labelText: l10n.createGroupCurrencyLabel),
+        decoration: InputDecoration(labelText: label),
         items: [
           DropdownMenuItem<String>(
             value: value,
@@ -61,7 +66,7 @@ class CurrencyDropdown extends ConsumerWidget {
         isExpanded: true,
         // ignore: deprecated_member_use
         value: value,
-        decoration: InputDecoration(labelText: l10n.createGroupCurrencyLabel),
+        decoration: InputDecoration(labelText: label),
         items: [
           DropdownMenuItem<String>(
             value: value,

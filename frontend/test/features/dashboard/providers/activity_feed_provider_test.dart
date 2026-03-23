@@ -21,6 +21,7 @@ void main() {
       id: id,
       type: 'expense',
       groupId: null,
+      groupName: null,
       amount: amount,
       currency: 'BRL',
       createdAt: createdAt,

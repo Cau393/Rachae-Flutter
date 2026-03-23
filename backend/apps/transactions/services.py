@@ -18,6 +18,11 @@ class TransactionService:
 
         if filters.get("group_id"):
             queryset = queryset.filter(group_id=filters["group_id"])
+        if filters.get("with_user"):
+            queryset = queryset.filter(
+                Q(payer=user, receiver_id=filters["with_user"])
+                | Q(payer_id=filters["with_user"], receiver=user)
+            )
 
         status_filter = filters.get("status")
         if status_filter == "confirmed":
@@ -26,6 +31,20 @@ class TransactionService:
             queryset = queryset.filter(is_disputed=True)
         elif status_filter == "pending":
             queryset = queryset.filter(is_confirmed=False, is_disputed=False)
+
+        pending_role = filters.get("pending_role")
+        if pending_role == "receiver":
+            queryset = queryset.filter(
+                receiver=user,
+                is_confirmed=False,
+                is_disputed=False,
+            )
+        elif pending_role == "payer":
+            queryset = queryset.filter(
+                payer=user,
+                is_confirmed=False,
+                is_disputed=False,
+            )
 
         return queryset.order_by("-created_at")
 

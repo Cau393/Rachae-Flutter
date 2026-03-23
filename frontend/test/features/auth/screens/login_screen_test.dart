@@ -26,7 +26,7 @@ class ThrowingGoogleAuthNotifier extends AuthNotifier {
   Future<AuthState> build() async => const AuthState.unauthenticated();
 
   @override
-  Future<void> signInWithGoogle() async {
+  Future<void> signInWithGoogle({String? inviteToken}) async {
     throw Exception('oauth');
   }
 }
@@ -40,7 +40,7 @@ class HangingGoogleAuthNotifier extends AuthNotifier {
   Future<AuthState> build() async => const AuthState.unauthenticated();
 
   @override
-  Future<void> signInWithGoogle() async {
+  Future<void> signInWithGoogle({String? inviteToken}) async {
     await _hang.future;
   }
 }
@@ -101,7 +101,7 @@ void main() {
       },
     );
 
-    testWidgets('iOS: logo, titles, Google and Apple sign-in', (tester) async {
+    testWidgets('iOS: logo, titles, Google sign-in only', (tester) async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       await pumpLogin(tester, const AuthState.unauthenticated());
       clearTestPlatform();
@@ -111,7 +111,7 @@ void main() {
       expect(find.text(l10n.loginTitle), findsOneWidget);
       expect(find.text(l10n.loginSubtitle), findsOneWidget);
       expect(find.text(l10n.signInWithGoogle), findsOneWidget);
-      expect(find.text(l10n.signInWithApple), findsOneWidget);
+      expect(find.text(l10n.signInWithApple), findsNothing);
     });
   });
 
@@ -242,7 +242,6 @@ void main() {
         l10n.loginTitle,
         l10n.loginSubtitle,
         l10n.signInWithGoogle,
-        l10n.signInWithApple,
         l10n.unsupportedPlatformMessage,
       };
 
@@ -284,7 +283,7 @@ void main() {
 
   group('LoginScreen accessibility', () {
     testWidgets(
-      'Google and Apple buttons expose l10n labels to semantics tree',
+      'Google button exposes l10n label to semantics tree',
       (tester) async {
         debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
         await pumpLogin(tester, const AuthState.unauthenticated());
@@ -292,7 +291,7 @@ void main() {
         final l10n = l10nFrom(tester);
 
         expect(find.bySemanticsLabel(l10n.signInWithGoogle), findsOneWidget);
-        expect(find.bySemanticsLabel(l10n.signInWithApple), findsOneWidget);
+        expect(find.bySemanticsLabel(l10n.signInWithApple), findsNothing);
       },
     );
 

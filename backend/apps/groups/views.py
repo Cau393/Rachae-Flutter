@@ -9,6 +9,7 @@ from apps.groups.queries import get_membership
 from apps.groups.serializers import (
     AddMemberSerializer,
     BalancesSerializer,
+    EligibleFriendGroupsQuerySerializer,
     GroupCreateSerializer,
     GroupDetailSerializer,
     GroupListSerializer,
@@ -67,6 +68,17 @@ class GroupListCreateView(GroupBaseView):
             raise ValidationError({"detail": str(exc)}) from exc
 
         return Response(GroupDetailSerializer(group).data, status=status.HTTP_201_CREATED)
+
+
+class EligibleFriendGroupListView(GroupBaseView):
+    def get(self, request):
+        serializer = EligibleFriendGroupsQuerySerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        groups = GroupService.list_eligible_groups_for_friend(
+            request.user,
+            serializer.validated_data["user_id"],
+        )
+        return Response(GroupListSerializer(groups, many=True).data)
 
 
 class GroupDetailView(GroupBaseView):

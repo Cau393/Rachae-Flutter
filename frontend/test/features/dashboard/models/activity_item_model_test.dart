@@ -1,11 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/core/currency/money_amount.dart';
 import 'package:frontend/features/dashboard/models/activity_item_model.dart';
+import 'package:frontend/features/expenses/models/expense_list_model.dart';
 
 const expenseActivityJson = {
   'id': '550e8400-e29b-41d4-a716-446655440001',
   'type': 'expense',
   'group_id': null,
+  'group_name': null,
   'description': 'Dinner',
   'amount': '60.00',
   'currency': 'BRL',
@@ -18,6 +20,7 @@ const transactionActivityJson = {
   'id': '550e8400-e29b-41d4-a716-446655440002',
   'type': 'transaction',
   'group_id': null,
+  'group_name': null,
   'amount': '30.00',
   'currency': 'BRL',
   'payer_id': 'payer-bob',
@@ -45,6 +48,7 @@ void main() {
         ActivityItemModel.fromJson(expenseActivityJson) as ExpenseActivity;
     expect(item.description, 'Dinner');
     expect(item.paidByName, 'Alice');
+    expect(item.groupName, isNull);
   });
 
   test(
@@ -137,5 +141,37 @@ void main() {
       }),
       throwsA(isA<ArgumentError>()),
     );
+  });
+
+  test('ExpenseActivity.fromExpenseListModel maps list fields', () {
+    final m = ExpenseListModel.fromJson(<String, dynamic>{
+      'id': 'e1',
+      'group_id': 'g1',
+      'paid_by': <String, dynamic>{
+        'id': 'u1',
+        'display_name': 'Sam',
+        'avatar_url': null,
+      },
+      'amount': '12.00',
+      'currency': 'BRL',
+      'amount_in_group_currency': '12.00',
+      'description': 'Coffee',
+      'category': 'comida',
+      'expense_date': '2024-02-01',
+      'split_method': 'equal',
+      'split_count': 1,
+      'is_deleted': false,
+      'created_at': '2024-02-01T10:00:00.000Z',
+    });
+    final a = ExpenseActivity.fromExpenseListModel(m);
+    expect(a.id, 'e1');
+    expect(a.type, 'expense');
+    expect(a.groupId, 'g1');
+    expect(a.groupName, isNull);
+    expect(a.description, 'Coffee');
+    expect(a.paidById, 'u1');
+    expect(a.paidByName, 'Sam');
+    expect(a.amountAsMoneyAmount.raw, '12.00');
+    expect(a.amountAsMoneyAmount.currencyCode, 'BRL');
   });
 }

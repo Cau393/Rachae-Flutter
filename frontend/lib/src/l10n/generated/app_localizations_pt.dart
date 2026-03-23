@@ -131,6 +131,46 @@ class AppLocalizationsPt extends AppLocalizations {
   String get dashboardAddExpense => 'Adicionar despesa';
 
   @override
+  String get dashboardShortcutPendingApprovals =>
+      'Pagamentos pendentes para aprovar';
+
+  @override
+  String get dashboardShortcutOwedToYou => 'Despesas que outros te devem';
+
+  @override
+  String get dashboardShortcutPendingSettlements => 'Acertos pendentes';
+
+  @override
+  String get dashboardPendingApprovalsTitle => 'Aprovações pendentes';
+
+  @override
+  String get dashboardPendingApprovalsEmpty =>
+      'Nenhum pagamento aguardando sua confirmação.';
+
+  @override
+  String get dashboardOwedToYouTitle => 'Despesas que outros te devem';
+
+  @override
+  String get dashboardOwedToYouEmpty =>
+      'Ainda não há despesas em que você pagou e outros te devem.';
+
+  @override
+  String get dashboardPendingSettlementsTitle => 'Acertos pendentes';
+
+  @override
+  String get dashboardPendingOutgoingSection =>
+      'Pagamentos que você registrou (aguardando confirmação)';
+
+  @override
+  String get dashboardYouOweSection => 'Saldos que você deve';
+
+  @override
+  String get dashboardYouOweEmpty => 'Você não deve nada a ninguém no momento.';
+
+  @override
+  String get dashboardYouOweSubtitle => 'Toque para acertar';
+
+  @override
   String get dashboardPulledToRefresh => 'Atualizado';
 
   @override
@@ -146,6 +186,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String activityPaidBy(String name) {
     return 'Pago por $name';
   }
+
+  @override
+  String get activitySourcePersonal => 'Pessoal';
 
   @override
   String get activityYouPaid => 'Você pagou';
@@ -361,8 +404,37 @@ class AppLocalizationsPt extends AppLocalizations {
   String get addExpenseError => 'Erro ao salvar. Tente novamente.';
 
   @override
+  String get addExpenseFriendLabel => 'Amigo';
+
+  @override
+  String get addExpenseFriendHint => 'Escolha o amigo envolvido nesta despesa';
+
+  @override
+  String get addExpenseFriendRequired => 'Escolha um amigo para esta despesa.';
+
+  @override
+  String get addExpenseNoFriendsAvailable =>
+      'Adicione um amigo primeiro para criar uma despesa pessoal compartilhada.';
+
+  @override
+  String get addExpenseAmountInvalid => 'Informe um valor maior que zero.';
+
+  @override
   String get addExpenseSplitDoesNotMatch =>
       'A divisão não bate com o valor total.';
+
+  @override
+  String get addExpenseSplitAutoChip => 'Automático';
+
+  @override
+  String addExpenseSplitTotalExact(String sum, String total) {
+    return 'Total: $sum / $total';
+  }
+
+  @override
+  String addExpenseSplitTotalPercentage(String percentage) {
+    return '$percentage%';
+  }
 
   @override
   String get addExpenseCurrencyLabel => 'Moeda';
@@ -414,6 +486,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get expenseDetailEditButton => 'Editar';
 
   @override
+  String get expenseDetailEditComingSoon => 'Edição em breve.';
+
+  @override
   String get expenseDetailDeleteButton => 'Excluir';
 
   @override
@@ -438,6 +513,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get settleUpTitle => 'Acertar contas';
+
+  @override
+  String get settleUpPayerLabel => 'De:';
 
   @override
   String get settleUpReceiverLabel => 'Pagar para';
@@ -484,6 +562,30 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get settleUpPaymentProofSection =>
+      'Comprovante de pagamento (opcional)';
+
+  @override
+  String get settleUpAddProofLabel => 'Adicionar comprovante';
+
+  @override
+  String get settleUpProofUploadError =>
+      'Não foi possível enviar o comprovante.';
+
+  @override
+  String get pendingSettlementYouPaidBeforeAmount => 'Você pagou ';
+
+  @override
+  String pendingSettlementYouPaidAfterAmount(String receiverName) {
+    return ' para $receiverName';
+  }
+
+  @override
+  String pendingSettlementReceivedBeforeAmount(String payerName) {
+    return '$payerName te enviou ';
+  }
+
+  @override
   String get friendsTitle => 'Amigos';
 
   @override
@@ -512,13 +614,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get friendInviteTitle => 'Convidar amigo';
 
   @override
-  String get friendInviteEmailLabel => 'E-mail (opcional)';
+  String get friendInviteBody =>
+      'Geramos um link exclusivo. Envie por qualquer app para a pessoa entrar e aceitar depois de entrar na conta.';
 
   @override
-  String get friendInvitePhoneLabel => 'Telefone';
-
-  @override
-  String get friendInviteButton => 'Enviar convite';
+  String get friendInviteButton => 'Gerar link de convite';
 
   @override
   String get friendInviteSuccess => 'Convite enviado!';
@@ -533,10 +633,22 @@ class AppLocalizationsPt extends AppLocalizations {
   String get friendAcceptSuccess => 'Convite aceito! Agora vocês são amigos.';
 
   @override
+  String get inviteGetTheAppHint => 'Prefere o app? Baixe aqui.';
+
+  @override
+  String get inviteAppStoreButton => 'App Store';
+
+  @override
+  String get invitePlayStoreButton => 'Google Play';
+
+  @override
   String get friendDetailTitle => 'Detalhes';
 
   @override
   String get friendDetailNetBalance => 'Saldo entre vocês';
+
+  @override
+  String get friendDetailPendingSettlements => 'Pagamentos pendentes';
 
   @override
   String get friendDetailSharedExpenses => 'Despesas compartilhadas';
@@ -549,6 +661,18 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get friendDetailSettleUpButton => 'Acertar contas';
+
+  @override
+  String get friendDetailAddToGroupButton => 'Adicionar ao grupo';
+
+  @override
+  String get friendDetailNoEligibleGroups =>
+      'Nenhum grupo disponível para este amigo.';
+
+  @override
+  String friendDetailAddedToGroupSuccess(String friendName, String groupName) {
+    return '$friendName foi adicionado a $groupName.';
+  }
 
   @override
   String get profileTitle => 'Perfil';
@@ -822,6 +946,46 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get dashboardAddExpense => 'Adicionar despesa';
 
   @override
+  String get dashboardShortcutPendingApprovals =>
+      'Pagamentos pendentes para aprovar';
+
+  @override
+  String get dashboardShortcutOwedToYou => 'Despesas que outros te devem';
+
+  @override
+  String get dashboardShortcutPendingSettlements => 'Acertos pendentes';
+
+  @override
+  String get dashboardPendingApprovalsTitle => 'Aprovações pendentes';
+
+  @override
+  String get dashboardPendingApprovalsEmpty =>
+      'Nenhum pagamento aguardando sua confirmação.';
+
+  @override
+  String get dashboardOwedToYouTitle => 'Despesas que outros te devem';
+
+  @override
+  String get dashboardOwedToYouEmpty =>
+      'Ainda não há despesas em que você pagou e outros te devem.';
+
+  @override
+  String get dashboardPendingSettlementsTitle => 'Acertos pendentes';
+
+  @override
+  String get dashboardPendingOutgoingSection =>
+      'Pagamentos que você registrou (aguardando confirmação)';
+
+  @override
+  String get dashboardYouOweSection => 'Saldos que você deve';
+
+  @override
+  String get dashboardYouOweEmpty => 'Você não deve nada a ninguém no momento.';
+
+  @override
+  String get dashboardYouOweSubtitle => 'Toque para acertar';
+
+  @override
   String get dashboardPulledToRefresh => 'Atualizado';
 
   @override
@@ -837,6 +1001,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String activityPaidBy(String name) {
     return 'Pago por $name';
   }
+
+  @override
+  String get activitySourcePersonal => 'Pessoal';
 
   @override
   String get activityYouPaid => 'Você pagou';
@@ -1052,8 +1219,37 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get addExpenseError => 'Erro ao salvar. Tente novamente.';
 
   @override
+  String get addExpenseFriendLabel => 'Amigo';
+
+  @override
+  String get addExpenseFriendHint => 'Escolha o amigo envolvido nesta despesa';
+
+  @override
+  String get addExpenseFriendRequired => 'Escolha um amigo para esta despesa.';
+
+  @override
+  String get addExpenseNoFriendsAvailable =>
+      'Adicione um amigo primeiro para criar uma despesa pessoal compartilhada.';
+
+  @override
+  String get addExpenseAmountInvalid => 'Informe um valor maior que zero.';
+
+  @override
   String get addExpenseSplitDoesNotMatch =>
       'A divisão não bate com o valor total.';
+
+  @override
+  String get addExpenseSplitAutoChip => 'Automático';
+
+  @override
+  String addExpenseSplitTotalExact(String sum, String total) {
+    return 'Total: $sum / $total';
+  }
+
+  @override
+  String addExpenseSplitTotalPercentage(String percentage) {
+    return '$percentage%';
+  }
 
   @override
   String get addExpenseCurrencyLabel => 'Moeda';
@@ -1105,6 +1301,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get expenseDetailEditButton => 'Editar';
 
   @override
+  String get expenseDetailEditComingSoon => 'Edição em breve.';
+
+  @override
   String get expenseDetailDeleteButton => 'Excluir';
 
   @override
@@ -1129,6 +1328,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get settleUpTitle => 'Acertar contas';
+
+  @override
+  String get settleUpPayerLabel => 'De:';
 
   @override
   String get settleUpReceiverLabel => 'Pagar para';
@@ -1175,6 +1377,30 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   }
 
   @override
+  String get settleUpPaymentProofSection =>
+      'Comprovante de pagamento (opcional)';
+
+  @override
+  String get settleUpAddProofLabel => 'Adicionar comprovante';
+
+  @override
+  String get settleUpProofUploadError =>
+      'Não foi possível enviar o comprovante.';
+
+  @override
+  String get pendingSettlementYouPaidBeforeAmount => 'Você pagou ';
+
+  @override
+  String pendingSettlementYouPaidAfterAmount(String receiverName) {
+    return ' para $receiverName';
+  }
+
+  @override
+  String pendingSettlementReceivedBeforeAmount(String payerName) {
+    return '$payerName te enviou ';
+  }
+
+  @override
   String get friendsTitle => 'Amigos';
 
   @override
@@ -1203,13 +1429,11 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get friendInviteTitle => 'Convidar amigo';
 
   @override
-  String get friendInviteEmailLabel => 'E-mail (opcional)';
+  String get friendInviteBody =>
+      'Geramos um link exclusivo. Envie por qualquer app para a pessoa entrar e aceitar depois de entrar na conta.';
 
   @override
-  String get friendInvitePhoneLabel => 'Telefone';
-
-  @override
-  String get friendInviteButton => 'Enviar convite';
+  String get friendInviteButton => 'Gerar link de convite';
 
   @override
   String get friendInviteSuccess => 'Convite enviado!';
@@ -1224,10 +1448,22 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get friendAcceptSuccess => 'Convite aceito! Agora vocês são amigos.';
 
   @override
+  String get inviteGetTheAppHint => 'Prefere o app? Baixe aqui.';
+
+  @override
+  String get inviteAppStoreButton => 'App Store';
+
+  @override
+  String get invitePlayStoreButton => 'Google Play';
+
+  @override
   String get friendDetailTitle => 'Detalhes';
 
   @override
   String get friendDetailNetBalance => 'Saldo entre vocês';
+
+  @override
+  String get friendDetailPendingSettlements => 'Pagamentos pendentes';
 
   @override
   String get friendDetailSharedExpenses => 'Despesas compartilhadas';
@@ -1240,6 +1476,18 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get friendDetailSettleUpButton => 'Acertar contas';
+
+  @override
+  String get friendDetailAddToGroupButton => 'Adicionar ao grupo';
+
+  @override
+  String get friendDetailNoEligibleGroups =>
+      'Nenhum grupo disponível para este amigo.';
+
+  @override
+  String friendDetailAddedToGroupSuccess(String friendName, String groupName) {
+    return '$friendName foi adicionado a $groupName.';
+  }
 
   @override
   String get profileTitle => 'Perfil';

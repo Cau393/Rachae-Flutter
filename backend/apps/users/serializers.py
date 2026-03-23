@@ -91,7 +91,13 @@ class AvatarConfirmSerializer(serializers.Serializer):
 
 class FriendInviteCreateSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False, allow_null=True)
-    phone = serializers.CharField(max_length=20)
+    phone = serializers.CharField(max_length=20, required=False, allow_null=True, allow_blank=True)
+
+    def validate(self, attrs):
+        phone = attrs.get("phone")
+        if phone is not None and str(phone).strip() == "":
+            attrs["phone"] = None
+        return attrs
 
 
 class FriendInviteSerializer(serializers.ModelSerializer):
@@ -111,7 +117,7 @@ class FriendInviteSerializer(serializers.ModelSerializer):
 class FriendInviteCreateResponseSerializer(serializers.Serializer):
     id = serializers.UUIDField(source="invite.id")
     email = serializers.EmailField(source="invite.email", allow_null=True)
-    phone = serializers.CharField(source="invite.phone")
+    phone = serializers.CharField(source="invite.phone", allow_null=True, allow_blank=True)
     token = serializers.CharField(source="invite.token")
     status = serializers.CharField(source="invite.status")
     expires_at = serializers.DateTimeField(source="invite.expires_at")
@@ -132,4 +138,10 @@ class BalanceSummarySerializer(serializers.Serializer):
     total_owed = serializers.DecimalField(max_digits=12, decimal_places=2)
     total_owing = serializers.DecimalField(max_digits=12, decimal_places=2)
     net_balance = serializers.DecimalField(max_digits=12, decimal_places=2)
+    currency = serializers.CharField()
+
+
+class PairwiseBalanceItemSerializer(serializers.Serializer):
+    user = FriendListSerializer()
+    balance = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
     currency = serializers.CharField()

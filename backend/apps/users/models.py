@@ -50,7 +50,7 @@ class FriendInvite(BaseModel):
         related_name="sent_friend_invites",
     )
     email = models.EmailField(null=True, blank=True, db_index=True)
-    phone = models.CharField(max_length=20, db_index=True)
+    phone = models.CharField(max_length=20, null=True, blank=True, db_index=True)
     token = models.CharField(max_length=128, unique=True)
     status = models.CharField(max_length=10, choices=FriendInviteStatus.choices, default=FriendInviteStatus.PENDING)
     expires_at = models.DateTimeField(db_index=True)

@@ -4,6 +4,11 @@ from apps.groups import views
 
 urlpatterns = [
     path("groups/", views.GroupListCreateView.as_view(), name="groups-list-create"),
+    path(
+        "groups/eligible-friend-groups/",
+        views.EligibleFriendGroupListView.as_view(),
+        name="groups-eligible-friend-groups",
+    ),
     path("groups/<uuid:group_id>/", views.GroupDetailView.as_view(), name="groups-detail"),
     path("groups/<uuid:group_id>/members/", views.GroupMemberListView.as_view(), name="groups-members"),
     path(

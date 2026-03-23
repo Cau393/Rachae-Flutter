@@ -68,6 +68,37 @@ class GroupService:
         return group
 
     @staticmethod
+    def list_eligible_groups_for_friend(requesting_user: User, friend_user_id) -> list[Group]:
+        get_object_or_404(User, id=friend_user_id, is_deleted=False)
+
+        groups = list(
+            Group.objects.filter(
+                is_deleted=False,
+                members__user=requesting_user,
+                members__role=GroupRole.ADMIN,
+                members__is_deleted=False,
+            )
+            .exclude(
+                members__user_id=friend_user_id,
+                members__is_deleted=False,
+            )
+            .distinct()
+            .prefetch_related("members__user")
+            .order_by("name", "created_at")
+        )
+
+        for group in groups:
+            group.member_count = len(
+                [
+                    membership
+                    for membership in group.members.all()
+                    if not getattr(membership, "is_deleted", False)
+                ]
+            )
+
+        return groups
+
+    @staticmethod
     def update_group(group: Group, validated_data: dict) -> Group:
         if "currency" in validated_data and validated_data["currency"] != group.currency:
             try:

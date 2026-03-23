@@ -35,9 +35,6 @@ class AuthController extends ChangeNotifier {
     await _client.auth.signInWithOAuth(
       OAuthProvider.google,
       redirectTo: AppConfig.oauthRedirectUri(),
-      authScreenLaunchMode: kIsWeb
-          ? LaunchMode.platformDefault
-          : LaunchMode.externalApplication,
       queryParams: const {
         'prompt': 'select_account',
       },
