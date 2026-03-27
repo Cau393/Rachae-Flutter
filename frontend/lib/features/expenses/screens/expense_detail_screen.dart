@@ -12,6 +12,7 @@ import 'package:frontend/features/expenses/providers/expense_detail_provider.dar
 import 'package:frontend/features/expenses/providers/expense_repository_provider.dart';
 import 'package:frontend/features/expenses/providers/group_expense_list_provider.dart';
 import 'package:frontend/features/expenses/widgets/expense_header.dart';
+import 'package:frontend/features/groups/providers/group_list_provider.dart';
 import 'package:frontend/features/expenses/widgets/receipt_gallery.dart';
 import 'package:frontend/features/expenses/widgets/split_breakdown_list.dart';
 import 'package:frontend/src/l10n/generated/app_localizations.dart';
@@ -132,10 +133,7 @@ class ExpenseDetailScreen extends ConsumerWidget {
               children: [
                 ExpenseHeader(model: detail),
                 const SizedBox(height: 16),
-                SplitBreakdownList(
-                  splits: detail.splits,
-                  currency: detail.currency,
-                ),
+                SplitBreakdownList(detail: detail),
                 const SizedBox(height: 16),
                 ReceiptGallery(receiptUrls: detail.receiptUrls),
                 const SizedBox(height: 16),
@@ -187,6 +185,7 @@ Future<void> _showDeleteDialog(
                 }
                 ref.invalidate(balanceSummaryProvider);
                 ref.invalidate(activityFeedProvider);
+                ref.invalidate(groupListProvider);
                 _exitExpenseScreen(context, gid);
                 messenger.showSnackBar(
                   SnackBar(content: Text(l10n.expenseDetailDeleteSuccess)),

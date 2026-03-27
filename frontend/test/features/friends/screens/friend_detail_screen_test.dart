@@ -268,7 +268,9 @@ void main() {
     expect(btn.onPressed, isNull);
   });
 
-  testWidgets('balance positive: friendsOwed phrasing', (tester) async {
+  testWidgets('balance positive: friendsOwed phrasing, settle disabled', (
+    tester,
+  ) async {
     await pumpDetail(
       tester,
       router: buildRouter(),
@@ -281,9 +283,13 @@ void main() {
     );
 
     expect(find.textContaining('Owes you'), findsOneWidget);
+    final btn = tester.widget<FilledButton>(find.byType(FilledButton));
+    expect(btn.onPressed, isNull);
   });
 
-  testWidgets('balance negative: friendsOwes phrasing', (tester) async {
+  testWidgets('balance negative: friendsOwes phrasing, settle enabled', (
+    tester,
+  ) async {
     await pumpDetail(
       tester,
       router: buildRouter(),
@@ -296,6 +302,8 @@ void main() {
     );
 
     expect(find.textContaining('Owes'), findsWidgets);
+    final btn = tester.widget<FilledButton>(find.byType(FilledButton));
+    expect(btn.onPressed, isNotNull);
   });
 
   testWidgets('settle button navigates to /settle with query params', (

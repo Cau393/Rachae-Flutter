@@ -5,16 +5,20 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.groups.models import Group, GroupMember
 from apps.transactions.filters import TransactionFilter
 from apps.transactions.models import Transaction
 from apps.transactions.proof_service import TransactionProofService
 from apps.transactions.serializers import (
+    OffsetCreditPreviewQuerySerializer,
+    OffsetCreditPreviewResponseSerializer,
     ProofFileKeySerializer,
     ProofUploadURLQuerySerializer,
     TransactionCreateSerializer,
     TransactionOutputSerializer,
 )
 from apps.transactions.services import TransactionService
+from apps.users.models import User
 from apps.users.permissions import ActiveUserPermission
 
 
@@ -63,15 +67,59 @@ class TransactionListCreateView(TransactionBaseView):
         )
         serializer.is_valid(raise_exception=True)
 
+        payload = dict(serializer.validated_data)
+        is_offset = payload.pop("is_offset", False)
         try:
-            transaction = TransactionService.create(request.user, serializer.validated_data)
+            if is_offset:
+                transactions = TransactionService.create_offset(request.user, payload)
+            else:
+                transactions = TransactionService.create(request.user, payload)
         except ValueError as exc:
             raise ValidationError({"detail": str(exc)}) from exc
 
         return _response_data(
-            TransactionOutputSerializer(transaction).data,
+            TransactionOutputSerializer(
+                transactions,
+                many=True,
+            ).data,
             status_code=status.HTTP_201_CREATED,
         )
+
+
+class TransactionOffsetCreditPreviewView(TransactionBaseView):
+    def get(self, request):
+        query_serializer = OffsetCreditPreviewQuerySerializer(data=request.query_params)
+        query_serializer.is_valid(raise_exception=True)
+        with_user_id = query_serializer.validated_data["with_user"]
+        exclude_group_id = query_serializer.validated_data["exclude_group"]
+
+        if with_user_id == request.user.id:
+            raise ValidationError({"with_user": "Cannot query offset credit with yourself."})
+
+        other_user = get_object_or_404(User, id=with_user_id)
+        group = get_object_or_404(Group, id=exclude_group_id, is_deleted=False)
+
+        if not GroupMember.objects.filter(
+            group=group,
+            user=request.user,
+            is_deleted=False,
+        ).exists():
+            raise ValidationError({"exclude_group": "You are not a member of this group."})
+
+        if not GroupMember.objects.filter(
+            group=group,
+            user=other_user,
+            is_deleted=False,
+        ).exists():
+            raise ValidationError(
+                {"exclude_group": "Counterparty is not a member of this group."}
+            )
+
+        raw = TransactionService.offset_credit_excluding_group(
+            request.user, other_user, exclude_group_id
+        )
+        out = OffsetCreditPreviewResponseSerializer(raw).data
+        return _response_data(out)
 
 
 class TransactionDetailView(TransactionBaseView):

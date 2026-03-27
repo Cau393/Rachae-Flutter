@@ -38,6 +38,22 @@ def test_recalculate_invalidates_per_user_cache(group_with_expenses, django_cach
 
 
 @pytest.mark.django_db
+def test_recalculate_invalidates_legacy_ledger_service_keys(group_with_expenses, django_cache):
+    from tasks.ledger_tasks import recalculate_group_ledger
+
+    group, _users = group_with_expenses
+    django_cache.set(f"ledger:balances:{group.id}", {"stale": True})
+    django_cache.set(f"ledger:simplified:{group.id}", {"stale": True})
+    django_cache.set(f"rachae:ledger:group:{group.id}:simplified", [{"stale": True}])
+
+    recalculate_group_ledger(str(group.id))
+
+    assert django_cache.get(f"ledger:balances:{group.id}") is None
+    assert django_cache.get(f"ledger:simplified:{group.id}") is None
+    assert django_cache.get(f"rachae:ledger:group:{group.id}:simplified") is None
+
+
+@pytest.mark.django_db
 def test_recalculate_correct_balance_values(group_with_expenses, django_cache):
     from tasks.ledger_tasks import recalculate_group_ledger
 

@@ -10,7 +10,6 @@ class NotificationType(models.TextChoices):
     SETTLEMENT_CONFIRMED = "settlement_confirmed", "Payment confirmed"
     GROUP_INVITATION = "group_invitation", "Group invitation"
     MEMBER_ADDED = "member_added", "Added to group"
-    WEEKLY_DIGEST = "weekly_digest", "Weekly balance digest"
 
 
 class Notification(models.Model):
@@ -72,7 +71,6 @@ class NotificationPreference(models.Model):
     push_group_invitation = models.BooleanField(default=True)
     email_expense_created = models.BooleanField(default=True)
     email_settlement_recorded = models.BooleanField(default=True)
-    email_weekly_digest = models.BooleanField(default=True)
 
     class Meta:
         db_table = "notification_preferences"

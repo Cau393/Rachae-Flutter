@@ -40,7 +40,6 @@ class NotificationPreferenceSerializer(serializers.ModelSerializer):
             "push_group_invitation",
             "email_expense_created",
             "email_settlement_recorded",
-            "email_weekly_digest",
         ]
 
     def validate(self, attrs):

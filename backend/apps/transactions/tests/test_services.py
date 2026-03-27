@@ -122,6 +122,19 @@ class TransactionTestMixin:
             is_settled=is_settled,
         )
 
+    def make_user_owes_member(self, *, owed: str = "20.00") -> None:
+        """Expense paid by member: [user] owes [member_user] ``owed`` (group currency)."""
+        owed_d = Decimal(str(owed)).quantize(Decimal("0.01"))
+        total = (owed_d * 2).quantize(Decimal("0.01"))
+        expense = self.create_expense(
+            group=self.group,
+            paid_by=self.member_user,
+            amount=str(total),
+            amount_in_group_currency=str(total),
+        )
+        self.create_split(expense, self.member_user, str(owed_d))
+        self.create_split(expense, self.user, str(owed_d))
+
     def create_transaction(
         self,
         *,
@@ -149,6 +162,7 @@ class TransactionTestMixin:
 class TransactionServiceTests(TransactionTestMixin, TestCase):
     @patch("tasks.email_tasks.send_settlement_confirmation.delay")
     def test_create_saves_pending_transaction_and_dispatches_email_on_commit(self, mock_delay):
+        self.make_user_owes_member(owed="20.00")
         payload = {
             "receiver_id": self.member_user.id,
             "amount": Decimal("15.00"),
@@ -158,7 +172,10 @@ class TransactionServiceTests(TransactionTestMixin, TestCase):
         }
 
         with self.captureOnCommitCallbacks(execute=True):
-            txn = TransactionService.create(self.user, payload)
+            txns = TransactionService.create(self.user, payload)
+
+        self.assertEqual(len(txns), 1)
+        txn = txns[0]
 
         txn.refresh_from_db()
 
@@ -172,6 +189,181 @@ class TransactionServiceTests(TransactionTestMixin, TestCase):
             mock_delay.call_args.args,
             (str(self.user.id), str(self.member_user.id), str(txn.id)),
         )
+
+    @patch("tasks.email_tasks.send_settlement_confirmation.delay")
+    def test_create_raises_when_amount_exceeds_owed(self, mock_delay):
+        self.make_user_owes_member(owed="5.00")
+        payload = {
+            "receiver_id": self.member_user.id,
+            "amount": Decimal("10.00"),
+            "currency": "BRL",
+            "group_id": self.group.id,
+        }
+        with self.assertRaisesMessage(
+            ValueError,
+            "Amount exceeds what you owe this person (including pending payments).",
+        ):
+            TransactionService.create(self.user, payload)
+        mock_delay.assert_not_called()
+
+    @patch("tasks.email_tasks.send_settlement_confirmation.delay")
+    def test_create_raises_when_pending_plus_new_exceeds_owed(self, mock_delay):
+        self.make_user_owes_member(owed="10.00")
+        first = {
+            "receiver_id": self.member_user.id,
+            "amount": Decimal("6.00"),
+            "currency": "BRL",
+            "group_id": self.group.id,
+        }
+        with self.captureOnCommitCallbacks(execute=True):
+            TransactionService.create(self.user, first)
+        second = {
+            "receiver_id": self.member_user.id,
+            "amount": Decimal("5.00"),
+            "currency": "BRL",
+            "group_id": self.group.id,
+        }
+        with self.assertRaisesMessage(
+            ValueError,
+            "Amount exceeds what you owe this person (including pending payments).",
+        ):
+            TransactionService.create(self.user, second)
+        self.assertEqual(mock_delay.call_count, 1)
+
+    @patch("tasks.email_tasks.send_settlement_confirmation.delay")
+    def test_create_with_group_id_capped_by_split_debt_in_that_group(self, mock_delay):
+        """Global pairwise debt can exceed this group's split debt; cap uses the group."""
+        self.make_user_owes_member(owed="5.00")
+        other = self.create_group(name="Other trip")
+        self.add_membership(other, self.user, GroupRole.MEMBER)
+        self.add_membership(other, self.member_user, GroupRole.MEMBER)
+        owed_d = Decimal("100.00")
+        total = (owed_d * 2).quantize(Decimal("0.01"))
+        expense = self.create_expense(
+            group=other,
+            paid_by=self.member_user,
+            amount=str(total),
+            amount_in_group_currency=str(total),
+        )
+        self.create_split(expense, self.member_user, str(owed_d))
+        self.create_split(expense, self.user, str(owed_d))
+
+        payload = {
+            "receiver_id": self.member_user.id,
+            "amount": Decimal("10.00"),
+            "currency": "BRL",
+            "group_id": self.group.id,
+        }
+        with self.assertRaisesMessage(
+            ValueError,
+            "Amount exceeds what you owe this person (including pending payments).",
+        ):
+            TransactionService.create(self.user, payload)
+        mock_delay.assert_not_called()
+
+    @patch("tasks.email_tasks.send_settlement_confirmation.delay")
+    def test_create_without_group_runs_waterfall_and_creates_group_and_residual_rows(
+        self,
+        mock_delay,
+    ):
+        self.make_user_owes_member(owed="20.00")
+
+        other_group = self.create_group(name="Other trip")
+        self.add_membership(other_group, self.user, GroupRole.MEMBER)
+        self.add_membership(other_group, self.member_user, GroupRole.MEMBER)
+        other_expense = self.create_expense(
+            group=other_group,
+            paid_by=self.member_user,
+            amount="30.00",
+            amount_in_group_currency="30.00",
+        )
+        self.create_split(other_expense, self.member_user, "15.00")
+        self.create_split(other_expense, self.user, "15.00")
+
+        personal_expense = self.create_expense(
+            group=None,
+            paid_by=self.member_user,
+            amount="20.00",
+            amount_in_group_currency="20.00",
+        )
+        self.create_split(personal_expense, self.member_user, "10.00")
+        self.create_split(personal_expense, self.user, "10.00")
+
+        payload = {
+            "receiver_id": self.member_user.id,
+            "amount": Decimal("40.00"),
+            "currency": "BRL",
+            "group_id": None,
+        }
+
+        with self.captureOnCommitCallbacks(execute=True):
+            txns = TransactionService.create(self.user, payload)
+
+        self.assertEqual(len(txns), 3)
+        self.assertEqual([txn.amount for txn in txns], [Decimal("20.00"), Decimal("15.00"), Decimal("5.00")])
+        self.assertEqual(txns[0].group_id, self.group.id)
+        self.assertEqual(txns[1].group_id, other_group.id)
+        self.assertIsNone(txns[2].group_id)
+        self.assertEqual(mock_delay.call_count, 3)
+
+    @patch("tasks.email_tasks.send_settlement_confirmation.delay")
+    def test_create_waterfall_copies_proof_urls_to_all_created_transactions(self, mock_delay):
+        self.make_user_owes_member(owed="20.00")
+
+        personal_expense = self.create_expense(
+            group=None,
+            paid_by=self.member_user,
+            amount="20.00",
+            amount_in_group_currency="20.00",
+        )
+        self.create_split(personal_expense, self.member_user, "10.00")
+        self.create_split(personal_expense, self.user, "10.00")
+
+        payload = {
+            "receiver_id": self.member_user.id,
+            "amount": Decimal("25.00"),
+            "currency": "BRL",
+            "group_id": None,
+            "proof_urls": ["transactions/proofs/p1.jpg"],
+        }
+
+        with self.captureOnCommitCallbacks(execute=True):
+            txns = TransactionService.create(self.user, payload)
+
+        self.assertEqual(len(txns), 2)
+        self.assertEqual(txns[0].proof_urls, ["transactions/proofs/p1.jpg"])
+        self.assertEqual(txns[1].proof_urls, ["transactions/proofs/p1.jpg"])
+        self.assertEqual(mock_delay.call_count, 2)
+
+    @patch("tasks.email_tasks.send_settlement_confirmation.delay")
+    def test_create_without_group_raises_when_user_owes_nothing(self, mock_delay):
+        payload = {
+            "receiver_id": self.member_user.id,
+            "amount": Decimal("1.00"),
+            "currency": "BRL",
+            "group_id": None,
+        }
+        with self.assertRaisesMessage(ValueError, "You do not owe this user any money globally."):
+            TransactionService.create(self.user, payload)
+        mock_delay.assert_not_called()
+
+    def test_get_debt_breakdown_includes_personal_and_sorts_descending(self):
+        self.make_user_owes_member(owed="20.00")
+        personal_expense = self.create_expense(
+            group=None,
+            paid_by=self.member_user,
+            amount="30.00",
+            amount_in_group_currency="30.00",
+        )
+        self.create_split(personal_expense, self.member_user, "15.00")
+        self.create_split(personal_expense, self.user, "15.00")
+
+        breakdown = TransactionService._get_debt_breakdown(self.user.id, self.member_user.id)
+
+        self.assertEqual(len(breakdown), 2)
+        self.assertEqual([row["amount"] for row in breakdown], [Decimal("20.00"), Decimal("15.00")])
+        self.assertEqual(breakdown[0]["group_id"], self.group.id)
+        self.assertIsNone(breakdown[1]["group_id"])
 
     @patch("tasks.email_tasks.send_settlement_confirmation.delay")
     @patch("tasks.ledger_tasks.recalculate_group_ledger.delay")
@@ -250,6 +442,86 @@ class TransactionServiceTests(TransactionTestMixin, TestCase):
 
         with self.assertRaisesMessage(ValueError, "Cannot dispute a confirmed transaction."):
             TransactionService.dispute(txn, self.member_user)
+
+    @patch("tasks.email_tasks.send_settlement_confirmation.delay")
+    def test_create_offset_creates_group_and_reverse_transactions(self, mock_delay):
+        """User owes member in main group; member owes user in another group."""
+        self.make_user_owes_member(owed="20.00")
+        other_group = self.create_group(name="Other")
+        self.add_membership(other_group, self.user, GroupRole.MEMBER)
+        self.add_membership(other_group, self.member_user, GroupRole.MEMBER)
+        other_expense = self.create_expense(
+            group=other_group,
+            paid_by=self.user,
+            amount="60.00",
+            amount_in_group_currency="60.00",
+        )
+        self.create_split(other_expense, self.member_user, "30.00")
+        self.create_split(other_expense, self.user, "30.00")
+
+        payload = {
+            "receiver_id": self.member_user.id,
+            "amount": Decimal("15.00"),
+            "currency": "BRL",
+            "group_id": self.group.id,
+            "note": "Offset",
+        }
+        with self.captureOnCommitCallbacks(execute=True):
+            txns = TransactionService.create_offset(self.user, payload)
+
+        self.assertEqual(len(txns), 2)
+        self.assertEqual(txns[0].payer_id, self.user.id)
+        self.assertEqual(txns[0].receiver_id, self.member_user.id)
+        self.assertEqual(txns[0].group_id, self.group.id)
+        self.assertEqual(txns[0].amount, Decimal("15.00"))
+        self.assertEqual(txns[1].payer_id, self.member_user.id)
+        self.assertEqual(txns[1].receiver_id, self.user.id)
+        self.assertEqual(txns[1].group_id, other_group.id)
+        self.assertEqual(txns[1].amount, Decimal("15.00"))
+        self.assertEqual(mock_delay.call_count, 2)
+
+    @patch("tasks.email_tasks.send_settlement_confirmation.delay")
+    def test_create_offset_raises_when_credit_only_in_offset_group(self, mock_delay):
+        self.make_user_owes_member(owed="20.00")
+        payload = {
+            "receiver_id": self.member_user.id,
+            "amount": Decimal("10.00"),
+            "currency": "BRL",
+            "group_id": self.group.id,
+        }
+        with self.assertRaisesMessage(
+            ValueError,
+            "You do not have enough credit with this user to offset this amount",
+        ):
+            TransactionService.create_offset(self.user, payload)
+        mock_delay.assert_not_called()
+
+    @patch("tasks.email_tasks.send_settlement_confirmation.delay")
+    def test_create_offset_raises_when_nothing_owed_in_group(self, mock_delay):
+        other_group = self.create_group(name="Other")
+        self.add_membership(other_group, self.user, GroupRole.MEMBER)
+        self.add_membership(other_group, self.member_user, GroupRole.MEMBER)
+        other_expense = self.create_expense(
+            group=other_group,
+            paid_by=self.user,
+            amount="60.00",
+            amount_in_group_currency="60.00",
+        )
+        self.create_split(other_expense, self.member_user, "30.00")
+        self.create_split(other_expense, self.user, "30.00")
+
+        payload = {
+            "receiver_id": self.member_user.id,
+            "amount": Decimal("5.00"),
+            "currency": "BRL",
+            "group_id": self.group.id,
+        }
+        with self.assertRaisesMessage(
+            ValueError,
+            "You do not owe this user any money in this group.",
+        ):
+            TransactionService.create_offset(self.user, payload)
+        mock_delay.assert_not_called()
 
     def test_list_pending_returns_only_non_confirmed_non_disputed_transactions(self):
         pending = self.create_transaction(

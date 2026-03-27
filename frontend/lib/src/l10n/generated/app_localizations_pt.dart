@@ -128,6 +128,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get dashboardNoActivity => 'Nenhuma atividade ainda.';
 
   @override
+  String get dashboardActivityEndOfList => 'Não há mais atividades.';
+
+  @override
   String get dashboardAddExpense => 'Adicionar despesa';
 
   @override
@@ -135,7 +138,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'Pagamentos pendentes para aprovar';
 
   @override
-  String get dashboardShortcutOwedToYou => 'Despesas que outros te devem';
+  String get dashboardShortcutOwedToYou => 'Quem te deve';
 
   @override
   String get dashboardShortcutPendingSettlements => 'Acertos pendentes';
@@ -148,11 +151,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'Nenhum pagamento aguardando sua confirmação.';
 
   @override
-  String get dashboardOwedToYouTitle => 'Despesas que outros te devem';
+  String get dashboardOwedToYouTitle => 'Quem te deve';
 
   @override
-  String get dashboardOwedToYouEmpty =>
-      'Ainda não há despesas em que você pagou e outros te devem.';
+  String get dashboardOwedToYouEmpty => 'Ninguém te deve nada no momento.';
 
   @override
   String get dashboardPendingSettlementsTitle => 'Acertos pendentes';
@@ -224,7 +226,7 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get groupBalanceZero => 'Quite';
+  String get groupBalanceZero => 'Quitado';
 
   @override
   String get createGroupTitle => 'Novo grupo';
@@ -317,6 +319,45 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get groupMemberCurrentUserSuffix => '(Você)';
+
+  @override
+  String get groupAddFriendsButton => 'Adicionar amigos';
+
+  @override
+  String get groupAddMembersTitle => 'Adicionar amigos ao grupo';
+
+  @override
+  String get groupAddMembersNoFriends =>
+      'Você ainda não tem amigos para adicionar.';
+
+  @override
+  String get groupAddMembersAllInGroup =>
+      'Todos os seus amigos já estão neste grupo.';
+
+  @override
+  String get groupAddMembersAddButton => 'Adicionar';
+
+  @override
+  String get groupAddMembersConfirmButton => 'Adicionar ao grupo';
+
+  @override
+  String groupAddMembersConfirmWithCount(int count) {
+    return 'Adicionar ($count)';
+  }
+
+  @override
+  String groupAddMembersAddedSuccess(int count) {
+    return '$count amigos adicionados ao grupo.';
+  }
+
+  @override
+  String groupAddMembersPartialFailure(int failed, int total) {
+    return 'Não foi possível adicionar $failed de $total.';
+  }
+
+  @override
+  String get groupAddMembersSelectAtLeastOne =>
+      'Selecione pelo menos um amigo.';
 
   @override
   String get groupSettingsTitle => 'Configurações do grupo';
@@ -573,6 +614,19 @@ class AppLocalizationsPt extends AppLocalizations {
       'Não foi possível enviar o comprovante.';
 
   @override
+  String get settleUpOffsetButton => 'Compensar dívida (encontro de contas)';
+
+  @override
+  String get settleUpOffsetConfirmTitle => 'Compensar esta dívida?';
+
+  @override
+  String get settleUpOffsetConfirmMessage =>
+      'Isso usa seu crédito existente com esta pessoa para quitar a dívida do grupo sem movimentar dinheiro de verdade.';
+
+  @override
+  String get settleUpOffsetConfirmAction => 'Compensar';
+
+  @override
   String get pendingSettlementYouPaidBeforeAmount => 'Você pagou ';
 
   @override
@@ -708,6 +762,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get profileDeleteAccountButton => 'Excluir minha conta';
 
   @override
+  String get profileDeleteAccountConfirmTitle => 'Excluir conta';
+
+  @override
   String get profileDeleteAccountConfirm =>
       'Excluir sua conta é permanente e não pode ser desfeito. Continuar?';
 
@@ -733,9 +790,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get profileEmailSettlementRecorded => 'E-mail: pagamento registrado';
 
   @override
-  String get profileEmailWeeklyDigest => 'Resumo semanal por e-mail';
-
-  @override
   String get profileAdFreeSection => 'Plano sem anúncios';
 
   @override
@@ -745,6 +799,23 @@ class AppLocalizationsPt extends AppLocalizations {
   String profileAdFreeExpires(String date) {
     return 'Válido até $date';
   }
+
+  @override
+  String get profileAdFreeMonthlyLabel => 'Mensal';
+
+  @override
+  String get profileAdFreeYearlyLabel => 'Anual';
+
+  @override
+  String profileAdFreePlanExpires(String date) {
+    return 'Válido até $date';
+  }
+
+  @override
+  String get profileUpgradeMonthlyButton => 'Assinar plano mensal';
+
+  @override
+  String get profileUpgradeYearlyButton => 'Assinar plano anual';
 
   @override
   String get profileUpgradeButton => 'Remover anúncios';
@@ -771,6 +842,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get exportAllGroups => 'Todos os grupos';
 
   @override
+  String get exportGroupAll => 'Todos os grupos';
+
+  @override
+  String get exportShareButton => 'Compartilhar PDF';
+
+  @override
   String get exportGenerateButton => 'Gerar relatório';
 
   @override
@@ -781,6 +858,83 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get exportError => 'Erro ao gerar relatório. Tente novamente.';
+
+  @override
+  String get sectionLoadError =>
+      'Não foi possível carregar esta seção. Tente novamente.';
+
+  @override
+  String get profileLoadError =>
+      'Não foi possível carregar seu perfil. Verifique a conexão e tente novamente.';
+
+  @override
+  String get profileAdsLoadError =>
+      'Não foi possível carregar o status da assinatura.';
+
+  @override
+  String get exportPdfDocumentTitle => 'Rachae - relatório de despesas';
+
+  @override
+  String get exportPdfEmptyReport => 'Sem dados para os filtros selecionados.';
+
+  @override
+  String exportPdfPeriod(String fromDate, String toDate) {
+    return 'Período: $fromDate - $toDate';
+  }
+
+  @override
+  String get exportPdfTotalSpent => 'Total gasto do grupo';
+
+  @override
+  String get exportPdfPerPersonTitle => 'Por pessoa (pago / devido / saldo)';
+
+  @override
+  String get exportPdfColumnPerson => 'Pessoa';
+
+  @override
+  String get exportPdfColumnPaid => 'Pago';
+
+  @override
+  String get exportPdfColumnOwed => 'Devido';
+
+  @override
+  String get exportPdfColumnNet => 'Saldo';
+
+  @override
+  String get exportPdfExpensesTitle => 'Linhas de despesa';
+
+  @override
+  String get exportPdfNoExpenses => 'Nenhuma despesa neste período.';
+
+  @override
+  String get exportPdfExpenseDescription => 'Descrição';
+
+  @override
+  String get exportPdfExpenseAmount => 'Valor';
+
+  @override
+  String get exportPdfExpenseDate => 'Data';
+
+  @override
+  String get exportPdfExpenseCategory => 'Categoria';
+
+  @override
+  String get exportPdfSettlementsTitle => 'Histórico de acertos';
+
+  @override
+  String get exportPdfNoSettlements => 'Nenhum acerto neste período.';
+
+  @override
+  String get exportPdfSettlementPayer => 'Pagador';
+
+  @override
+  String get exportPdfSettlementReceiver => 'Recebedor';
+
+  @override
+  String get exportPdfSettlementAmount => 'Valor';
+
+  @override
+  String get exportPdfSettlementDate => 'Data';
 
   @override
   String get adBannerFallback => '';
@@ -943,6 +1097,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get dashboardNoActivity => 'Nenhuma atividade ainda.';
 
   @override
+  String get dashboardActivityEndOfList => 'Não há mais atividades.';
+
+  @override
   String get dashboardAddExpense => 'Adicionar despesa';
 
   @override
@@ -950,7 +1107,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'Pagamentos pendentes para aprovar';
 
   @override
-  String get dashboardShortcutOwedToYou => 'Despesas que outros te devem';
+  String get dashboardShortcutOwedToYou => 'Quem te deve';
 
   @override
   String get dashboardShortcutPendingSettlements => 'Acertos pendentes';
@@ -963,11 +1120,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'Nenhum pagamento aguardando sua confirmação.';
 
   @override
-  String get dashboardOwedToYouTitle => 'Despesas que outros te devem';
+  String get dashboardOwedToYouTitle => 'Quem te deve';
 
   @override
-  String get dashboardOwedToYouEmpty =>
-      'Ainda não há despesas em que você pagou e outros te devem.';
+  String get dashboardOwedToYouEmpty => 'Ninguém te deve nada no momento.';
 
   @override
   String get dashboardPendingSettlementsTitle => 'Acertos pendentes';
@@ -1039,7 +1195,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   }
 
   @override
-  String get groupBalanceZero => 'Quite';
+  String get groupBalanceZero => 'Quitado';
 
   @override
   String get createGroupTitle => 'Novo grupo';
@@ -1132,6 +1288,45 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get groupMemberCurrentUserSuffix => '(Você)';
+
+  @override
+  String get groupAddFriendsButton => 'Adicionar amigos';
+
+  @override
+  String get groupAddMembersTitle => 'Adicionar amigos ao grupo';
+
+  @override
+  String get groupAddMembersNoFriends =>
+      'Você ainda não tem amigos para adicionar.';
+
+  @override
+  String get groupAddMembersAllInGroup =>
+      'Todos os seus amigos já estão neste grupo.';
+
+  @override
+  String get groupAddMembersAddButton => 'Adicionar';
+
+  @override
+  String get groupAddMembersConfirmButton => 'Adicionar ao grupo';
+
+  @override
+  String groupAddMembersConfirmWithCount(int count) {
+    return 'Adicionar ($count)';
+  }
+
+  @override
+  String groupAddMembersAddedSuccess(int count) {
+    return '$count amigos adicionados ao grupo.';
+  }
+
+  @override
+  String groupAddMembersPartialFailure(int failed, int total) {
+    return 'Não foi possível adicionar $failed de $total.';
+  }
+
+  @override
+  String get groupAddMembersSelectAtLeastOne =>
+      'Selecione pelo menos um amigo.';
 
   @override
   String get groupSettingsTitle => 'Configurações do grupo';
@@ -1388,6 +1583,19 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'Não foi possível enviar o comprovante.';
 
   @override
+  String get settleUpOffsetButton => 'Compensar dívida (encontro de contas)';
+
+  @override
+  String get settleUpOffsetConfirmTitle => 'Compensar esta dívida?';
+
+  @override
+  String get settleUpOffsetConfirmMessage =>
+      'Isso usa seu crédito existente com esta pessoa para quitar a dívida do grupo sem movimentar dinheiro de verdade.';
+
+  @override
+  String get settleUpOffsetConfirmAction => 'Compensar';
+
+  @override
   String get pendingSettlementYouPaidBeforeAmount => 'Você pagou ';
 
   @override
@@ -1523,6 +1731,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get profileDeleteAccountButton => 'Excluir minha conta';
 
   @override
+  String get profileDeleteAccountConfirmTitle => 'Excluir conta';
+
+  @override
   String get profileDeleteAccountConfirm =>
       'Excluir sua conta é permanente e não pode ser desfeito. Continuar?';
 
@@ -1548,9 +1759,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get profileEmailSettlementRecorded => 'E-mail: pagamento registrado';
 
   @override
-  String get profileEmailWeeklyDigest => 'Resumo semanal por e-mail';
-
-  @override
   String get profileAdFreeSection => 'Plano sem anúncios';
 
   @override
@@ -1560,6 +1768,23 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String profileAdFreeExpires(String date) {
     return 'Válido até $date';
   }
+
+  @override
+  String get profileAdFreeMonthlyLabel => 'Mensal';
+
+  @override
+  String get profileAdFreeYearlyLabel => 'Anual';
+
+  @override
+  String profileAdFreePlanExpires(String date) {
+    return 'Válido até $date';
+  }
+
+  @override
+  String get profileUpgradeMonthlyButton => 'Assinar plano mensal';
+
+  @override
+  String get profileUpgradeYearlyButton => 'Assinar plano anual';
 
   @override
   String get profileUpgradeButton => 'Remover anúncios';
@@ -1586,6 +1811,12 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get exportAllGroups => 'Todos os grupos';
 
   @override
+  String get exportGroupAll => 'Todos os grupos';
+
+  @override
+  String get exportShareButton => 'Compartilhar PDF';
+
+  @override
   String get exportGenerateButton => 'Gerar relatório';
 
   @override
@@ -1596,6 +1827,83 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get exportError => 'Erro ao gerar relatório. Tente novamente.';
+
+  @override
+  String get sectionLoadError =>
+      'Não foi possível carregar esta seção. Tente novamente.';
+
+  @override
+  String get profileLoadError =>
+      'Não foi possível carregar seu perfil. Verifique a conexão e tente novamente.';
+
+  @override
+  String get profileAdsLoadError =>
+      'Não foi possível carregar o status da assinatura.';
+
+  @override
+  String get exportPdfDocumentTitle => 'Rachae - relatório de despesas';
+
+  @override
+  String get exportPdfEmptyReport => 'Sem dados para os filtros selecionados.';
+
+  @override
+  String exportPdfPeriod(String fromDate, String toDate) {
+    return 'Período: $fromDate - $toDate';
+  }
+
+  @override
+  String get exportPdfTotalSpent => 'Total gasto do grupo';
+
+  @override
+  String get exportPdfPerPersonTitle => 'Por pessoa (pago / devido / saldo)';
+
+  @override
+  String get exportPdfColumnPerson => 'Pessoa';
+
+  @override
+  String get exportPdfColumnPaid => 'Pago';
+
+  @override
+  String get exportPdfColumnOwed => 'Devido';
+
+  @override
+  String get exportPdfColumnNet => 'Saldo';
+
+  @override
+  String get exportPdfExpensesTitle => 'Linhas de despesa';
+
+  @override
+  String get exportPdfNoExpenses => 'Nenhuma despesa neste período.';
+
+  @override
+  String get exportPdfExpenseDescription => 'Descrição';
+
+  @override
+  String get exportPdfExpenseAmount => 'Valor';
+
+  @override
+  String get exportPdfExpenseDate => 'Data';
+
+  @override
+  String get exportPdfExpenseCategory => 'Categoria';
+
+  @override
+  String get exportPdfSettlementsTitle => 'Histórico de acertos';
+
+  @override
+  String get exportPdfNoSettlements => 'Nenhum acerto neste período.';
+
+  @override
+  String get exportPdfSettlementPayer => 'Pagador';
+
+  @override
+  String get exportPdfSettlementReceiver => 'Recebedor';
+
+  @override
+  String get exportPdfSettlementAmount => 'Valor';
+
+  @override
+  String get exportPdfSettlementDate => 'Data';
 
   @override
   String get adBannerFallback => '';

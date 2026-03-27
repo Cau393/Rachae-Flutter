@@ -13,9 +13,10 @@ import 'package:frontend/features/groups/providers/group_settings_notifier.dart'
 import 'package:frontend/features/groups/widgets/balance_list_tile.dart';
 import 'package:frontend/features/groups/widgets/group_expense_list.dart';
 import 'package:frontend/features/groups/widgets/group_header.dart';
+import 'package:frontend/features/groups/widgets/group_net_balance_chip.dart';
 import 'package:frontend/features/groups/widgets/member_list_tile.dart';
-import 'package:frontend/features/groups/widgets/member_search_chips.dart';
 import 'package:frontend/features/groups/widgets/settlement_suggestion_tile.dart';
+import 'package:frontend/features/profile/providers/profile_notifier.dart';
 import 'package:frontend/src/l10n/generated/app_localizations.dart';
 
 class GroupDetailScreen extends ConsumerStatefulWidget {
@@ -71,51 +72,9 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     await ref.read(groupDetailProvider(_groupId).future);
   }
 
-  void _showAddMemberSheet(AppLocalizations l10n) {
-    var selectedIds = <String>[];
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (modalContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.viewInsetsOf(modalContext).bottom + 16,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(l10n.createGroupAddMembers, style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 12),
-              MemberSearchChips(onChanged: (ids) => selectedIds = List<String>.from(ids)),
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: () async {
-                  for (final id in selectedIds) {
-                    await ref
-                        .read(groupSettingsNotifierProvider(_groupId).notifier)
-                        .addMember(id, 'MEMBER');
-                    if (!mounted) return;
-                  }
-                  if (!modalContext.mounted) return;
-                  Navigator.of(modalContext).pop();
-                },
-                child: Text(l10n.saveLabel),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   Widget? _buildFab({
     required AppLocalizations l10n,
     required int tabIndex,
-    required String role,
   }) {
     if (tabIndex == 0) {
       return FloatingActionButton(
@@ -129,14 +88,6 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
         },
         tooltip: l10n.groupDetailAddExpense,
         child: const Icon(Icons.add),
-      );
-    }
-    if (tabIndex == 2 && role == 'ADMIN') {
-      return FloatingActionButton(
-        heroTag: 'fab_group_detail_add_member',
-        onPressed: () => _showAddMemberSheet(l10n),
-        tooltip: l10n.createGroupAddMembers,
-        child: const Icon(Icons.person_add_outlined),
       );
     }
     return null;
@@ -202,6 +153,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                   (s) => SettlementSuggestionTile(
                     groupId: _groupId,
                     suggestion: s,
+                    currentUserId: currentUserId,
                   ),
                 ),
               ],
@@ -222,44 +174,87 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     );
   }
 
-  Widget _membersTab(AppLocalizations l10n, String currentUserId, String role) {
+  Widget _membersTab(
+    AppLocalizations l10n,
+    String currentUserId,
+    String role,
+    String groupCreatorUserId,
+  ) {
     final async = ref.watch(groupMembersProvider(_groupId));
     return RefreshIndicator(
       onRefresh: _onRefresh,
       child: async.when(
         data: (members) {
-          if (members.isEmpty) {
-            return ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Center(child: Text(l10n.groupsEmpty)),
-                ),
-              ],
-            );
-          }
-          return ListView.builder(
+          return CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            itemCount: members.length,
-            itemBuilder: (context, i) {
-              final m = members[i];
-              return MemberListTile(
-                member: m,
-                isCurrentUser: m.userId == currentUserId,
-                canManage: role == 'ADMIN',
-                onChangeRole: (newRole) {
-                  ref
-                      .read(groupSettingsNotifierProvider(_groupId).notifier)
-                      .changeMemberRole(m.userId, newRole);
-                },
-                onRemove: () {
-                  ref
-                      .read(groupSettingsNotifierProvider(_groupId).notifier)
-                      .removeMember(m.userId);
-                },
-              );
-            },
+            slivers: [
+              if (role == 'ADMIN')
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: FilledButton.icon(
+                      onPressed: () async {
+                        final addedCount = await context.push<int>(
+                          '/groups/$_groupId/add-members',
+                        );
+                        if (!mounted) return;
+                        if (addedCount != null && addedCount > 0) {
+                          _tabController.animateTo(2);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                l10n.groupAddMembersAddedSuccess(addedCount),
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.person_add_outlined),
+                      label: Text(l10n.groupAddFriendsButton),
+                    ),
+                  ),
+                ),
+              if (members.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Center(child: Text(l10n.groupsEmpty)),
+                  ),
+                )
+              else
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, i) {
+                      final m = members[i];
+                      return MemberListTile(
+                        member: m,
+                        isCurrentUser: m.userId == currentUserId,
+                        canManage: role == 'ADMIN',
+                        canManageThisMember: currentUserId == groupCreatorUserId ||
+                            m.userId != groupCreatorUserId,
+                        onChangeRole: (newRole) {
+                          ref
+                              .read(
+                                groupSettingsNotifierProvider(_groupId)
+                                    .notifier,
+                              )
+                              .changeMemberRole(m.userId, newRole);
+                        },
+                        onRemove: () {
+                          ref
+                              .read(
+                                groupSettingsNotifierProvider(_groupId)
+                                    .notifier,
+                              )
+                              .removeMember(m.userId);
+                        },
+                      );
+                    },
+                    childCount: members.length,
+                  ),
+                ),
+            ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -280,8 +275,15 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final detailAsync = ref.watch(groupDetailProvider(_groupId));
+    final profileAsync = ref.watch(profileNotifierProvider);
     final authAsync = ref.watch(authNotifierProvider);
-    final userId = _currentUserId(authAsync);
+    final djangoUserId = profileAsync.maybeWhen(
+      data: (p) => p.id,
+      orElse: () => '',
+    );
+    final userId = djangoUserId.isNotEmpty
+        ? djangoUserId
+        : _currentUserId(authAsync);
 
     return detailAsync.when(
       loading: () => Scaffold(
@@ -293,7 +295,21 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
         body: Center(child: Text(l10n.errorGeneric)),
       ),
       data: (detail) {
+        ref.watch(groupSettingsNotifierProvider(_groupId));
         final role = _currentUserRole(detail, userId);
+        Widget? balanceChip;
+        if (userId.isNotEmpty) {
+          for (final b in detail.netBalances) {
+            if (b.userId == userId) {
+              balanceChip = GroupNetBalanceChip(
+                rawNetBalance: b.netBalance,
+                currency: detail.currency,
+                l10n: l10n,
+              );
+              break;
+            }
+          }
+        }
         return Scaffold(
           appBar: AppBar(
             title: Text(detail.name),
@@ -309,7 +325,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              GroupHeader(model: detail),
+              GroupHeader(model: detail, balanceChip: balanceChip),
               TabBar(
                 controller: _tabController,
                 tabs: [
@@ -324,7 +340,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                   children: [
                     _expensesTab(l10n),
                     _balancesTab(l10n, userId),
-                    _membersTab(l10n, userId, role),
+                    _membersTab(l10n, userId, role, detail.createdBy),
                   ],
                 ),
               ),
@@ -333,7 +349,6 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           floatingActionButton: _buildFab(
             l10n: l10n,
             tabIndex: _tabController.index,
-            role: role,
           ),
         );
       },

@@ -38,11 +38,6 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=9, minute=0),
         "options": {"expires": 3600},
     },
-    "send-weekly-digest-monday": {
-        "task": "tasks.email_tasks.send_weekly_digest",
-        "schedule": crontab(hour=11, minute=0, day_of_week=1),
-        "options": {"expires": 3600},
-    },
     "cleanup-orphan-s3-files-weekly": {
         "task": "tasks.s3_tasks.cleanup_orphan_s3_files",
         "schedule": crontab(hour=3, minute=0, day_of_week=0),

@@ -51,10 +51,15 @@ class DashboardRepository {
   Future<List<ActivityItemModel>> fetchNextActivityPage(int page) =>
       fetchActivity(page: page);
 
-  Future<List<PairwiseBalanceRowModel>> fetchPairwiseBalances() async {
+  Future<List<PairwiseBalanceRowModel>> fetchPairwiseBalances({
+    bool oweMeOnly = false,
+  }) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         '/users/me/pairwise-balances/',
+        queryParameters: oweMeOnly
+            ? <String, dynamic>{'owed_to_me': 'true'}
+            : const <String, dynamic>{},
       );
       final data = response.data;
       if (data == null) {

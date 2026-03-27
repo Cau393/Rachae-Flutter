@@ -40,8 +40,11 @@ void main() {
 
   tearDown(() => container.dispose());
 
+  List<ActivityItemModel> pageOf20(String prefix) =>
+      List.generate(kActivityFeedPageSize, (i) => expense('$prefix-$i'));
+
   group('build and loadMore', () {
-    test('build sets AsyncData with page-1 results (2 items)', () async {
+    test('build sets AsyncData with page-1 results (2 items), hasMore false', () async {
       final p1a = expense('p1-a');
       final p1b = expense('p1-b');
       when(
@@ -61,12 +64,14 @@ void main() {
       final async = container.read(activityFeedProvider);
       expect(async, isA<AsyncData<List<ActivityItemModel>>>());
       expect(async.value, hasLength(2));
-      expect(async.value!.map((e) => e.id).toList(), ['p1-a', 'p1-b']);
+      expect(
+        (container.read(activityFeedProvider.notifier))
+            .hasMore,
+        isFalse,
+      );
     });
 
-    test('after loadMore state has 4 items (page 1 + page 2)', () async {
-      final p1a = expense('p1-a');
-      final p1b = expense('p1-b');
+    test('after loadMore state merges page 2 (20 + 2 items)', () async {
       final p2a = expense('p2-a');
       final p2b = expense('p2-b');
       when(
@@ -78,7 +83,7 @@ void main() {
         final page = invocation.namedArguments[#page] as int? ?? 1;
         switch (page) {
           case 1:
-            return [p1a, p1b];
+            return pageOf20('p1');
           case 2:
             return [p2a, p2b];
           default:
@@ -90,18 +95,14 @@ void main() {
       await container.read(activityFeedProvider.notifier).loadMore();
 
       final list = container.read(activityFeedProvider).value!;
-      expect(list, hasLength(4));
-      expect(list.map((e) => e.id).toList(), ['p1-a', 'p1-b', 'p2-a', 'p2-b']);
+      expect(list, hasLength(kActivityFeedPageSize + 2));
+      expect(list.last.id, 'p2-b');
     });
   });
 
   test(
     'page 3 empty then loadMore again does not call fetchActivity a fourth time',
     () async {
-      final p1a = expense('p1-a');
-      final p1b = expense('p1-b');
-      final p2a = expense('p2-a');
-      final p2b = expense('p2-b');
       var fetchCount = 0;
       when(
         () => mockRepo.fetchActivity(
@@ -113,9 +114,9 @@ void main() {
         final page = invocation.namedArguments[#page] as int? ?? 1;
         switch (page) {
           case 1:
-            return [p1a, p1b];
+            return pageOf20('p1');
           case 2:
-            return [p2a, p2b];
+            return pageOf20('p2');
           case 3:
             return <ActivityItemModel>[];
           default:
@@ -134,11 +135,6 @@ void main() {
   );
 
   test('refresh resets to page-1 items only', () async {
-    final p1a = expense('p1-a');
-    final p1b = expense('p1-b');
-    final p2a = expense('p2-a');
-    final p2b = expense('p2-b');
-
     when(
       () => mockRepo.fetchActivity(
         page: any(named: 'page'),
@@ -147,30 +143,36 @@ void main() {
     ).thenAnswer((invocation) async {
       final page = invocation.namedArguments[#page] as int? ?? 1;
       if (page == 1) {
-        return [p1a, p1b];
+        return pageOf20('p1');
       }
       if (page == 2) {
-        return [p2a, p2b];
+        return pageOf20('p2');
       }
       return <ActivityItemModel>[];
     });
 
     await container.read(activityFeedProvider.future);
     await container.read(activityFeedProvider.notifier).loadMore();
-    expect(container.read(activityFeedProvider).value, hasLength(4));
+    expect(
+      container.read(activityFeedProvider).value,
+      hasLength(kActivityFeedPageSize * 2),
+    );
 
     await container.read(activityFeedProvider.notifier).refresh();
 
     final list = container.read(activityFeedProvider).value!;
-    expect(list, hasLength(2));
-    expect(list.map((e) => e.id).toList(), ['p1-a', 'p1-b']);
+    expect(list, hasLength(kActivityFeedPageSize));
+    expect(list.first.id, 'p1-0');
   });
 
   test('deduplicates by id when page 2 overlaps page 1', () async {
     final p1a = expense('p1-a');
-    final p1b = expense('p1-b');
     final dup = expense('p1-a', amount: '99.00');
     final p2new = expense('p2-new');
+    final page1 = <ActivityItemModel>[
+      p1a,
+      ...List.generate(19, (i) => expense('x-$i')),
+    ];
 
     when(
       () => mockRepo.fetchActivity(
@@ -180,7 +182,7 @@ void main() {
     ).thenAnswer((invocation) async {
       final page = invocation.namedArguments[#page] as int? ?? 1;
       if (page == 1) {
-        return [p1a, p1b];
+        return page1;
       }
       if (page == 2) {
         return [dup, p2new];
@@ -192,7 +194,9 @@ void main() {
     await container.read(activityFeedProvider.notifier).loadMore();
 
     final list = container.read(activityFeedProvider).value!;
-    expect(list, hasLength(3));
-    expect(list.map((e) => e.id).toList(), ['p1-a', 'p1-b', 'p2-new']);
+    expect(list, hasLength(kActivityFeedPageSize + 1));
+    expect(list.map((e) => e.id).toList(), contains('p2-new'));
+    expect(list.where((e) => e.id == 'p1-a'), hasLength(1));
+    expect(list.firstWhere((e) => e.id == 'p1-a').amount, '10.00');
   });
 }

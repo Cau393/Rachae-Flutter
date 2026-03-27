@@ -1,9 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:frontend/features/dashboard/models/pairwise_balance_row_model.dart';
-import 'package:frontend/features/dashboard/providers/balance_summary_provider.dart';
-import 'package:frontend/features/expenses/models/expense_list_model.dart';
-import 'package:frontend/features/expenses/providers/expense_repository_provider.dart';
+import 'package:frontend/features/dashboard/providers/balance_summary_provider.dart'
+    show dashboardRepositoryProvider;
 import 'package:frontend/features/settlements/models/transaction_model.dart';
 import 'package:frontend/features/settlements/providers/settlement_repository_provider.dart';
 
@@ -25,7 +24,18 @@ final pairwiseBalancesProvider =
   retry: (int retryCount, Object error) => null,
 );
 
-final owedToMeExpensesProvider = FutureProvider.autoDispose<List<ExpenseListModel>>(
-  (ref) => ref.watch(expenseRepositoryProvider).fetchOwedToMeExpenses(),
+/// Counterparties with positive net balance (they owe you), same basis as home summary.
+final owedToMeExpensesProvider =
+    FutureProvider.autoDispose<List<PairwiseBalanceRowModel>>(
+  (ref) => ref
+      .watch(dashboardRepositoryProvider)
+      .fetchPairwiseBalances(oweMeOnly: true)
+      .then(
+        (list) => list
+            .where(
+              (r) => !r.balanceAsMoneyAmount.isNegative && !r.balanceAsMoneyAmount.isZero,
+            )
+            .toList(),
+      ),
   retry: (int retryCount, Object error) => null,
 );

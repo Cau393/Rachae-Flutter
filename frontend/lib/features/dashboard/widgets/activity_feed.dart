@@ -9,54 +9,101 @@ import 'package:frontend/features/dashboard/widgets/settlement_list_tile.dart';
 import 'package:frontend/src/l10n/generated/app_localizations.dart';
 
 class ActivityFeed extends ConsumerStatefulWidget {
-  const ActivityFeed({super.key, this.groupId});
+  const ActivityFeed({
+    super.key,
+    this.groupId,
+    this.linkedPrimaryScroll = false,
+  });
 
   /// When set, loads `GET /ledger/activity/?group_id=…` via [groupActivityFeedProvider].
   final String? groupId;
+
+  /// When true, the list uses the [NestedScrollView] body primary scroll controller (narrow
+  /// dashboard). When false (e.g. wide layout inside [Row]), uses a dedicated [ScrollController].
+  final bool linkedPrimaryScroll;
 
   @override
   ConsumerState<ActivityFeed> createState() => _ActivityFeedState();
 }
 
 class _ActivityFeedState extends ConsumerState<ActivityFeed> {
-  late final ScrollController _scrollController;
+  ScrollController? _scrollController;
 
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController();
-    _scrollController.addListener(_onScroll);
+    if (!widget.linkedPrimaryScroll) {
+      _scrollController = ScrollController();
+    }
   }
 
   @override
   void dispose() {
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
+    _scrollController?.dispose();
     super.dispose();
   }
 
-  void _onScroll() {
-    if (!_scrollController.hasClients) return;
-    final pos = _scrollController.position;
-    if (pos.maxScrollExtent <= 0) return;
-    if (pos.pixels >= pos.maxScrollExtent * 0.85) {
+  void _maybeLoadMoreFromMetrics(ScrollMetrics m) {
+    if (m.maxScrollExtent <= 0) return;
+    if (m.pixels < m.maxScrollExtent * 0.85) return;
+    final gid = widget.groupId;
+    if (gid != null) {
+      _groupFeedNotifier(gid).loadMore();
+    } else {
+      _globalFeedNotifier.loadMore();
+    }
+  }
+
+  bool _onScrollNotification(ScrollNotification n) {
+    if (n.metrics.axis != Axis.vertical) return false;
+    if (!n.metrics.hasContentDimensions) return false;
+    if (n is ScrollUpdateNotification || n is OverscrollNotification) {
+      _maybeLoadMoreFromMetrics(n.metrics);
+    }
+    return false;
+  }
+
+  ActivityFeedNotifier get _globalFeedNotifier =>
+      ref.read(activityFeedProvider.notifier);
+
+  GroupActivityFeedNotifier _groupFeedNotifier(String gid) =>
+      ref.read(groupActivityFeedProvider(gid).notifier);
+
+  void _tryAutoloadWhenListFitsViewport(List<ActivityItemModel> items) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (items.isEmpty) return;
+      final pos = Scrollable.maybeOf(context)?.position;
+      if (pos == null) return;
+      if (pos.maxScrollExtent > 0) return;
       final gid = widget.groupId;
       if (gid != null) {
-        ref.read(groupActivityFeedProvider(gid).notifier).loadMore();
+        final n = _groupFeedNotifier(gid);
+        if (!n.hasMore || n.isLoadingMore) return;
+        if (items.length % kActivityFeedPageSize != 0) return;
+        n.loadMore();
       } else {
-        ref.read(activityFeedProvider.notifier).loadMore();
+        final n = _globalFeedNotifier;
+        if (!n.hasMore || n.isLoadingMore) return;
+        if (items.length % kActivityFeedPageSize != 0) return;
+        n.loadMore();
       }
-    }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final gid = widget.groupId;
-    final async = gid != null
-        ? ref.watch(groupActivityFeedProvider(gid))
-        : ref.watch(activityFeedProvider);
+    final provider = gid != null
+        ? groupActivityFeedProvider(gid)
+        : activityFeedProvider;
+    final async = ref.watch(provider);
 
-    return async.map(
+    ref.listen<AsyncValue<List<ActivityItemModel>>>(provider, (previous, next) {
+      next.whenData(_tryAutoloadWhenListFitsViewport);
+    });
+
+    final body = async.map(
       data: (data) => _buildData(context, data.value),
       error: (e) => _buildError(context),
       loading: (l) {
@@ -64,6 +111,7 @@ class _ActivityFeedState extends ConsumerState<ActivityFeed> {
           return _buildError(context);
         }
         return ListView(
+          primary: widget.linkedPrimaryScroll,
           controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           children: const [
@@ -75,12 +123,18 @@ class _ActivityFeedState extends ConsumerState<ActivityFeed> {
         );
       },
     );
+
+    return NotificationListener<ScrollNotification>(
+      onNotification: _onScrollNotification,
+      child: body,
+    );
   }
 
   Widget _buildData(BuildContext context, List<ActivityItemModel> items) {
     final l10n = AppLocalizations.of(context)!;
     if (items.isEmpty) {
       return ListView(
+        primary: widget.linkedPrimaryScroll,
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
@@ -92,11 +146,51 @@ class _ActivityFeedState extends ConsumerState<ActivityFeed> {
       );
     }
 
+    final gid = widget.groupId;
+    final bool showFooter;
+    final bool loadingMore;
+    final bool hasMore;
+    if (gid != null) {
+      final n = _groupFeedNotifier(gid);
+      loadingMore = n.isLoadingMore;
+      hasMore = n.hasMore;
+      showFooter = loadingMore || (!hasMore && items.isNotEmpty);
+    } else {
+      final n = _globalFeedNotifier;
+      loadingMore = n.isLoadingMore;
+      hasMore = n.hasMore;
+      showFooter = loadingMore || (!hasMore && items.isNotEmpty);
+    }
+
     return ListView.builder(
+      primary: widget.linkedPrimaryScroll,
       controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
-      itemCount: items.length,
+      itemCount: items.length + (showFooter ? 1 : 0),
       itemBuilder: (context, index) {
+        if (index >= items.length) {
+          if (loadingMore) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            );
+          }
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Center(
+              child: Text(
+                l10n.dashboardActivityEndOfList,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          );
+        }
         final item = items[index];
         switch (item) {
           case final ExpenseActivity e:
@@ -115,6 +209,7 @@ class _ActivityFeedState extends ConsumerState<ActivityFeed> {
     final l10n = AppLocalizations.of(context)!;
     final gid = widget.groupId;
     return ListView(
+      primary: widget.linkedPrimaryScroll,
       controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       children: [

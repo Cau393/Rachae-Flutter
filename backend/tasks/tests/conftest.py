@@ -27,7 +27,8 @@ def celery_eager(settings):
 
 
 @pytest.fixture
-def mock_brevo(monkeypatch):
+def mock_brevo(monkeypatch, settings):
+    settings.BREVO_API_KEY = "test-brevo-api-key"
     mock_client = MagicMock()
     monkeypatch.setattr("tasks.email_tasks.get_brevo_client", lambda: mock_client)
     return mock_client

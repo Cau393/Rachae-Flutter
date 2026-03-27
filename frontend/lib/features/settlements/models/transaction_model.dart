@@ -14,9 +14,10 @@ class ParticipantInfo {
   final String? avatarUrl;
 
   factory ParticipantInfo.fromJson(Map<String, dynamic> json) {
+    final name = json['display_name'];
     return ParticipantInfo(
       userId: json['user_id'].toString(),
-      displayName: json['display_name'] as String,
+      displayName: name is String ? name : (name?.toString() ?? ''),
       avatarUrl: json['avatar_url'] as String?,
     );
   }
@@ -27,6 +28,7 @@ class TransactionModel {
   const TransactionModel({
     required this.id,
     this.groupId,
+    this.groupName,
     required this.payer,
     required this.receiver,
     required this.amount,
@@ -40,6 +42,7 @@ class TransactionModel {
 
   final String id;
   final String? groupId;
+  final String? groupName;
   final ParticipantInfo payer;
   final ParticipantInfo receiver;
   final String amount;
@@ -55,6 +58,7 @@ class TransactionModel {
     return TransactionModel(
       id: json['id'].toString(),
       groupId: json['group_id']?.toString(),
+      groupName: json['group_name'] as String?,
       payer: ParticipantInfo.fromJson(
         Map<String, dynamic>.from(json['payer'] as Map),
       ),
@@ -65,10 +69,19 @@ class TransactionModel {
       currency: json['currency'] as String,
       note: json['note'] as String?,
       proofUrls: proofRaw.map((e) => e.toString()).toList(),
-      isConfirmed: json['is_confirmed'] as bool,
-      isDisputed: json['is_disputed'] as bool,
+      isConfirmed: _readBool(json['is_confirmed']),
+      isDisputed: _readBool(json['is_disputed']),
       createdAt: DateTime.parse(json['created_at'] as String),
     );
+  }
+
+  static bool _readBool(Object? v) {
+    if (v is bool) return v;
+    if (v is String) {
+      final s = v.toLowerCase();
+      return s == 'true' || s == '1';
+    }
+    return false;
   }
 
   MoneyAmount get amountAsMoneyAmount =>

@@ -40,14 +40,27 @@ class GroupSummaryModel {
         .toList();
   }
 
+  /// Treat tiny residuals as settled (display only).
+  static final Decimal settledEpsilon = Decimal.parse('0.005');
+
+  static Decimal parseNetBalanceRaw(String raw) =>
+      Decimal.parse(raw.trim());
+
+  static bool netBalanceRawIsZero(String raw) =>
+      parseNetBalanceRaw(raw).abs() <= settledEpsilon;
+
+  static bool netBalanceRawIsPositive(String raw) =>
+      parseNetBalanceRaw(raw) > settledEpsilon;
+
+  static bool netBalanceRawIsNegative(String raw) =>
+      parseNetBalanceRaw(raw) < -settledEpsilon;
+
   MoneyAmount get yourNetBalanceAsAmount =>
       MoneyAmount.fromApiString(yourNetBalance, currency);
 
-  bool get isNetPositive => _netDecimal > Decimal.zero;
-  bool get isNetNegative => _netDecimal < Decimal.zero;
-  bool get isNetZero => _netDecimal == Decimal.zero;
-
-  Decimal get _netDecimal => Decimal.parse(yourNetBalance.trim());
+  bool get isNetPositive => GroupSummaryModel.netBalanceRawIsPositive(yourNetBalance);
+  bool get isNetNegative => GroupSummaryModel.netBalanceRawIsNegative(yourNetBalance);
+  bool get isNetZero => GroupSummaryModel.netBalanceRawIsZero(yourNetBalance);
 
   @override
   bool operator ==(Object other) =>

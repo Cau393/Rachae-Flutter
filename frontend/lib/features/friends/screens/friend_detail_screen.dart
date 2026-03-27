@@ -247,9 +247,9 @@ class FriendDetailScreen extends ConsumerWidget {
               balance: balance,
               l10n: l10n,
               theme: theme,
-              onSettle: balance.isZero
-                  ? null
-                  : () => _goSettle(context, balance),
+              onSettle: balance.isNegative
+                  ? () => _goSettle(context, balance)
+                  : null,
             ),
             const SizedBox(height: 16),
           ],

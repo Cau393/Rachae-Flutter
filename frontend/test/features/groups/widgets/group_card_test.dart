@@ -74,6 +74,12 @@ void main() {
       expect(find.text(l10nFor(tester).groupBalanceZero), findsOneWidget);
     });
 
+    testWidgets('negligible balance shows settled chip', (tester) async {
+      await pumpCard(tester, m: model(yourNetBalance: '0.002'));
+      expect(find.byType(CurrencyFormatterWidget), findsNothing);
+      expect(find.text(l10nFor(tester).groupBalanceZero), findsOneWidget);
+    });
+
     for (final entry in <(String, IconData)>[
       ('home', Icons.home),
       ('trip', Icons.flight),

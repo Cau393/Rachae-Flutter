@@ -40,6 +40,76 @@ class UsersPhaseThreeTests(TestCase):
     def authenticate(self, user=None):
         self.client.force_authenticate(user=user or self.user)
 
+    def test_pairwise_balances_owed_to_me_returns_only_positive_balances(self):
+        self.authenticate()
+        group = Group.objects.create(name="G", currency="BRL", created_by=self.user)
+        GroupMember.objects.create(group=group, user=self.user)
+        GroupMember.objects.create(group=group, user=self.other_user)
+        GroupMember.objects.create(group=group, user=self.third_user)
+        e1 = Expense.objects.create(
+            group=group,
+            paid_by=self.user,
+            amount="60.00",
+            currency="BRL",
+            exchange_rate_to_group_currency="1.000000",
+            amount_in_group_currency="60.00",
+            description="D1",
+            created_by=self.user,
+        )
+        Split.objects.create(expense=e1, user=self.user, amount_owed="30.00")
+        Split.objects.create(expense=e1, user=self.other_user, amount_owed="30.00")
+        e2 = Expense.objects.create(
+            group=group,
+            paid_by=self.third_user,
+            amount="80.00",
+            currency="BRL",
+            exchange_rate_to_group_currency="1.000000",
+            amount_in_group_currency="80.00",
+            description="D2",
+            created_by=self.third_user,
+        )
+        Split.objects.create(expense=e2, user=self.third_user, amount_owed="40.00")
+        Split.objects.create(expense=e2, user=self.user, amount_owed="40.00")
+
+        all_resp = self.client.get("/api/v1/users/me/pairwise-balances/")
+        owed_resp = self.client.get("/api/v1/users/me/pairwise-balances/?owed_to_me=true")
+
+        self.assertEqual(all_resp.status_code, 200)
+        self.assertEqual(owed_resp.status_code, 200)
+        owed_balances = owed_resp.json()["data"]["balances"]
+        self.assertEqual(len(owed_balances), 1)
+        self.assertEqual(owed_balances[0]["user"]["id"], str(self.other_user.id))
+        self.assertEqual(owed_balances[0]["balance"], "30.00")
+
+    def test_pairwise_balances_owed_to_me_includes_soft_deleted_counterparty(self):
+        """Default User manager hides is_deleted=True; balances still include their split debt."""
+        self.authenticate()
+        group = Group.objects.create(name="G2", currency="BRL", created_by=self.user)
+        GroupMember.objects.create(group=group, user=self.user)
+        GroupMember.objects.create(group=group, user=self.other_user)
+        expense = Expense.objects.create(
+            group=group,
+            paid_by=self.user,
+            amount="10.00",
+            currency="BRL",
+            exchange_rate_to_group_currency="1.000000",
+            amount_in_group_currency="10.00",
+            description="Lunch",
+            created_by=self.user,
+        )
+        Split.objects.create(expense=expense, user=self.user, amount_owed="5.00")
+        Split.objects.create(expense=expense, user=self.other_user, amount_owed="5.00")
+
+        self.other_user.is_deleted = True
+        self.other_user.save(update_fields=["is_deleted", "updated_at"])
+
+        owed_resp = self.client.get("/api/v1/users/me/pairwise-balances/?owed_to_me=true")
+        self.assertEqual(owed_resp.status_code, 200)
+        owed_balances = owed_resp.json()["data"]["balances"]
+        self.assertEqual(len(owed_balances), 1)
+        self.assertEqual(owed_balances[0]["user"]["id"], str(self.other_user.id))
+        self.assertEqual(owed_balances[0]["balance"], "5.00")
+
     def test_users_me_requires_authentication(self):
         response = self.client.get("/api/v1/users/me/")
 
@@ -342,14 +412,47 @@ class UsersPhaseThreeTests(TestCase):
         Split.objects.create(expense=expense, user=self.other_user, amount_owed="25.00")
         Transaction.objects.create(
             group=group,
+            payer=self.other_user,
+            receiver=self.user,
+            amount="10.00",
+            currency="BRL",
+            is_confirmed=True,
+        )
+        response = self.client.get(f"/api/v1/users/{self.other_user.id}/balances/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["balance"], "15.00")
+
+    def test_user_balance_endpoint_reduces_owing_after_confirmed_payment(self):
+        self.authenticate()
+        group = Group.objects.create(
+            name="Trip Group",
+            currency="BRL",
+            created_by=self.other_user,
+        )
+        GroupMember.objects.create(group=group, user=self.user)
+        GroupMember.objects.create(group=group, user=self.other_user)
+        expense = Expense.objects.create(
+            group=group,
+            paid_by=self.other_user,
+            amount="50.00",
+            currency="BRL",
+            exchange_rate_to_group_currency="1.000000",
+            amount_in_group_currency="50.00",
+            description="Hotel",
+            created_by=self.other_user,
+        )
+        Split.objects.create(expense=expense, user=self.user, amount_owed="25.00")
+        Split.objects.create(expense=expense, user=self.other_user, amount_owed="25.00")
+        Transaction.objects.create(
+            group=group,
             payer=self.user,
             receiver=self.other_user,
             amount="10.00",
             currency="BRL",
             is_confirmed=True,
         )
-
         response = self.client.get(f"/api/v1/users/{self.other_user.id}/balances/")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["balance"], "15.00")
+        self.assertEqual(response.json()["balance"], "-15.00")

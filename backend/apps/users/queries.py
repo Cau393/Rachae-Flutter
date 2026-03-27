@@ -65,7 +65,9 @@ def get_balance_expenses_for_user(user_id):
     expense_model = apps.get_model("expenses", "Expense")
     split_model = apps.get_model("splits", "Split")
 
-    split_queryset = split_model.objects.select_related("user").order_by("created_at")
+    split_queryset = (
+        split_model.objects.filter(is_deleted=False).select_related("user").order_by("created_at")
+    )
     return (
         expense_model.objects.filter(Q(paid_by_id=user_id) | Q(splits__user_id=user_id))
         .select_related("group", "paid_by")
@@ -78,9 +80,16 @@ def get_pairwise_expenses(current_user_id, other_user_id):
     expense_model = apps.get_model("expenses", "Expense")
     split_model = apps.get_model("splits", "Split")
 
-    split_queryset = split_model.objects.select_related("user").order_by("created_at")
+    split_queryset = (
+        split_model.objects.filter(is_deleted=False)
+        .select_related("user")
+        .order_by("created_at")
+    )
     return (
         expense_model.objects.filter(
+            is_deleted=False,
+        )
+        .filter(
             Q(paid_by_id=current_user_id, splits__user_id=other_user_id)
             | Q(paid_by_id=other_user_id, splits__user_id=current_user_id)
         )
@@ -92,9 +101,9 @@ def get_pairwise_expenses(current_user_id, other_user_id):
 
 def get_transactions_for_user(user_id):
     transaction_model = apps.get_model("transactions", "Transaction")
-    return transaction_model.objects.filter(Q(payer_id=user_id) | Q(receiver_id=user_id)).select_related(
-        "payer", "receiver"
-    )
+    return transaction_model.objects.filter(
+        Q(payer_id=user_id) | Q(receiver_id=user_id),
+    ).select_related("payer", "receiver")
 
 
 def get_pairwise_transactions(current_user_id, other_user_id):

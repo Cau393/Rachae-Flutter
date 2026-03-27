@@ -8,28 +8,6 @@ class ExpenseRepository {
 
   final Dio _dio;
 
-  Future<List<ExpenseListModel>> fetchOwedToMeExpenses({
-    int page = 1,
-    int limit = 20,
-  }) async {
-    final response = await _dio.get<Map<String, dynamic>>(
-      '/expenses/',
-      queryParameters: <String, dynamic>{
-        'owed_to_me': true,
-        'page': page,
-        'limit': limit,
-      },
-    );
-    final data = response.data;
-    if (data == null) {
-      return [];
-    }
-    final list = data['data'] as List<dynamic>? ?? const <dynamic>[];
-    return list
-        .map((e) => ExpenseListModel.fromJson(e as Map<String, dynamic>))
-        .toList();
-  }
-
   Future<List<ExpenseListModel>> fetchGroupExpenses(
     String groupId, {
     int page = 1,

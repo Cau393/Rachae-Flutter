@@ -24,7 +24,6 @@ def test_beat_schedule_contains_required_tasks():
     schedule = current_app.conf.beat_schedule
     task_names = {entry["task"] for entry in schedule.values()}
     assert "tasks.currency_tasks.refresh_exchange_rates" in task_names
-    assert "tasks.email_tasks.send_weekly_digest" in task_names
     assert "tasks.s3_tasks.cleanup_orphan_s3_files" in task_names
     assert "tasks.ledger_tasks.run_debt_simplification_all_groups" in task_names
 

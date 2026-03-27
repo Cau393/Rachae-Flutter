@@ -23,6 +23,9 @@ def recalculate_group_ledger(self, group_id: str):
             {uid: str(Decimal(str(balance))) for uid, balance in net_map.items()},
             timeout=3600,
         )
+        cache.delete(f"ledger:balances:{group_id}")
+        cache.delete(f"ledger:simplified:{group_id}")
+        cache.delete(f"rachae:ledger:group:{group_id}:simplified")
 
         member_user_ids = list(
             GroupMember.objects.filter(group_id=group_id).values_list("user_id", flat=True)

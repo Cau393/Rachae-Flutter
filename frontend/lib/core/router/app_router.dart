@@ -16,10 +16,13 @@ import 'package:frontend/features/groups/screens/group_detail_screen.dart';
 import 'package:frontend/features/groups/screens/group_list_screen.dart';
 import 'package:frontend/features/expenses/screens/add_expense_screen.dart';
 import 'package:frontend/features/expenses/screens/expense_detail_screen.dart';
+import 'package:frontend/features/groups/screens/group_add_members_screen.dart';
 import 'package:frontend/features/groups/screens/group_settings_screen.dart';
+import 'package:frontend/features/profile/providers/profile_notifier.dart';
 import 'package:frontend/features/friends/screens/friend_detail_screen.dart';
 import 'package:frontend/features/friends/screens/friends_screen.dart';
 import 'package:frontend/features/settlements/screens/settle_up_screen.dart';
+import 'package:frontend/features/profile/screens/export_screen.dart';
 import 'package:frontend/features/profile/screens/profile_screen.dart';
 import 'package:frontend/features/shell/app_shell.dart';
 
@@ -61,6 +64,31 @@ String? groupSettingsRouteRedirect({
     },
     loading: () => '/groups/$groupId',
     error: (_, _) => '/groups/$groupId',
+  );
+}
+
+/// ADMIN-only guard for `/groups/:groupId/add-members`.
+///
+/// While [detailAsync] is loading or in error, returns `null` so the route can
+/// open (avoids bouncing back to group detail when cache is cold). When detail
+/// is ready, uses [currentUserId] (Django user id preferred — same as
+/// [GroupDetailScreen]) to resolve role; empty [currentUserId] allows navigation
+/// and [GroupAddMembersScreen] enforces access after profile loads.
+String? groupAddMembersRouteRedirect({
+  required String? groupId,
+  required AsyncValue<GroupDetailModel> detailAsync,
+  required String currentUserId,
+}) {
+  if (groupId == null || groupId.isEmpty) return null;
+
+  return detailAsync.when(
+    data: (detail) {
+      if (currentUserId.isEmpty) return null;
+      final role = detail.memberByUserId(currentUserId)?.role ?? 'VIEWER';
+      return role == 'ADMIN' ? null : '/groups/$groupId';
+    },
+    loading: () => null,
+    error: (_, _) => null,
   );
 }
 
@@ -150,6 +178,40 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     ),
                     routes: [
                       GoRoute(
+                        path: 'add-members',
+                        redirect: (context, state) {
+                          final groupId = state.pathParameters['groupId'];
+                          if (groupId == null) return null;
+                          final djangoId = ref
+                              .read(profileNotifierProvider)
+                              .maybeWhen(
+                                data: (p) => p.id,
+                                orElse: () => '',
+                              );
+                          final supabaseUid = ref
+                              .read(authNotifierProvider)
+                              .maybeWhen(
+                                data: (s) => switch (s) {
+                                  AuthStateAuthenticated(:final user) =>
+                                    user.id,
+                                  _ => '',
+                                },
+                                orElse: () => '',
+                              );
+                          final currentUserId =
+                              djangoId.isNotEmpty ? djangoId : supabaseUid;
+                          return groupAddMembersRouteRedirect(
+                            groupId: groupId,
+                            detailAsync:
+                                ref.read(groupDetailProvider(groupId)),
+                            currentUserId: currentUserId,
+                          );
+                        },
+                        builder: (context, state) => GroupAddMembersScreen(
+                          groupId: state.pathParameters['groupId']!,
+                        ),
+                      ),
+                      GoRoute(
                         path: 'settings',
                         redirect: (context, state) {
                           final groupId = state.pathParameters['groupId'];
@@ -185,6 +247,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/profile',
                 builder: (_, _) => const ProfileScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'export',
+                    builder: (_, _) => const ExportScreen(),
+                  ),
+                ],
               ),
             ],
           ),

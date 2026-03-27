@@ -1,11 +1,11 @@
+from collections import defaultdict
 from decimal import Decimal
 from importlib import import_module
 
 from django.db import transaction
-from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 
-from apps.groups.algorithms import run_min_cash_flow
+from apps.ledger.algorithms import compute_group_net_balances, run_min_cash_flow
 from apps.groups.models import Group, GroupMember, GroupRole
 from apps.groups.queries import admin_count, get_group_members, get_membership, get_user_groups
 from apps.users.models import User
@@ -164,6 +164,15 @@ class MemberService:
 
         if (
             actor is not None
+            and actor.id != membership.user_id
+            and membership.user_id == group.created_by_id
+            and membership.role == GroupRole.ADMIN
+            and new_role != GroupRole.ADMIN
+        ):
+            raise ValueError("Cannot demote the group creator.")
+
+        if (
+            actor is not None
             and actor.id == membership.user_id
             and membership.role == GroupRole.ADMIN
             and new_role != GroupRole.ADMIN
@@ -183,6 +192,9 @@ class MemberService:
             raise ValueError("Use the leave endpoint to remove yourself from the group.")
 
         membership = get_object_or_404(GroupMember, group=group, user_id=target_user_id)
+        if membership.user_id == group.created_by_id:
+            raise ValueError("Cannot remove the group creator.")
+
         if membership.role == GroupRole.ADMIN and admin_count(group) == 1:
             raise ValueError("Cannot remove the last admin. Transfer admin role first.")
 
@@ -207,45 +219,15 @@ class MemberService:
 class BalanceService:
     @classmethod
     def group_balances(cls, group: Group) -> dict:
-        try:
-            from apps.expenses.models import Expense
-            from apps.splits.models import Split
-        except ImportError:
-            return {
-                "group_id": group.id,
-                "currency": group.currency,
-                "balances": [],
-            }
-
-        paid_totals = {
-            item["paid_by_id"]: item["total"] or ZERO
-            for item in Expense.objects.filter(
-                group=group,
-                is_deleted=False,
-            )
-            .values("paid_by_id")
-            .annotate(total=Sum("amount_in_group_currency"))
-        }
-        owed_totals = {
-            item["user_id"]: item["total"] or ZERO
-            for item in Split.objects.filter(
-                expense__group=group,
-                expense__is_deleted=False,
-                is_settled=False,
-            )
-            .values("user_id")
-            .annotate(total=Sum("amount_owed"))
-        }
+        net_totals = compute_group_net_balances(str(group.id))
 
         balances = []
         for membership in get_group_members(group):
-            paid = paid_totals.get(membership.user_id, ZERO)
-            owed = owed_totals.get(membership.user_id, ZERO)
             balances.append(
                 {
                     "user_id": membership.user_id,
                     "display_name": membership.user.display_name,
-                    "net_balance": paid - owed,
+                    "net_balance": net_totals.get(str(membership.user_id), ZERO),
                 }
             )
 
@@ -297,16 +279,60 @@ class BalanceService:
 class ReportService:
     @staticmethod
     def group_report(group: Group, date_from=None, date_to=None) -> dict:
-        per_person_spend = [
-            {
-                "user_id": membership.user_id,
-                "display_name": membership.user.display_name,
-                "total_paid": ZERO,
-                "total_owed": ZERO,
-                "net": ZERO,
-            }
-            for membership in get_group_members(group)
-        ]
+        from apps.expenses.models import Expense
+
+        cent = Decimal("0.01")
+        expense_qs = (
+            Expense.objects.filter(group=group, is_deleted=False)
+            .select_related("paid_by")
+            .prefetch_related("splits")
+            .order_by("-expense_date", "-created_at")
+        )
+        if date_from is not None:
+            expense_qs = expense_qs.filter(expense_date__gte=date_from)
+        if date_to is not None:
+            expense_qs = expense_qs.filter(expense_date__lte=date_to)
+
+        total_spent = ZERO
+        expenses_out = []
+        paid_by_user = defaultdict(lambda: ZERO)
+        owed_by_user = defaultdict(lambda: ZERO)
+
+        for expense in expense_qs:
+            ag = Decimal(str(expense.amount_in_group_currency)).quantize(cent)
+            total_spent = (total_spent + ag).quantize(cent)
+            pid = expense.paid_by_id
+            paid_by_user[pid] = (paid_by_user[pid] + ag).quantize(cent)
+            expenses_out.append(
+                {
+                    "description": expense.description,
+                    "amount_in_group_currency": str(ag),
+                    "expense_date": expense.expense_date.isoformat(),
+                    "category": expense.category,
+                }
+            )
+            for split in expense.splits.all():
+                if split.is_deleted:
+                    continue
+                ow = Decimal(str(split.amount_owed)).quantize(cent)
+                uid = split.user_id
+                owed_by_user[uid] = (owed_by_user[uid] + ow).quantize(cent)
+
+        per_person_spend = []
+        for membership in get_group_members(group):
+            uid = membership.user_id
+            tp = paid_by_user[uid].quantize(cent)
+            to_ = owed_by_user[uid].quantize(cent)
+            net = (tp - to_).quantize(cent)
+            per_person_spend.append(
+                {
+                    "user_id": uid,
+                    "display_name": membership.user.display_name,
+                    "total_paid": tp,
+                    "total_owed": to_,
+                    "net": net,
+                }
+            )
 
         try:
             from apps.transactions.models import Transaction
@@ -339,8 +365,8 @@ class ReportService:
             "currency": group.currency,
             "date_from": date_from,
             "date_to": date_to,
-            "total_spent": ZERO,
+            "total_spent": total_spent.quantize(cent),
             "per_person_spend": per_person_spend,
-            "expenses": [],
+            "expenses": expenses_out,
             "settlements": settlements,
         }

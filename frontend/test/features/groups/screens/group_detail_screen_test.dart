@@ -10,7 +10,9 @@ import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
 import 'package:frontend/core/theme/app_theme.dart';
-import 'package:frontend/core/widgets/ad_banner.dart' show AdBanner, AdStatus, adStatusProvider;
+import 'package:frontend/core/widgets/ad_banner.dart' show AdBanner;
+import 'package:frontend/features/profile/models/ads_status_model.dart';
+import 'package:frontend/features/profile/providers/ads_status_provider.dart';
 import 'package:frontend/features/auth/auth_notifier.dart';
 import 'package:frontend/features/auth/auth_state.dart';
 import 'package:frontend/features/dashboard/providers/balance_summary_provider.dart';
@@ -99,6 +101,7 @@ void main() {
     required GroupDetailModel detail,
     required List<GroupMemberModel> members,
     required AuthState authState,
+    List<SettlementSuggestionModel> balanceSuggestions = const [],
   }) {
     return [
       groupDetailProvider(gid).overrideWith((ref) async => detail),
@@ -106,14 +109,16 @@ void main() {
       groupBalancesProvider(gid).overrideWith(
         (ref) async => (
           balances: const <GroupBalanceModel>[],
-          suggestions: const <SettlementSuggestionModel>[],
+          suggestions: balanceSuggestions,
           currency: 'BRL',
         ),
       ),
       authNotifierProvider.overrideWith(() => FakeAuthNotifier(authState)),
       dashboardRepositoryProvider.overrideWithValue(mockDashboard),
       expenseRepositoryProvider.overrideWithValue(mockExpenseRepo),
-      adStatusProvider.overrideWithValue(const AdStatus(isAdFree: false)),
+      adsStatusProvider.overrideWith(
+        (ref) async => const AdsStatusModel(isAdFree: false),
+      ),
     ];
   }
 
@@ -386,6 +391,74 @@ void main() {
       await tester.tap(find.text(l10n.groupDetailTabMembers));
       await tester.pumpAndSettle();
       expect(find.byType(AdBanner), findsNothing);
+    });
+
+    testWidgets(
+        'Balances tab: payer sees Settle up on simplified suggestion row',
+        (tester) async {
+      when(() => mockUser.id).thenReturn(adminUid);
+      final suggestion = SettlementSuggestionModel.fromJson(<String, dynamic>{
+        'payer_id': adminUid,
+        'payer_name': 'AdminPayer',
+        'receiver_id': memberUid,
+        'receiver_name': 'MemberRecv',
+        'amount': '10.00',
+        'currency': 'BRL',
+      });
+      final detail = detailForRole(adminUid, 'ADMIN');
+      final router = buildRouter();
+      await pumpDetail(
+        tester,
+        router: router,
+        overrides: baseOverrides(
+          detail: detail,
+          members: detail.members,
+          authState: AuthState.authenticated(user: mockUser),
+          balanceSuggestions: [suggestion],
+        ),
+      );
+
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(GroupDetailScreen)),
+      )!;
+      await tester.tap(find.text(l10n.groupDetailTabBalances));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.groupDetailSettleUp), findsOneWidget);
+    });
+
+    testWidgets(
+        'Balances tab: non-payer does not see Settle up on simplified row',
+        (tester) async {
+      when(() => mockUser.id).thenReturn(memberUid);
+      final suggestion = SettlementSuggestionModel.fromJson(<String, dynamic>{
+        'payer_id': adminUid,
+        'payer_name': 'AdminPayer',
+        'receiver_id': memberUid,
+        'receiver_name': 'MemberRecv',
+        'amount': '10.00',
+        'currency': 'BRL',
+      });
+      final detail = detailForRole(memberUid, 'MEMBER');
+      final router = buildRouter();
+      await pumpDetail(
+        tester,
+        router: router,
+        overrides: baseOverrides(
+          detail: detail,
+          members: detail.members,
+          authState: AuthState.authenticated(user: mockUser),
+          balanceSuggestions: [suggestion],
+        ),
+      );
+
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(GroupDetailScreen)),
+      )!;
+      await tester.tap(find.text(l10n.groupDetailTabBalances));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.groupDetailSettleUp), findsNothing);
     });
   });
 }

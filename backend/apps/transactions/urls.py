@@ -5,12 +5,17 @@ from apps.transactions.views import (
     TransactionDetailView,
     TransactionDisputeView,
     TransactionListCreateView,
+    TransactionOffsetCreditPreviewView,
     TransactionProofConfirmView,
     TransactionProofUploadURLView,
 )
 
 urlpatterns = [
     path("transactions/", TransactionListCreateView.as_view()),
+    path(
+        "transactions/offset-credit-preview/",
+        TransactionOffsetCreditPreviewView.as_view(),
+    ),
     path(
         "transactions/<uuid:transaction_id>/proof-upload-url/",
         TransactionProofUploadURLView.as_view(),

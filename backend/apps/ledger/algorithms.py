@@ -62,11 +62,7 @@ def compute_group_net_balances(group_id: str) -> dict[str, Decimal]:
     from apps.expenses.models import Expense
     from apps.groups.models import GroupMember
     from apps.splits.models import Split
-    Transaction = None
-    try:
-        from apps.transactions.models import Transaction
-    except ImportError:
-        pass
+    from apps.transactions.models import Transaction
 
     result: dict[str, Decimal] = {}
 
@@ -78,7 +74,7 @@ def compute_group_net_balances(group_id: str) -> dict[str, Decimal]:
     for member in members:
         user = member.user
 
-        paid = (
+        paid_expenses = (
             Expense.objects.filter(
                 group_id=group_id,
                 paid_by=user,
@@ -86,34 +82,31 @@ def compute_group_net_balances(group_id: str) -> dict[str, Decimal]:
             ).aggregate(total=Sum("amount_in_group_currency"))["total"]
         ) or Decimal("0")
 
-        owed = (
+        owed_splits = (
             Split.objects.filter(
                 expense__group_id=group_id,
                 expense__is_deleted=False,
                 user=user,
-                is_settled=False,
             ).aggregate(total=Sum("amount_owed"))["total"]
         ) or Decimal("0")
 
-        received_confirmed = Decimal("0")
-        paid_confirmed = Decimal("0")
-        if Transaction is not None:
-            received_confirmed = (
-                Transaction.objects.filter(
-                    group_id=group_id,
-                    receiver=user,
-                    is_confirmed=True,
-                ).aggregate(total=Sum("amount"))["total"]
-            ) or Decimal("0")
-            paid_confirmed = (
-                Transaction.objects.filter(
-                    group_id=group_id,
-                    payer=user,
-                    is_confirmed=True,
-                ).aggregate(total=Sum("amount"))["total"]
-            ) or Decimal("0")
+        paid_txns = (
+            Transaction.objects.filter(
+                group_id=group_id,
+                payer=user,
+                is_disputed=False,
+            ).aggregate(total=Sum("amount"))["total"]
+        ) or Decimal("0")
 
-        result[str(user.id)] = paid - owed + received_confirmed - paid_confirmed
+        received_txns = (
+            Transaction.objects.filter(
+                group_id=group_id,
+                receiver=user,
+                is_disputed=False,
+            ).aggregate(total=Sum("amount"))["total"]
+        ) or Decimal("0")
+
+        result[str(user.id)] = (paid_expenses + paid_txns) - (owed_splits + received_txns)
 
     return result
 

@@ -1,1 +1,6 @@
 include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    # dart:html / dart:js_util — analyzed only when compiling for web.
+    - lib/features/ads/widgets/web_sidebar_ad_web.dart

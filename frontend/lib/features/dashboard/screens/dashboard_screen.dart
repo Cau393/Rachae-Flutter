@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:frontend/core/widgets/ad_banner.dart';
+import 'package:frontend/features/dashboard/dashboard_refresh.dart';
 import 'package:frontend/features/dashboard/models/balance_summary_model.dart';
-import 'package:frontend/features/dashboard/providers/activity_feed_provider.dart';
 import 'package:frontend/features/dashboard/providers/balance_summary_provider.dart';
 import 'package:frontend/features/dashboard/providers/dashboard_shortcuts_providers.dart';
 import 'package:frontend/features/dashboard/widgets/activity_feed.dart';
 import 'package:frontend/features/dashboard/widgets/balance_summary_card.dart';
+import 'package:frontend/features/profile/providers/ads_status_provider.dart';
 import 'package:frontend/src/l10n/generated/app_localizations.dart';
 
 extension DashboardScreenL10n on BuildContext {
@@ -33,22 +35,29 @@ class DashboardScreen extends ConsumerWidget {
         tooltip: context.l10n.dashboardAddExpense,
         child: const Icon(Icons.add),
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(balanceSummaryProvider);
-          ref.invalidate(activityFeedProvider);
-          ref.invalidate(pendingIncomingSettlementsProvider);
-          ref.invalidate(pendingOutgoingSettlementsProvider);
-          ref.invalidate(pairwiseBalancesProvider);
-          ref.invalidate(owedToMeExpensesProvider);
-          await Future.wait([
-            ref.read(balanceSummaryProvider.future),
-            ref.read(activityFeedProvider.future),
-          ]);
-        },
-        child: _buildBody(context, ref, balanceAsync),
+      body: Column(
+        children: [
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () => refreshDashboardData(ref),
+              child: _buildBody(context, ref, balanceAsync),
+            ),
+          ),
+          _dashboardAdSlot(ref),
+        ],
       ),
     );
+  }
+
+  /// Only mount [AdBanner] when ads status is known and user is not ad-free, so
+  /// premium users have no [AdBanner] in the subtree (see placement guard tests).
+  /// On web, [AdBanner] itself reserves no space (see ad_banner_widget.dart).
+  Widget _dashboardAdSlot(WidgetRef ref) {
+    return ref.watch(adsStatusProvider).maybeWhen(
+          data: (status) =>
+              status.isAdFree ? const SizedBox.shrink() : const AdBanner(),
+          orElse: () => const SizedBox.shrink(),
+        );
   }
 
   Widget _buildBody(
@@ -63,7 +72,6 @@ class DashboardScreen extends ConsumerWidget {
             ? constraints.maxHeight
             : MediaQuery.sizeOf(context).height;
 
-        final l10n = context.l10n;
         if (wide) {
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -83,7 +91,7 @@ class DashboardScreen extends ConsumerWidget {
                             children: [
                               BalanceSummaryCard(model: m),
                               const SizedBox(height: 12),
-                              _DashboardShortcuts(l10n: l10n),
+                              const _DashboardShortcuts(),
                             ],
                           ),
                           loading: () => const _BalanceCardSkeleton(),
@@ -105,63 +113,106 @@ class DashboardScreen extends ConsumerWidget {
           );
         }
 
-        return CustomScrollView(
+        // NestedScrollView links header + activity list into one scrollable axis (fixes
+        // nested CustomScrollView + inner ListView gesture/scroll issues on mobile web).
+        return NestedScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              sliver: SliverToBoxAdapter(
-                child: balanceAsync.when(
-                  data: (m) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      BalanceSummaryCard(model: m),
-                      const SizedBox(height: 12),
-                      _DashboardShortcuts(l10n: l10n),
-                    ],
+          headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+            return [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                sliver: SliverToBoxAdapter(
+                  child: balanceAsync.when(
+                    data: (m) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        BalanceSummaryCard(model: m),
+                        const SizedBox(height: 12),
+                        const _DashboardShortcuts(),
+                      ],
+                    ),
+                    loading: () => const _BalanceCardSkeleton(),
+                    error: (Object e, StackTrace st) =>
+                        const _BalanceErrorWidget(),
                   ),
-                  loading: () => const _BalanceCardSkeleton(),
-                  error: (Object e, StackTrace st) => const _BalanceErrorWidget(),
                 ),
               ),
+            ];
+          },
+          body: ColoredBox(
+            color: Theme.of(context).colorScheme.surface,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              child: const ActivityFeed(linkedPrimaryScroll: true),
             ),
-            SliverFillRemaining(
-              hasScrollBody: true,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                child: ActivityFeed(),
-              ),
-            ),
-          ],
+          ),
         );
       },
     );
   }
 }
 
-class _DashboardShortcuts extends StatelessWidget {
-  const _DashboardShortcuts({required this.l10n});
+class _DashboardShortcuts extends ConsumerWidget {
+  const _DashboardShortcuts();
 
-  final AppLocalizations l10n;
+  int _pendingCount<T>(AsyncValue<List<T>> async) {
+    return async.maybeWhen(data: (list) => list.length, orElse: () => 0);
+  }
+
+  Widget _badgedButton({
+    required BuildContext context,
+    required int count,
+    required VoidCallback onPressed,
+    required String label,
+  }) {
+    final button = SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        child: Text(label, textAlign: TextAlign.center),
+      ),
+    );
+    if (count <= 0) return button;
+    return Badge(
+      label: Text('$count'),
+      child: button,
+    );
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final incoming = ref.watch(pendingIncomingSettlementsProvider);
+    final owed = ref.watch(owedToMeExpensesProvider);
+    final pairwiseAsync = ref.watch(pairwiseBalancesProvider);
+    final iOweThemCount = pairwiseAsync.maybeWhen(
+      data: (list) =>
+          list.where((r) => r.balanceAsMoneyAmount.isNegative).length,
+      orElse: () => 0,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        OutlinedButton(
+        _badgedButton(
+          context: context,
+          count: _pendingCount(incoming),
           onPressed: () => context.push('/dashboard/pending-approvals'),
-          child: Text(l10n.dashboardShortcutPendingApprovals),
+          label: l10n.dashboardShortcutPendingApprovals,
         ),
         const SizedBox(height: 8),
-        OutlinedButton(
+        _badgedButton(
+          context: context,
+          count: _pendingCount(owed),
           onPressed: () => context.push('/dashboard/owed-to-me'),
-          child: Text(l10n.dashboardShortcutOwedToYou),
+          label: l10n.dashboardShortcutOwedToYou,
         ),
         const SizedBox(height: 8),
-        OutlinedButton(
+        _badgedButton(
+          context: context,
+          count: iOweThemCount,
           onPressed: () => context.push('/dashboard/pending-settlements'),
-          child: Text(l10n.dashboardShortcutPendingSettlements),
+          label: l10n.dashboardShortcutPendingSettlements,
         ),
       ],
     );

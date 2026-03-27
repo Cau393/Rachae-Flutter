@@ -29,9 +29,9 @@ def test_create_notification_without_actor(notification_user):
 
     notif = NotificationService.create(
         recipient=notification_user,
-        notification_type="weekly_digest",
-        title="Resumo semanal",
-        body="Você deve R$50",
+        notification_type="settlement_recorded",
+        title="Pagamento registrado",
+        body="Você recebeu R$50",
     )
     assert notif.actor is None
 
@@ -111,7 +111,7 @@ def test_get_or_create_returns_defaults(notification_user):
 
     pref = PreferenceService.get_or_create(notification_user)
     assert pref.push_expense_created is True
-    assert pref.email_weekly_digest is True
+    assert pref.email_expense_created is True
 
 
 @pytest.mark.django_db
@@ -130,10 +130,10 @@ def test_update_preferences_persists_changes(notification_user):
     pref = PreferenceService.get_or_create(notification_user)
     PreferenceService.update(
         pref,
-        {"email_weekly_digest": False, "push_expense_created": False},
+        {"email_settlement_recorded": False, "push_expense_created": False},
     )
     pref.refresh_from_db()
-    assert pref.email_weekly_digest is False
+    assert pref.email_settlement_recorded is False
     assert pref.push_expense_created is False
     assert pref.push_settlement_recorded is True
 

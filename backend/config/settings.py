@@ -5,7 +5,6 @@ from pathlib import Path
 
 import dj_database_url
 import environ
-import ssl
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 ROOT_DIR = BASE_DIR.parent
@@ -114,19 +113,37 @@ if DATABASES["default"]["ENGINE"] == "django.db.backends.postgresql":
     DATABASES["default"].setdefault("OPTIONS", {})
     DATABASES["default"]["OPTIONS"].setdefault("connect_timeout", 5)
 
+
+def _normalize_redis_url(url: str) -> str:
+    """Map legacy SSL query flags to redis-py 7+ allowed strings (none/optional/required).
+
+    Hosts often append ``ssl_cert_reqs=CERT_NONE``; redis treats that as an invalid *string*
+    (only ``none`` is valid), raising ``Invalid SSL Certificate Requirements Flag: CERT_NONE``.
+    """
+    for old, new in (
+        ("ssl_cert_reqs=CERT_NONE", "ssl_cert_reqs=none"),
+        ("ssl_cert_reqs=CERT_OPTIONAL", "ssl_cert_reqs=optional"),
+        ("ssl_cert_reqs=CERT_REQUIRED", "ssl_cert_reqs=required"),
+    ):
+        if old in url:
+            url = url.replace(old, new)
+    return url
+
+
 # Redis + Celery
-REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+REDIS_URL = _normalize_redis_url(os.environ.get("REDIS_URL", "redis://localhost:6379/0"))
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': REDIS_URL,
-        'KEY_PREFIX': 'rachae',
-        'TIMEOUT': 300,
-    }
+_default_cache = {
+    "BACKEND": "django.core.cache.backends.redis.RedisCache",
+    "LOCATION": REDIS_URL,
+    "KEY_PREFIX": "rachae",
+    "TIMEOUT": 300,
 }
+if REDIS_URL.startswith("rediss://"):
+    _default_cache["OPTIONS"] = {"ssl_cert_reqs": "none"}
+CACHES = {"default": _default_cache}
 if TESTING:
     CACHES = {
         "default": {
@@ -136,13 +153,12 @@ if TESTING:
         }
     }
 
-# External services
+# External services — Brevo transactional template IDs (numeric), not marketing campaign IDs.
+# Example test IDs from Brevo UI: expense=4, settlement recorded=5, confirmed=6.
 BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '')
 BREVO_EXPENSE_NOTIFICATION_TEMPLATE_ID_PT_BR = int(os.environ.get('BREVO_EXPENSE_NOTIFICATION_TEMPLATE_ID_PT_BR', 0))
 BREVO_SETTLEMENT_RECORDED_TEMPLATE_ID_PT_BR = int(os.environ.get('BREVO_SETTLEMENT_RECORDED_TEMPLATE_ID_PT_BR', 0))
 BREVO_SETTLEMENT_CONFIRMED_TEMPLATE_ID_PT_BR = int(os.environ.get('BREVO_SETTLEMENT_CONFIRMED_TEMPLATE_ID_PT_BR', 0))
-BREVO_INVITATION_TEMPLATE_ID_PT_BR = int(os.environ.get('BREVO_INVITATION_TEMPLATE_ID_PT_BR', 0))
-BREVO_WEEKLY_DIGEST_TEMPLATE_ID_PT_BR = int(os.environ.get('BREVO_WEEKLY_DIGEST_TEMPLATE_ID_PT_BR', 0))
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://app.rachae.app')
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', '')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', '')
@@ -212,13 +228,15 @@ REST_FRAMEWORK = {
 
 SUPABASE_ISSUER = f"{SUPABASE_URL}/auth/v1"
 
-# TLS for Redis (Upstash / secure Redis)
+# TLS for Redis (Upstash / secure Redis).
+# redis-py 7+ validates ssl_cert_reqs only for strings "none" | "optional" | "required"
+# (see redis.connection.SSLConnection); ssl.CERT_NONE can surface as invalid "CERT_NONE".
 CELERY_BROKER_USE_SSL = {
-    "ssl_cert_reqs": ssl.CERT_NONE
+    "ssl_cert_reqs": "none",
 }
 
 CELERY_REDIS_BACKEND_USE_SSL = {
-    "ssl_cert_reqs": ssl.CERT_NONE
+    "ssl_cert_reqs": "none",
 }
 
 # Task execution behaviour

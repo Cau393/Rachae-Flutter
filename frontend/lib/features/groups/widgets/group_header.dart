@@ -6,9 +6,10 @@ import 'package:frontend/features/groups/models/group_member_model.dart';
 import 'package:frontend/src/l10n/generated/app_localizations.dart';
 
 class GroupHeader extends StatelessWidget {
-  const GroupHeader({super.key, required this.model});
+  const GroupHeader({super.key, required this.model, this.balanceChip});
 
   final GroupDetailModel model;
+  final Widget? balanceChip;
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +33,10 @@ class GroupHeader extends StatelessWidget {
                     style: theme.textTheme.headlineSmall,
                   ),
                 ),
+                if (balanceChip != null) ...[
+                  balanceChip!,
+                  const SizedBox(width: 8),
+                ],
                 Chip(
                   label: Text(model.currency),
                 ),

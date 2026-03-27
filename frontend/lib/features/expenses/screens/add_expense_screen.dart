@@ -25,6 +25,7 @@ import 'package:frontend/features/friends/models/friend_model.dart';
 import 'package:frontend/features/friends/providers/friends_provider.dart';
 import 'package:frontend/features/groups/models/group_member_model.dart';
 import 'package:frontend/features/groups/providers/group_detail_provider.dart';
+import 'package:frontend/features/groups/providers/group_list_provider.dart';
 import 'package:frontend/features/groups/widgets/currency_dropdown.dart';
 import 'package:frontend/src/l10n/generated/app_localizations.dart';
 
@@ -142,6 +143,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
     }
     ref.invalidate(balanceSummaryProvider);
     ref.invalidate(activityFeedProvider);
+    ref.invalidate(groupListProvider);
 
     if (!mounted) return;
     _exitScreen(groupId);

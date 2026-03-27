@@ -98,6 +98,10 @@ void main() {
 
       final subDetail = container.listen(groupDetailProvider(gid), (_, _) {});
       final subMembers = container.listen(groupMembersProvider(gid), (_, _) {});
+      final subSettings = container.listen(
+        groupSettingsNotifierProvider(gid),
+        (_, _) {},
+      );
 
       await container.read(groupDetailProvider(gid).future);
       await container.read(groupMembersProvider(gid).future);
@@ -112,8 +116,36 @@ void main() {
 
       subDetail.close();
       subMembers.close();
+      subSettings.close();
     },
   );
+
+  test('addMembersBatch calls addMember for each id and collects failures', () async {
+    final member = GroupMemberModel.fromJson({
+      'user_id': 'u1',
+      'display_name': 'A',
+      'avatar_url': null,
+      'role': 'MEMBER',
+      'joined_at': '2025-01-01T00:00:00.000Z',
+      'invited_by': null,
+    });
+    when(() => mockRepo.addMember(gid, 'u1', 'MEMBER'))
+        .thenAnswer((_) async => member);
+    when(() => mockRepo.addMember(gid, 'u2', 'MEMBER')).thenAnswer(
+      (_) => Future<GroupMemberModel>.error(
+        const ApiException(statusCode: 400, message: 'bad'),
+      ),
+    );
+
+    final result = await container
+        .read(groupSettingsNotifierProvider(gid).notifier)
+        .addMembersBatch(<String>['u1', 'u2']);
+
+    expect(result.addedCount, 1);
+    expect(result.failedUserIds, <String>['u2']);
+    verify(() => mockRepo.addMember(gid, 'u1', 'MEMBER')).called(1);
+    verify(() => mockRepo.addMember(gid, 'u2', 'MEMBER')).called(1);
+  });
 
   test('repository error yields AsyncError without rethrowing from method', () async {
     when(() => mockRepo.changeMemberRole(gid, any(), any())).thenAnswer(
@@ -122,9 +154,14 @@ void main() {
       ),
     );
 
+    final subSettings = container.listen(
+      groupSettingsNotifierProvider(gid),
+      (_, _) {},
+    );
     await container
         .read(groupSettingsNotifierProvider(gid).notifier)
         .changeMemberRole('u', 'MEMBER');
+    subSettings.close();
 
     final state = container.read(groupSettingsNotifierProvider(gid));
     expect(state, isA<AsyncError<void>>());

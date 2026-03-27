@@ -1,8 +1,12 @@
+from datetime import date
+from decimal import Decimal
 from unittest.mock import patch
 
 from django.test import TestCase
 
+from apps.expenses.models import Expense, SplitMethod
 from apps.groups.models import Group, GroupMember, GroupRole
+from apps.splits.models import Split
 
 from .base import GroupTestMixin
 
@@ -106,6 +110,83 @@ class GroupViewTests(GroupTestMixin, TestCase):
         self.assertEqual(balances_response.status_code, 200)
         self.assertEqual(report_response.status_code, 200)
 
+    def test_report_includes_expenses_and_per_person_totals(self):
+        expense = Expense.objects.create(
+            group=self.group,
+            paid_by=self.user,
+            created_by=self.user,
+            amount=Decimal("40.00"),
+            currency="BRL",
+            exchange_rate_to_group_currency=Decimal("1.000000"),
+            amount_in_group_currency=Decimal("40.00"),
+            description="Groceries",
+            category="comida",
+            expense_date=date(2025, 6, 1),
+            split_method=SplitMethod.EQUAL,
+        )
+        Split.objects.create(expense=expense, user=self.user, amount_owed=Decimal("20.00"))
+        Split.objects.create(expense=expense, user=self.member_user, amount_owed=Decimal("20.00"))
+
+        self.authenticate(self.viewer_user)
+        response = self.client.get(f"/api/v1/groups/{self.group.id}/report/")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(Decimal(str(payload["total_spent"])), Decimal("40.00"))
+        self.assertEqual(len(payload["expenses"]), 1)
+        self.assertEqual(payload["expenses"][0]["description"], "Groceries")
+        self.assertEqual(
+            Decimal(str(payload["expenses"][0]["amount_in_group_currency"])),
+            Decimal("40.00"),
+        )
+        by_uid = {str(row["user_id"]): row for row in payload["per_person_spend"]}
+        self.assertEqual(Decimal(str(by_uid[str(self.user.id)]["total_paid"])), Decimal("40.00"))
+        self.assertEqual(Decimal(str(by_uid[str(self.user.id)]["total_owed"])), Decimal("20.00"))
+        self.assertEqual(Decimal(str(by_uid[str(self.user.id)]["net"])), Decimal("20.00"))
+        self.assertEqual(Decimal(str(by_uid[str(self.member_user.id)]["total_paid"])), Decimal("0.00"))
+        self.assertEqual(Decimal(str(by_uid[str(self.member_user.id)]["total_owed"])), Decimal("20.00"))
+        self.assertEqual(Decimal(str(by_uid[str(self.member_user.id)]["net"])), Decimal("-20.00"))
+
+    def test_report_date_filters_exclude_expenses_outside_range(self):
+        inside = Expense.objects.create(
+            group=self.group,
+            paid_by=self.user,
+            created_by=self.user,
+            amount=Decimal("10.00"),
+            currency="BRL",
+            exchange_rate_to_group_currency=Decimal("1.000000"),
+            amount_in_group_currency=Decimal("10.00"),
+            description="In range",
+            category="geral",
+            expense_date=date(2025, 3, 15),
+            split_method=SplitMethod.EQUAL,
+        )
+        Split.objects.create(expense=inside, user=self.user, amount_owed=Decimal("10.00"))
+        outside = Expense.objects.create(
+            group=self.group,
+            paid_by=self.user,
+            created_by=self.user,
+            amount=Decimal("99.00"),
+            currency="BRL",
+            exchange_rate_to_group_currency=Decimal("1.000000"),
+            amount_in_group_currency=Decimal("99.00"),
+            description="Out of range",
+            category="geral",
+            expense_date=date(2024, 1, 1),
+            split_method=SplitMethod.EQUAL,
+        )
+        Split.objects.create(expense=outside, user=self.user, amount_owed=Decimal("99.00"))
+
+        self.authenticate(self.viewer_user)
+        response = self.client.get(
+            f"/api/v1/groups/{self.group.id}/report/",
+            {"from": "2025-03-01", "to": "2025-03-31"},
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(Decimal(str(payload["total_spent"])), Decimal("10.00"))
+        self.assertEqual(len(payload["expenses"]), 1)
+        self.assertEqual(payload["expenses"][0]["description"], "In range")
+
     def test_viewer_is_blocked_on_write_endpoints(self):
         self.authenticate(self.viewer_user)
 
@@ -207,7 +288,41 @@ class GroupViewTests(GroupTestMixin, TestCase):
                 user=self.member_user
             ).exists()
         )
-    
+
+    def test_secondary_admin_cannot_remove_group_creator(self):
+        mu = GroupMember.objects.get(group=self.group, user=self.member_user)
+        mu.role = GroupRole.ADMIN
+        mu.save(update_fields=["role"])
+        self.authenticate(self.member_user)
+
+        response = self.client.delete(
+            f"/api/v1/groups/{self.group.id}/members/{self.user.id}/"
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(
+            "creator",
+            str(response.json()).lower(),
+        )
+
+    def test_secondary_admin_cannot_demote_group_creator(self):
+        mu = GroupMember.objects.get(group=self.group, user=self.member_user)
+        mu.role = GroupRole.ADMIN
+        mu.save(update_fields=["role"])
+        self.authenticate(self.member_user)
+
+        response = self.client.patch(
+            f"/api/v1/groups/{self.group.id}/members/{self.user.id}/",
+            data={"role": GroupRole.VIEWER},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(
+            "creator",
+            str(response.json()).lower(),
+        )
+
     def test_group_balances_endpoint(self):
         self.authenticate(self.member_user)
 

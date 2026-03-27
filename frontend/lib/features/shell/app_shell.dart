@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:frontend/core/widgets/ad_banner.dart';
+import 'package:frontend/features/dashboard/dashboard_refresh.dart';
 import 'package:frontend/src/l10n/generated/app_localizations.dart';
 
 class AppShell extends ConsumerWidget {
@@ -23,8 +23,13 @@ class AppShell extends ConsumerWidget {
   final Widget child;
   final int currentIndex;
 
-  void _goToTab(BuildContext context, int index) {
+  void _onTabSelected(BuildContext context, WidgetRef ref, int index) {
     context.go(tabRoutes[index]);
+    if (index == 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        refreshDashboardData(ref);
+      });
+    }
   }
 
   @override
@@ -42,12 +47,8 @@ class AppShell extends ConsumerWidget {
               children: [
                 NavigationRail(
                   selectedIndex: currentIndex,
-                  onDestinationSelected: (i) => _goToTab(context, i),
+                  onDestinationSelected: (i) => _onTabSelected(context, ref, i),
                   labelType: NavigationRailLabelType.all,
-                  trailing: const SizedBox(
-                    width: 72,
-                    child: AdBanner(),
-                  ),
                   destinations: [
                     NavigationRailDestination(
                       icon: const Icon(Icons.home),
@@ -74,15 +75,10 @@ class AppShell extends ConsumerWidget {
         }
 
         return Scaffold(
-          body: Column(
-            children: [
-              Expanded(child: child),
-              const AdBanner(),
-            ],
-          ),
+          body: child,
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: currentIndex,
-            onTap: (i) => _goToTab(context, i),
+            onTap: (i) => _onTabSelected(context, ref, i),
             type: BottomNavigationBarType.fixed,
             items: [
               BottomNavigationBarItem(

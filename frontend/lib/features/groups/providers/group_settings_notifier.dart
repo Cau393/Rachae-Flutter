@@ -2,7 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:frontend/features/groups/providers/group_detail_provider.dart';
 import 'package:frontend/features/groups/providers/group_list_provider.dart';
-import 'package:frontend/features/groups/providers/group_members_provider.dart';
+import 'package:frontend/features/groups/providers/group_members_provider.dart'
+    show friendsNotInGroupProvider, groupMembersProvider;
 import 'package:frontend/features/groups/providers/group_repository_provider.dart';
 
 /// Optional snackbar after successful save — overridden at app level.
@@ -19,6 +20,17 @@ final groupSettingsNotifierProvider =
     AsyncNotifierProvider.autoDispose.family<GroupSettingsNotifier, void, String>(
   GroupSettingsNotifier.new,
 );
+
+/// Outcome of [GroupSettingsNotifier.addMembersBatch].
+class AddMembersBatchResult {
+  const AddMembersBatchResult({
+    required this.addedCount,
+    required this.failedUserIds,
+  });
+
+  final int addedCount;
+  final List<String> failedUserIds;
+}
 
 class GroupSettingsNotifier extends AsyncNotifier<void> {
   GroupSettingsNotifier(this.groupId);
@@ -73,10 +85,40 @@ class GroupSettingsNotifier extends AsyncNotifier<void> {
           .read(groupRepositoryProvider)
           .addMember(groupId, userId, role);
       ref.invalidate(groupMembersProvider(groupId));
+      ref.invalidate(groupDetailProvider(groupId));
+      ref.invalidate(friendsNotInGroupProvider(groupId));
       state = const AsyncData<void>(null);
     } catch (e, s) {
       state = AsyncError<void>(e, s);
     }
+  }
+
+  /// Adds each user as MEMBER; collects failures without aborting the rest.
+  Future<AddMembersBatchResult> addMembersBatch(List<String> userIds) async {
+    if (userIds.isEmpty) {
+      return const AddMembersBatchResult(addedCount: 0, failedUserIds: []);
+    }
+    state = const AsyncLoading<void>();
+    final repo = ref.read(groupRepositoryProvider);
+    final failedUserIds = <String>[];
+    var addedCount = 0;
+    for (final id in userIds) {
+      try {
+        await repo.addMember(groupId, id, 'MEMBER');
+        addedCount++;
+      } catch (_) {
+        failedUserIds.add(id);
+      }
+    }
+    ref.invalidate(groupMembersProvider(groupId));
+    ref.invalidate(groupDetailProvider(groupId));
+    ref.invalidate(friendsNotInGroupProvider(groupId));
+    ref.invalidate(groupListProvider);
+    state = const AsyncData<void>(null);
+    return AddMembersBatchResult(
+      addedCount: addedCount,
+      failedUserIds: failedUserIds,
+    );
   }
 
   Future<void> changeMemberRole(String userId, String role) async {

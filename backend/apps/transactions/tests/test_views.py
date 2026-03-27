@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from django.test import TestCase, override_settings
 
+from apps.groups.models import GroupRole
 from apps.transactions.models import Transaction
 from core.models import AuditLog
 
@@ -12,6 +13,7 @@ class TransactionViewTests(TransactionTestMixin, TestCase):
     @patch("tasks.email_tasks.send_settlement_confirmation.delay")
     def test_post_transactions_returns_201_with_pending_transaction(self, mock_delay):
         self.authenticate(self.user)
+        self.make_user_owes_member(owed="20.00")
 
         with self.captureOnCommitCallbacks(execute=True):
             response = self.client.post(
@@ -27,14 +29,72 @@ class TransactionViewTests(TransactionTestMixin, TestCase):
 
         self.assertEqual(response.status_code, 201)
         payload = response.json()["data"]
-        transaction = Transaction.objects.get(id=payload["id"])
+        self.assertEqual(len(payload), 1)
+        created = payload[0]
+        transaction = Transaction.objects.get(id=created["id"])
 
-        self.assertFalse(payload["is_confirmed"])
-        self.assertFalse(payload["is_disputed"])
-        self.assertEqual(payload["payer"]["user_id"], str(self.user.id))
-        self.assertEqual(payload["receiver"]["user_id"], str(self.member_user.id))
+        self.assertFalse(created["is_confirmed"])
+        self.assertFalse(created["is_disputed"])
+        self.assertEqual(created["payer"]["user_id"], str(self.user.id))
+        self.assertEqual(created["receiver"]["user_id"], str(self.member_user.id))
         self.assertEqual(transaction.amount, transaction.amount.__class__("15.00"))
         self.assertEqual(mock_delay.call_count, 1)
+
+    @patch("tasks.email_tasks.send_settlement_confirmation.delay")
+    def test_post_transactions_rejects_amount_above_owed(self, mock_delay):
+        self.authenticate(self.user)
+        self.make_user_owes_member(owed="5.00")
+
+        response = self.client.post(
+            "/api/v1/transactions/",
+            data={
+                "receiver_id": str(self.member_user.id),
+                "group_id": str(self.group.id),
+                "amount": "10.00",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(
+            "Amount exceeds what you owe",
+            str(response.json().get("detail", "")),
+        )
+        mock_delay.assert_not_called()
+
+    @patch("tasks.email_tasks.send_settlement_confirmation.delay")
+    def test_post_transactions_without_group_returns_waterfall_payload(self, mock_delay):
+        self.authenticate(self.user)
+        self.make_user_owes_member(owed="20.00")
+
+        personal_expense = self.create_expense(
+            group=None,
+            paid_by=self.member_user,
+            amount="20.00",
+            amount_in_group_currency="20.00",
+        )
+        self.create_split(personal_expense, self.member_user, "10.00")
+        self.create_split(personal_expense, self.user, "10.00")
+
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                "/api/v1/transactions/",
+                data={
+                    "receiver_id": str(self.member_user.id),
+                    "amount": "25.00",
+                    "proof_urls": ["transactions/proofs/p1.jpg"],
+                },
+                format="json",
+            )
+
+        self.assertEqual(response.status_code, 201)
+        data = response.json()["data"]
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]["group_id"], str(self.group.id))
+        self.assertIsNone(data[1]["group_id"])
+        self.assertEqual(data[0]["proof_urls"], ["transactions/proofs/p1.jpg"])
+        self.assertEqual(data[1]["proof_urls"], ["transactions/proofs/p1.jpg"])
+        self.assertEqual(mock_delay.call_count, 2)
 
     @patch("tasks.email_tasks.send_settlement_confirmation.delay")
     def test_post_transactions_rejects_self_payment(self, mock_delay):
@@ -74,6 +134,84 @@ class TransactionViewTests(TransactionTestMixin, TestCase):
             "Receiver is not a member of this group.",
         )
         mock_delay.assert_not_called()
+
+    @patch("tasks.email_tasks.send_settlement_confirmation.delay")
+    def test_post_transactions_is_offset_returns_two_transactions(self, mock_delay):
+        self.authenticate(self.user)
+        self.make_user_owes_member(owed="20.00")
+        other_group = self.create_group(name="Other")
+        self.add_membership(other_group, self.user, GroupRole.MEMBER)
+        self.add_membership(other_group, self.member_user, GroupRole.MEMBER)
+        other_expense = self.create_expense(
+            group=other_group,
+            paid_by=self.user,
+            amount="60.00",
+            amount_in_group_currency="60.00",
+        )
+        self.create_split(other_expense, self.member_user, "30.00")
+        self.create_split(other_expense, self.user, "30.00")
+
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                "/api/v1/transactions/",
+                data={
+                    "receiver_id": str(self.member_user.id),
+                    "group_id": str(self.group.id),
+                    "amount": "12.00",
+                    "is_offset": True,
+                },
+                format="json",
+            )
+
+        self.assertEqual(response.status_code, 201)
+        data = response.json()["data"]
+        self.assertEqual(len(data), 2)
+        self.assertEqual(mock_delay.call_count, 2)
+
+    def test_post_transactions_is_offset_without_group_returns_400(self):
+        self.authenticate(self.user)
+        self.make_user_owes_member(owed="20.00")
+
+        response = self.client.post(
+            "/api/v1/transactions/",
+            data={
+                "receiver_id": str(self.member_user.id),
+                "amount": "5.00",
+                "is_offset": True,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("group_id", response.json())
+
+    def test_get_offset_credit_preview_returns_credit(self):
+        self.authenticate(self.user)
+        self.make_user_owes_member(owed="20.00")
+        other_group = self.create_group(name="Other")
+        self.add_membership(other_group, self.user, GroupRole.MEMBER)
+        self.add_membership(other_group, self.member_user, GroupRole.MEMBER)
+        other_expense = self.create_expense(
+            group=other_group,
+            paid_by=self.user,
+            amount="60.00",
+            amount_in_group_currency="60.00",
+        )
+        self.create_split(other_expense, self.member_user, "30.00")
+        self.create_split(other_expense, self.user, "30.00")
+
+        response = self.client.get(
+            "/api/v1/transactions/offset-credit-preview/",
+            {
+                "with_user": str(self.member_user.id),
+                "exclude_group": str(self.group.id),
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()["data"]
+        self.assertEqual(body["credit"], "30.00")
+        self.assertEqual(body["currency"], "BRL")
 
     def test_list_transactions_returns_only_involved_transactions(self):
         included = self.create_transaction(payer=self.user, receiver=self.member_user, amount="9.00")

@@ -111,7 +111,9 @@ class UserPairwiseBalancesView(APIView):
     permission_classes = [ActiveUserPermission]
 
     def get(self, request):
-        rows = BalanceService.list_pairwise_nonzero(request.user)
+        flag = str(request.query_params.get("owed_to_me", "")).lower()
+        owe_me_only = flag in ("true", "1", "yes")
+        rows = BalanceService.list_pairwise_nonzero(request.user, owe_me_only=owe_me_only)
         return Response(
             {
                 "data": {

@@ -96,8 +96,56 @@ class MemberServiceTests(GroupTestMixin, TestCase):
             MemberService.add_member(self.group, self.member_user.id, GroupRole.MEMBER, self.user)
 
     def test_remove_member_blocks_removing_last_admin(self):
-        with self.assertRaisesMessage(ValueError, "Cannot remove the last admin. Transfer admin role first."):
+        self.add_membership(self.group, self.member_user, GroupRole.MEMBER)
+        with self.assertRaisesMessage(ValueError, "Cannot remove the group creator."):
             MemberService.remove_member(self.group, self.user.id, self.member_user)
+
+    def test_remove_member_blocks_removing_last_admin_when_target_is_not_creator(self):
+        group = self.create_group(created_by=self.other_user)
+        self.add_membership(group, self.other_user, GroupRole.MEMBER)
+        self.add_membership(group, self.user, GroupRole.ADMIN)
+        self.add_membership(group, self.member_user, GroupRole.MEMBER)
+        with self.assertRaisesMessage(
+            ValueError, "Cannot remove the last admin. Transfer admin role first."
+        ):
+            MemberService.remove_member(group, self.user.id, self.member_user)
+
+    def test_remove_member_blocks_removing_group_creator_even_with_two_admins(self):
+        self.add_membership(self.group, self.member_user, GroupRole.MEMBER)
+        mu = GroupMember.objects.get(group=self.group, user=self.member_user)
+        mu.role = GroupRole.ADMIN
+        mu.save(update_fields=["role"])
+        with self.assertRaisesMessage(ValueError, "Cannot remove the group creator."):
+            MemberService.remove_member(self.group, self.user.id, self.member_user)
+
+    def test_creator_can_remove_other_admin_when_two_admins(self):
+        self.add_membership(self.group, self.member_user, GroupRole.MEMBER)
+        mu = GroupMember.objects.get(group=self.group, user=self.member_user)
+        mu.role = GroupRole.ADMIN
+        mu.save(update_fields=["role"])
+        MemberService.remove_member(self.group, self.member_user.id, self.user)
+        self.assertFalse(
+            GroupMember.objects.filter(group=self.group, user=self.member_user).exists()
+        )
+
+    def test_change_role_blocks_demoting_creator_by_other_admin(self):
+        self.add_membership(self.group, self.member_user, GroupRole.MEMBER)
+        mu = GroupMember.objects.get(group=self.group, user=self.member_user)
+        mu.role = GroupRole.ADMIN
+        mu.save(update_fields=["role"])
+        with self.assertRaisesMessage(ValueError, "Cannot demote the group creator."):
+            MemberService.change_role(
+                self.group, self.user.id, GroupRole.VIEWER, actor=self.member_user
+            )
+
+    def test_creator_can_demote_self_when_not_last_admin(self):
+        self.add_membership(self.group, self.member_user, GroupRole.MEMBER)
+        mu = GroupMember.objects.get(group=self.group, user=self.member_user)
+        mu.role = GroupRole.ADMIN
+        mu.save(update_fields=["role"])
+        MemberService.change_role(self.group, self.user.id, GroupRole.MEMBER, actor=self.user)
+        membership = GroupMember.objects.get(group=self.group, user=self.user)
+        self.assertEqual(membership.role, GroupRole.MEMBER)
 
     def test_leave_group_blocks_last_admin_from_leaving(self):
         with self.assertRaisesMessage(ValueError, "You are the last admin. Transfer the admin role before leaving."):

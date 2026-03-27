@@ -1,3 +1,5 @@
+// Legacy demo screen. The signed-in home is DashboardScreen at /dashboard
+// (AppShell + GoRouter). Pull-to-refresh and tab refresh live there.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

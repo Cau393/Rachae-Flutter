@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:frontend/core/network/api_client.dart';
@@ -16,4 +17,11 @@ final apiClientProvider = Provider<ApiClient>((ref) {
 
 final dioProvider = Provider<Dio>((ref) {
   return ref.watch(apiClientProvider).dio;
+});
+
+/// Overridden in tests to verify avatar upload `PUT` without real network.
+final httpClientProvider = Provider<http.Client>((ref) {
+  final client = http.Client();
+  ref.onDispose(client.close);
+  return client;
 });

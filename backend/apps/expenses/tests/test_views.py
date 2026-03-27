@@ -4,6 +4,8 @@ from unittest.mock import patch
 from django.test import TestCase, override_settings
 
 from apps.expenses.models import Expense, SplitMethod
+from apps.transactions.models import Transaction
+from apps.transactions.settlement_splits import apply_confirmed_group_settlement_to_splits
 from core.models import AuditLog
 
 from .base import ExpenseTestMixin
@@ -128,6 +130,159 @@ class ExpenseViewTests(ExpenseTestMixin, TestCase):
         self.assertIn("data", body)
         self.assertIn("pagination", body)
         self.assertEqual(len(body["data"]), 2)
+
+    def test_list_expenses_owed_to_me_includes_shared_expenses_paid_by_user(self):
+        """Payer has a split row; filter must still return expenses others owe on."""
+        shared = self.create_expense(
+            group=self.group,
+            paid_by=self.user,
+            description="Dinner split",
+        )
+        self.create_split(shared, self.user, "25.00")
+        self.create_split(shared, self.member_user, "25.00")
+
+        solo = self.create_expense(
+            group=self.group,
+            paid_by=self.user,
+            description="Solo note",
+        )
+        self.create_split(solo, self.user, "50.00")
+
+        self.authenticate(self.user)
+
+        response = self.client.get("/api/v1/expenses/?owed_to_me=true")
+
+        self.assertEqual(response.status_code, 200)
+        ids = {item["id"] for item in response.json()["data"]}
+        self.assertIn(str(shared.id), ids)
+        self.assertNotIn(str(solo.id), ids)
+
+    def test_list_expenses_owed_to_me_empty_after_counterparty_fully_settled(self):
+        shared = self.create_expense(
+            group=self.group,
+            paid_by=self.user,
+            description="Lunch",
+        )
+        self.create_split(shared, self.user, "25.00")
+        self.create_split(shared, self.member_user, "25.00")
+
+        self.authenticate(self.user)
+        self.assertEqual(
+            len(self.client.get("/api/v1/expenses/?owed_to_me=true").json()["data"]),
+            1,
+        )
+
+        txn = Transaction.objects.create(
+            group=self.group,
+            payer=self.member_user,
+            receiver=self.user,
+            amount="25.00",
+            currency="BRL",
+            is_confirmed=True,
+        )
+        apply_confirmed_group_settlement_to_splits(txn)
+
+        response = self.client.get("/api/v1/expenses/?owed_to_me=true")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["data"], [])
+
+    def test_list_expenses_owed_to_me_empty_after_non_group_settlement(self):
+        shared = self.create_expense(
+            group=None,
+            paid_by=self.user,
+            description="Personal lunch",
+        )
+        self.create_split(shared, self.user, "25.00")
+        self.create_split(shared, self.member_user, "25.00")
+
+        self.authenticate(self.user)
+        self.assertEqual(
+            len(self.client.get("/api/v1/expenses/?owed_to_me=true").json()["data"]),
+            1,
+        )
+
+        txn = Transaction.objects.create(
+            group=None,
+            payer=self.member_user,
+            receiver=self.user,
+            amount="25.00",
+            currency="BRL",
+            is_confirmed=True,
+        )
+        apply_confirmed_group_settlement_to_splits(txn)
+
+        response = self.client.get("/api/v1/expenses/?owed_to_me=true")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["data"], [])
+
+    def test_list_expenses_owed_to_me_only_first_expense_after_one_payment_covers_fifo(
+        self,
+    ):
+        """One confirmed payment applies FIFO to the oldest expense first (nominal replay)."""
+        first = self.create_expense(
+            group=None,
+            paid_by=self.user,
+            description="Older",
+            amount="20.00",
+            amount_in_group_currency="20.00",
+        )
+        self.create_split(first, self.user, "10.00")
+        self.create_split(first, self.member_user, "10.00")
+        second = self.create_expense(
+            group=None,
+            paid_by=self.user,
+            description="Newer",
+            amount="20.00",
+            amount_in_group_currency="20.00",
+        )
+        self.create_split(second, self.user, "10.00")
+        self.create_split(second, self.member_user, "10.00")
+
+        txn = Transaction.objects.create(
+            group=None,
+            payer=self.member_user,
+            receiver=self.user,
+            amount="10.00",
+            currency="BRL",
+            is_confirmed=True,
+        )
+        apply_confirmed_group_settlement_to_splits(txn)
+
+        self.authenticate(self.user)
+        response = self.client.get("/api/v1/expenses/?owed_to_me=true")
+        self.assertEqual(response.status_code, 200)
+        ids = {item["id"] for item in response.json()["data"]}
+        self.assertEqual(ids, {str(second.id)})
+
+    def test_list_expenses_owed_to_me_empty_when_net_pairwise_zero_from_offsetting_expenses(
+        self,
+    ):
+        """Member still has unsettled split on user's expense but user owes member same net elsewhere."""
+        user_paid = self.create_expense(
+            group=None,
+            paid_by=self.user,
+            description="I paid dinner",
+            amount="20.00",
+            amount_in_group_currency="20.00",
+        )
+        self.create_split(user_paid, self.user, "10.00")
+        self.create_split(user_paid, self.member_user, "10.00")
+
+        member_paid = self.create_expense(
+            group=None,
+            paid_by=self.member_user,
+            created_by=self.member_user,
+            description="Member paid taxi",
+            amount="20.00",
+            amount_in_group_currency="20.00",
+        )
+        self.create_split(member_paid, self.member_user, "10.00")
+        self.create_split(member_paid, self.user, "10.00")
+
+        self.authenticate(self.user)
+        response = self.client.get("/api/v1/expenses/?owed_to_me=true")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["data"], [])
 
     def test_list_expenses_with_user_returns_only_pairwise_expenses(self):
         shared = self.create_expense(group=None, paid_by=self.user, description="Shared lunch")

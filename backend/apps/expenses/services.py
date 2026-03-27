@@ -4,7 +4,7 @@ from importlib import import_module
 
 from django.core.cache import cache
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -298,6 +298,15 @@ def _schedule_expense_notification(user_id, expense_id) -> None:
     )
 
 
+def _schedule_expense_push_notification(user_id, expense_id) -> None:
+    _schedule_optional_task(
+        "tasks.notification_tasks",
+        "send_expense_created_push",
+        str(user_id),
+        str(expense_id),
+    )
+
+
 def _schedule_receipt_confirmation(file_key: str) -> None:
     _schedule_optional_task(
         "tasks.s3_tasks",
@@ -423,13 +432,27 @@ class ExpenseService:
             queryset = queryset.filter(category=filters["category"])
         if filters.get("q"):
             queryset = queryset.filter(description__icontains=filters["q"])
-        if filters.get("owed_to_me"):
+        if filters.get("owed_to_me") is True:
+            # Payer always has a split row for their share. Django turns
+            # `.exclude(splits__user=me)` / `~Q(splits__user=me)` into
+            # NOT EXISTS (split for me), which excludes every shared expense.
+            others_owe_split = (
+                Split.objects.filter(
+                    expense_id=OuterRef("pk"),
+                    is_deleted=False,
+                    is_settled=False,
+                    amount_owed__gt=Decimal("0.00"),
+                ).exclude(user_id=OuterRef("paid_by_id"))
+            )
             queryset = (
                 queryset.filter(paid_by=requesting_user)
-                .filter(splits__is_deleted=False)
-                .exclude(splits__user=requesting_user)
+                .filter(Exists(others_owe_split))
                 .distinct()
             )
+            from apps.expenses.owed_me_replay import compute_owed_to_me_expense_ids
+
+            keep_ids = compute_owed_to_me_expense_ids(requesting_user.id)
+            queryset = queryset.filter(pk__in=keep_ids)
 
         return queryset.order_by("-expense_date", "-created_at")
 
@@ -482,6 +505,7 @@ class ExpenseService:
             _schedule_group_ledger_recalculation(expense.group_id)
             for split in computed_splits:
                 _schedule_expense_notification(split["user_id"], expense.id)
+                _schedule_expense_push_notification(split["user_id"], expense.id)
 
         return expense
 
@@ -530,6 +554,7 @@ class ExpenseService:
             _schedule_group_ledger_recalculation(expense.group_id)
             for split in computed_splits:
                 _schedule_expense_notification(split["user_id"], expense.id)
+                _schedule_expense_push_notification(split["user_id"], expense.id)
 
         return expense
 

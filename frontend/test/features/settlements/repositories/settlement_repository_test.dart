@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:frontend/core/network/api_client.dart';
-import 'package:frontend/features/settlements/models/transaction_model.dart';
 import 'package:frontend/features/settlements/repositories/settlement_repository.dart';
 
 class MockDio extends Mock implements Dio {}
@@ -16,6 +15,7 @@ const _receiverId = '22222222-2222-2222-2222-222222222222';
 const _otherUserId = '33333333-3333-3333-3333-333333333333';
 
 bool _dioHasApiError(Object e, int statusCode) {
+  if (e is ApiException && e.statusCode == statusCode) return true;
   if (e is! DioException) return false;
   final err = e.error;
   return err is ApiException && err.statusCode == statusCode;
@@ -71,11 +71,13 @@ void main() {
         ).thenAnswer(
           (_) async => Response<Map<String, dynamic>>(
             data: <String, dynamic>{
-              'data': transactionJson(
-                id: _txnId,
-                payerId: '11111111-1111-1111-1111-111111111111',
-                receiverId: _receiverId,
-              ),
+              'data': <dynamic>[
+                transactionJson(
+                  id: _txnId,
+                  payerId: '11111111-1111-1111-1111-111111111111',
+                  receiverId: _receiverId,
+                ),
+              ],
             },
             statusCode: 201,
             requestOptions: RequestOptions(path: '/transactions/'),
@@ -87,8 +89,9 @@ void main() {
           amount: '50.00',
           currency: 'BRL',
         );
-        expect(result, isA<TransactionModel>());
-        expect(result.id, _txnId);
+        expect(result, isA<SettlementCreateResult>());
+        expect(result.totalSettled, '50.00');
+        expect(result.transactionsCreated.single.id, _txnId);
 
         verify(
           () => mockDio.post<Map<String, dynamic>>(
@@ -114,11 +117,13 @@ void main() {
       ).thenAnswer(
         (_) async => Response<Map<String, dynamic>>(
           data: <String, dynamic>{
-            'data': transactionJson(
-              id: _txnId,
-              payerId: '11111111-1111-1111-1111-111111111111',
-              receiverId: _receiverId,
-            ),
+            'data': <dynamic>[
+              transactionJson(
+                id: _txnId,
+                payerId: '11111111-1111-1111-1111-111111111111',
+                receiverId: _receiverId,
+              ),
+            ],
           },
           statusCode: 201,
           requestOptions: RequestOptions(path: '/transactions/'),
@@ -143,6 +148,53 @@ void main() {
             'currency': 'BRL',
             'group_id': groupId,
             'note': 'Thanks',
+          },
+          queryParameters: any(named: 'queryParameters'),
+        ),
+      ).called(1);
+    });
+
+    test('includes is_offset when isOffset is true', () async {
+      when(
+        () => mockDio.post<Map<String, dynamic>>(
+          '/transactions/',
+          data: any(named: 'data'),
+          queryParameters: any(named: 'queryParameters'),
+        ),
+      ).thenAnswer(
+        (_) async => Response<Map<String, dynamic>>(
+          data: <String, dynamic>{
+            'data': <dynamic>[
+              transactionJson(
+                id: _txnId,
+                payerId: '11111111-1111-1111-1111-111111111111',
+                receiverId: _receiverId,
+              ),
+            ],
+          },
+          statusCode: 201,
+          requestOptions: RequestOptions(path: '/transactions/'),
+        ),
+      );
+
+      const groupId = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
+      await repo.createTransaction(
+        receiverId: _receiverId,
+        amount: '5.00',
+        currency: 'BRL',
+        groupId: groupId,
+        isOffset: true,
+      );
+
+      verify(
+        () => mockDio.post<Map<String, dynamic>>(
+          '/transactions/',
+          data: <String, dynamic>{
+            'receiver_id': _receiverId,
+            'amount': '5.00',
+            'currency': 'BRL',
+            'group_id': groupId,
+            'is_offset': true,
           },
           queryParameters: any(named: 'queryParameters'),
         ),

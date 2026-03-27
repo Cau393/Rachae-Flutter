@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,12 +10,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:frontend/core/currency/currency_formatter.dart';
 import 'package:frontend/core/currency/default_currency.dart';
+import 'package:frontend/core/network/api_client.dart';
 import 'package:frontend/features/auth/auth_notifier.dart';
 import 'package:frontend/features/auth/auth_state.dart';
 import 'package:frontend/features/expenses/widgets/amount_field.dart';
 import 'package:frontend/features/expenses/widgets/receipt_upload_row.dart';
 import 'package:frontend/features/friends/models/friend_model.dart';
 import 'package:frontend/features/friends/providers/friends_provider.dart';
+import 'package:frontend/features/settlements/providers/offset_credit_preview_provider.dart';
 import 'package:frontend/features/settlements/providers/settle_up_notifier.dart';
 import 'package:frontend/features/settlements/providers/settlement_repository_provider.dart';
 import 'package:frontend/src/l10n/generated/app_localizations.dart';
@@ -119,25 +122,72 @@ class _SettleUpScreenState extends ConsumerState<SettleUpScreen> {
     return 'image/jpeg';
   }
 
+  bool _offsetCreditCoversAmount(String creditRaw) {
+    if (_amount.isEmpty) {
+      return false;
+    }
+    try {
+      final entered = Decimal.parse(
+        CurrencyFormatter.normalizeDecimalInput(_amount),
+      );
+      final credit = Decimal.parse(creditRaw.trim());
+      return entered > Decimal.zero && credit >= entered;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> _onOffsetPressed() async {
+    final l10n = context.l10n;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.settleUpOffsetConfirmTitle),
+        content: Text(l10n.settleUpOffsetConfirmMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.cancelLabel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.settleUpOffsetConfirmAction),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      await _submitSettlement(isOffset: true);
+    }
+  }
+
   Future<void> _handleRecord() async {
+    await _submitSettlement(isOffset: false);
+  }
+
+  Future<void> _submitSettlement({required bool isOffset}) async {
     final messenger = ScaffoldMessenger.of(context);
     final l10n = context.l10n;
     setState(() => _isLoading = true);
     try {
-      final txn = await ref.read(settleUpNotifierProvider.notifier).recordPayment(
+      final result = await ref.read(settleUpNotifierProvider.notifier).recordPayment(
             receiverId: _receiverId,
             amount: _amount,
             currency: _currency,
             groupId: _groupId.isEmpty ? null : _groupId,
             note: _note.trim().isEmpty ? null : _note.trim(),
+            isOffset: isOffset,
           );
-      if (txn != null && _proofQueue.isNotEmpty) {
+      final createdTransactions = result?.transactionsCreated ?? const [];
+      if (createdTransactions.isNotEmpty && _proofQueue.isNotEmpty) {
         var proofFailed = false;
-        for (final file in List<File>.from(_proofQueue)) {
-          try {
-            await _uploadProof(txn.id, file);
-          } catch (_) {
-            proofFailed = true;
+        for (final txn in createdTransactions) {
+          for (final file in List<File>.from(_proofQueue)) {
+            try {
+              await _uploadProof(txn.id, file);
+            } catch (_) {
+              proofFailed = true;
+            }
           }
         }
         if (proofFailed && mounted) {
@@ -153,10 +203,12 @@ class _SettleUpScreenState extends ConsumerState<SettleUpScreen> {
       });
       messenger.showSnackBar(SnackBar(content: Text(l10n.settleUpSuccess)));
       _exitScreen();
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        messenger.showSnackBar(SnackBar(content: Text(l10n.settleUpError)));
+        final message =
+            e is ApiException ? e.message : l10n.settleUpError;
+        messenger.showSnackBar(SnackBar(content: Text(message)));
       }
     }
   }
@@ -344,6 +396,33 @@ class _SettleUpScreenState extends ConsumerState<SettleUpScreen> {
                     )
                   : Text(l10n.settleUpRecordButton),
             ),
+            if (_groupId.isNotEmpty && _receiverId.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Consumer(
+                builder: (context, ref, _) {
+                  final asyncCredit = ref.watch(
+                    offsetCreditPreviewProvider(
+                      (receiverId: _receiverId, excludeGroupId: _groupId),
+                    ),
+                  );
+                  return asyncCredit.when(
+                    data: (row) {
+                      if (!_offsetCreditCoversAmount(row.credit)) {
+                        return const SizedBox.shrink();
+                      }
+                      return OutlinedButton(
+                        onPressed: (_amount.isEmpty || _isLoading)
+                            ? null
+                            : _onOffsetPressed,
+                        child: Text(l10n.settleUpOffsetButton),
+                      );
+                    },
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, _) => const SizedBox.shrink(),
+                  );
+                },
+              ),
+            ],
           ],
         ),
       ),

@@ -9,12 +9,14 @@ import 'package:frontend/src/l10n/generated/app_localizations.dart';
 
 void main() {
   const gid = '11111111-1111-1111-1111-111111111111';
+  const payerUid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+  const receiverUid = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 
   SettlementSuggestionModel suggestion() {
     return SettlementSuggestionModel.fromJson(<String, dynamic>{
-      'payer_id': 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      'payer_id': payerUid,
       'payer_name': 'PayerUnique',
-      'receiver_id': 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      'receiver_id': receiverUid,
       'receiver_name': 'ReceiverUnique',
       'amount': '30.00',
       'currency': 'BRL',
@@ -33,6 +35,7 @@ void main() {
               body: SettlementSuggestionTile(
                 groupId: gid,
                 suggestion: suggestion(),
+                currentUserId: payerUid,
               ),
             ),
           ),
@@ -68,6 +71,7 @@ void main() {
               body: SettlementSuggestionTile(
                 groupId: gid,
                 suggestion: suggestion(),
+                currentUserId: payerUid,
               ),
             ),
           ),
@@ -97,11 +101,42 @@ void main() {
 
       expect(router.state.uri.path, '/settle');
       expect(router.state.uri.queryParameters['group_id'], gid);
-      expect(
-        router.state.uri.queryParameters['receiver_id'],
-        'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
-      );
+      expect(router.state.uri.queryParameters['receiver_id'], receiverUid);
       expect(router.state.uri.queryParameters['amount'], '30.00');
+    });
+
+    testWidgets('non-payer does not see Settle up button', (tester) async {
+      final router = GoRouter(
+        initialLocation: '/',
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) => Scaffold(
+              body: SettlementSuggestionTile(
+                groupId: gid,
+                suggestion: suggestion(),
+                currentUserId: receiverUid,
+              ),
+            ),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp.router(
+          theme: AppTheme.light,
+          locale: const Locale('pt', 'BR'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(SettlementSuggestionTile)),
+      )!;
+      expect(find.text(l10n.groupDetailSettleUp), findsNothing);
     });
   });
 }

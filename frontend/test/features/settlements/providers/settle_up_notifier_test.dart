@@ -65,6 +65,11 @@ void main() {
         'is_disputed': false,
         'created_at': '2026-03-20T15:30:00Z',
       });
+  SettlementCreateResult settlementResult() => SettlementCreateResult(
+        message: 'Settlement processed successfully',
+        totalSettled: '50.00',
+        transactionsCreated: [transaction()],
+      );
 
   setUp(() {
     mockSettlement = _MockSettlementRepository();
@@ -85,7 +90,7 @@ void main() {
     'recordPayment calls createTransaction and on success invalidates '
     'friendBalanceProvider(receiverId), balanceSummaryProvider, activityFeedProvider',
     () async {
-      final txn = transaction();
+      final result = settlementResult();
       when(
         () => mockSettlement.createTransaction(
           receiverId: any(named: 'receiverId'),
@@ -93,8 +98,10 @@ void main() {
           currency: any(named: 'currency'),
           groupId: any(named: 'groupId'),
           note: any(named: 'note'),
+          proofUrls: any(named: 'proofUrls'),
+          isOffset: any(named: 'isOffset'),
         ),
-      ).thenAnswer((_) async => txn);
+      ).thenAnswer((_) async => result);
 
       when(() => mockFriends.fetchFriendBalance(receiverId))
           .thenAnswer((_) async => friendBalance());
@@ -129,6 +136,8 @@ void main() {
           currency: 'BRL',
           groupId: null,
           note: null,
+          proofUrls: null,
+          isOffset: false,
         ),
       ).called(1);
       verify(() => mockFriends.fetchFriendBalance(receiverId)).called(2);
@@ -141,8 +150,8 @@ void main() {
         ),
       ).called(2);
       final settled = container.read(settleUpNotifierProvider);
-      expect(settled, isA<AsyncData<TransactionModel?>>());
-      expect((settled as AsyncData<TransactionModel?>).value, txn);
+      expect(settled, isA<AsyncData<SettlementCreateResult?>>());
+      expect((settled as AsyncData<SettlementCreateResult?>).value, result);
     },
   );
 
@@ -156,9 +165,11 @@ void main() {
           currency: any(named: 'currency'),
           groupId: any(named: 'groupId'),
           note: any(named: 'note'),
+          proofUrls: any(named: 'proofUrls'),
+          isOffset: any(named: 'isOffset'),
         ),
       ).thenAnswer(
-        (_) => Future<TransactionModel>.error(
+        (_) => Future<SettlementCreateResult>.error(
           const ApiException(statusCode: 400, message: 'bad'),
         ),
       );
@@ -179,10 +190,10 @@ void main() {
       expect(caught, isA<ApiException>());
       expect(
         container.read(settleUpNotifierProvider),
-        isA<AsyncError<TransactionModel?>>(),
+        isA<AsyncError<SettlementCreateResult?>>(),
       );
       final asyncErr =
-          container.read(settleUpNotifierProvider) as AsyncError<TransactionModel?>;
+          container.read(settleUpNotifierProvider) as AsyncError<SettlementCreateResult?>;
       expect(asyncErr.error, isA<ApiException>());
       verify(
         () => mockSettlement.createTransaction(
@@ -191,6 +202,8 @@ void main() {
           currency: 'BRL',
           groupId: null,
           note: null,
+          proofUrls: null,
+          isOffset: false,
         ),
       ).called(1);
       sub.close();

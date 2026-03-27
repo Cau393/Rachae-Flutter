@@ -4,6 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:frontend/core/theme/app_theme.dart';
 import 'package:frontend/core/widgets/ad_banner.dart';
+import 'package:frontend/features/ads/providers/ad_service_provider.dart';
+import 'package:frontend/features/ads/services/mock_ad_service.dart';
+import 'package:frontend/features/profile/models/ads_status_model.dart';
+import 'package:frontend/features/profile/providers/ads_status_provider.dart';
 import 'package:frontend/src/l10n/generated/app_localizations.dart';
 
 void main() {
@@ -12,9 +16,10 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            adStatusProvider.overrideWith(
-              (ref) => const AdStatus(isAdFree: false),
+            adsStatusProvider.overrideWith(
+              (ref) async => const AdsStatusModel(isAdFree: false),
             ),
+            adServiceProvider.overrideWithValue(MockAdService()),
           ],
           child: MaterialApp(
             theme: AppTheme.light,
@@ -47,8 +52,8 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            adStatusProvider.overrideWith(
-              (ref) => const AdStatus(isAdFree: true),
+            adsStatusProvider.overrideWith(
+              (ref) async => const AdsStatusModel(isAdFree: true),
             ),
           ],
           child: MaterialApp(

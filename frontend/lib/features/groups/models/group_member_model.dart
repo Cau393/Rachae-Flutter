@@ -11,6 +11,7 @@ class GroupMemberModel {
     required this.invitedBy,
   });
 
+  /// Django user id; same identifier as a friend’s `id` when adding to a group.
   final String userId;
   final String displayName;
   final String? avatarUrl;

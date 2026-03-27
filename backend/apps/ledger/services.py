@@ -10,26 +10,32 @@ from apps.ledger.algorithms import compute_group_net_balances, simplify_group_de
 
 CACHE_TTL_SECONDS = 300
 ZERO = Decimal("0")
+GROUP_BALANCES_CACHE_KEY = "rachae:ledger:group:{group_id}:balances"
+GROUP_SIMPLIFIED_CACHE_KEY = "rachae:ledger:group:{group_id}:simplified"
 
 
 class LedgerService:
     @staticmethod
     def get_group_balances(group_id) -> dict:
-        cache_key = f"ledger:balances:{group_id}"
+        normalized_group_id = str(group_id)
+        cache_key = GROUP_BALANCES_CACHE_KEY.format(group_id=normalized_group_id)
         cached_payload = cache.get(cache_key)
         if cached_payload is not None:
-            return cached_payload
+            return LedgerService._deserialize_cached_balances(
+                cached_payload,
+                normalized_group_id,
+            )
 
         memberships = (
             GroupMember.objects.filter(
-                group_id=group_id,
+                group_id=normalized_group_id,
                 is_deleted=False,
                 group__is_deleted=False,
             )
             .select_related("user")
             .order_by("created_at", "user__display_name")
         )
-        net_balances = compute_group_net_balances(str(group_id))
+        net_balances = compute_group_net_balances(normalized_group_id)
 
         payload = {
             "balances": [
@@ -52,9 +58,14 @@ class LedgerService:
                 "suggestions": [],
             }
 
-        cache_key = f"ledger:simplified:{group.id}"
+        cache_key = GROUP_SIMPLIFIED_CACHE_KEY.format(group_id=str(group.id))
         cached_payload = cache.get(cache_key)
         if cached_payload is not None:
+            if isinstance(cached_payload, list):
+                return {
+                    "simplify_debts": True,
+                    "suggestions": cached_payload,
+                }
             return cached_payload
 
         payload = {
@@ -63,6 +74,42 @@ class LedgerService:
         }
         cache.set(cache_key, payload, timeout=CACHE_TTL_SECONDS)
         return payload
+
+    @staticmethod
+    def _deserialize_cached_balances(cached_payload, group_id: str) -> dict:
+        if isinstance(cached_payload, dict) and "balances" in cached_payload:
+            return cached_payload
+
+        if not isinstance(cached_payload, dict):
+            return {"balances": []}
+
+        memberships = (
+            GroupMember.objects.filter(
+                group_id=group_id,
+                is_deleted=False,
+                group__is_deleted=False,
+            )
+            .select_related("user")
+            .order_by("created_at", "user__display_name")
+        )
+
+        return {
+            "balances": [
+                {
+                    "user_id": str(membership.user_id),
+                    "user_name": membership.user.display_name,
+                    "balance": Decimal(
+                        str(
+                            cached_payload.get(
+                                str(membership.user_id),
+                                ZERO,
+                            )
+                        )
+                    ),
+                }
+                for membership in memberships
+            ]
+        }
 
 
 class ActivityService:

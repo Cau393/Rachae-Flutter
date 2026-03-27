@@ -275,6 +275,8 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen> {
                             member: m,
                             isCurrentUser: m.userId == userId,
                             canManage: true,
+                            canManageThisMember: userId == detail.createdBy ||
+                                m.userId != detail.createdBy,
                             onChangeRole: (role) {
                               ref
                                   .read(

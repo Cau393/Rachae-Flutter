@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:frontend/features/dashboard/dashboard_refresh.dart';
 import 'package:frontend/features/dashboard/providers/balance_summary_provider.dart';
 import 'package:frontend/features/dashboard/providers/dashboard_shortcuts_providers.dart';
 import 'package:frontend/features/friends/widgets/pending_transaction_tile.dart';
@@ -22,9 +24,16 @@ class PendingApprovalsScreen extends ConsumerWidget {
     );
 
     Future<void> onConfirm(String id) async {
-      await ref.read(settlementRepositoryProvider).confirmTransaction(id);
-      ref.invalidate(pendingIncomingSettlementsProvider);
-      ref.invalidate(balanceSummaryProvider);
+      try {
+        await ref.read(settlementRepositoryProvider).confirmTransaction(id);
+        await refreshDashboardData(ref);
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.errorGeneric)),
+          );
+        }
+      }
     }
 
     Future<void> onDispute(String id) async {
@@ -45,9 +54,16 @@ class PendingApprovalsScreen extends ConsumerWidget {
         ),
       );
       if (confirmed != true || !context.mounted) return;
-      await ref.read(settlementRepositoryProvider).disputeTransaction(id);
-      ref.invalidate(pendingIncomingSettlementsProvider);
-      ref.invalidate(balanceSummaryProvider);
+      try {
+        await ref.read(settlementRepositoryProvider).disputeTransaction(id);
+        await refreshDashboardData(ref);
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.errorGeneric)),
+          );
+        }
+      }
     }
 
     return Scaffold(
@@ -55,31 +71,40 @@ class PendingApprovalsScreen extends ConsumerWidget {
         title: Text(l10n.dashboardPendingApprovalsTitle),
       ),
       body: txnsAsync.when(
-        data: (list) {
-          if (list.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  l10n.dashboardPendingApprovalsEmpty,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyLarge,
-                ),
-              ),
-            );
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: list.length,
-            itemBuilder: (context, i) {
-              final t = list[i];
-              return PendingTransactionTile(
-                transaction: t,
-                currentUserId: djangoUserId,
-                onConfirm: () => onConfirm(t.id),
-                onDispute: () => onDispute(t.id),
-              );
-            },
+        data: (allRows) {
+          final list = djangoUserId.isEmpty
+              ? allRows
+              : allRows.where((t) => t.receiver.userId == djangoUserId).toList();
+          return RefreshIndicator(
+            onRefresh: () => refreshDashboardData(ref),
+            child: list.isEmpty
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          l10n.dashboardPendingApprovalsEmpty,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyLarge,
+                        ),
+                      ),
+                    ],
+                  )
+                : ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: list.length,
+                    itemBuilder: (context, i) {
+                      final t = list[i];
+                      return PendingTransactionTile(
+                        transaction: t,
+                        currentUserId: djangoUserId,
+                        onConfirm: () => onConfirm(t.id),
+                        onDispute: () => onDispute(t.id),
+                      );
+                    },
+                  ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

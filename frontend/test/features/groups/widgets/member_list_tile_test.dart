@@ -79,6 +79,23 @@ void main() {
       expect(listTile.trailing, isNull);
     });
 
+    testWidgets('canManage true but canManageThisMember false: no trailing menu',
+        (tester) async {
+      await pumpTile(
+        tester,
+        tile: MemberListTile(
+          member: member(),
+          isCurrentUser: false,
+          canManage: true,
+          canManageThisMember: false,
+          onChangeRole: (_) {},
+          onRemove: () {},
+        ),
+      );
+
+      expect(find.byType(PopupMenuButton<String>), findsNothing);
+    });
+
     testWidgets('isCurrentUser true: title uses groupMemberCurrentUserSuffix',
         (tester) async {
       await pumpTile(

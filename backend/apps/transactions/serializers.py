@@ -31,7 +31,13 @@ class TransactionCreateSerializer(serializers.Serializer):
     )
     currency = serializers.CharField(max_length=3, required=False, default="BRL")
     group_id = serializers.UUIDField(required=False, allow_null=True)
+    is_offset = serializers.BooleanField(required=False, default=False)
     note = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    proof_urls = serializers.ListField(
+        child=serializers.CharField(max_length=2048),
+        required=False,
+        allow_empty=True,
+    )
 
     def validate_receiver_id(self, value):
         if value == UUID(str(self.context["request"].user.id)):
@@ -39,6 +45,11 @@ class TransactionCreateSerializer(serializers.Serializer):
         return value
 
     def validate(self, attrs):
+        if attrs.get("is_offset") and attrs.get("group_id") is None:
+            raise serializers.ValidationError(
+                {"group_id": "Offset settlements require a group."}
+            )
+
         group_id = attrs.get("group_id")
         if group_id is None:
             return attrs
@@ -69,6 +80,16 @@ class TransactionCreateSerializer(serializers.Serializer):
             attrs["currency"] = group.currency
 
         return attrs
+
+
+class OffsetCreditPreviewQuerySerializer(serializers.Serializer):
+    with_user = serializers.UUIDField(required=True)
+    exclude_group = serializers.UUIDField(required=True)
+
+
+class OffsetCreditPreviewResponseSerializer(serializers.Serializer):
+    credit = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=True)
+    currency = serializers.CharField(max_length=3)
 
 
 class ProofUploadURLQuerySerializer(serializers.Serializer):

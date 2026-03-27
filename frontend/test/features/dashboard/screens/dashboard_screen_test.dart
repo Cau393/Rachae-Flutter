@@ -12,8 +12,12 @@ import 'package:frontend/features/dashboard/models/activity_item_model.dart';
 import 'package:frontend/features/dashboard/models/balance_summary_model.dart';
 import 'package:frontend/features/dashboard/providers/activity_feed_provider.dart';
 import 'package:frontend/features/dashboard/providers/balance_summary_provider.dart';
+import 'package:frontend/features/dashboard/providers/dashboard_shortcuts_providers.dart';
 import 'package:frontend/features/dashboard/screens/dashboard_screen.dart';
 import 'package:frontend/features/dashboard/widgets/balance_summary_card.dart';
+import 'package:frontend/features/groups/providers/group_list_provider.dart';
+import 'package:frontend/features/dashboard/models/pairwise_balance_row_model.dart';
+import 'package:frontend/features/settlements/models/transaction_model.dart';
 import 'package:frontend/src/l10n/generated/app_localizations.dart';
 
 void main() {
@@ -44,6 +48,18 @@ void main() {
           builder: (context, state) => const DashboardScreen(),
         ),
         GoRoute(
+          path: '/dashboard/pending-approvals',
+          builder: (context, state) => const Scaffold(body: SizedBox()),
+        ),
+        GoRoute(
+          path: '/dashboard/owed-to-me',
+          builder: (context, state) => const Scaffold(body: SizedBox()),
+        ),
+        GoRoute(
+          path: '/dashboard/pending-settlements',
+          builder: (context, state) => const Scaffold(body: SizedBox()),
+        ),
+        GoRoute(
           path: '/expenses/new',
           builder: (context, state) => const Scaffold(body: SizedBox()),
         ),
@@ -71,6 +87,11 @@ void main() {
                   (ref) async => fixedBalance,
                 ),
           activityFeedProvider.overrideWith(_EmptyActivityFeed.new),
+          pendingIncomingSettlementsProvider.overrideWith((ref) async => const []),
+          pendingOutgoingSettlementsProvider.overrideWith((ref) async => const []),
+          pairwiseBalancesProvider.overrideWith((ref) async => const []),
+          owedToMeExpensesProvider.overrideWith((ref) async => const []),
+          groupListProvider.overrideWith((ref) async => const []),
         ],
         child: MaterialApp.router(
           theme: AppTheme.light,
@@ -152,10 +173,123 @@ void main() {
 
       expect(router.state.uri.path, '/expenses/new');
     });
+
+    testWidgets('shortcut buttons show Badge counts when pending lists non-empty',
+        (tester) async {
+      final router = buildRouter();
+      setPhysicalSize(tester, const ui.Size(400, 800));
+      addTearDown(() => resetPhysicalSize(tester));
+
+      final payer = const ParticipantInfo(userId: 'a', displayName: 'A');
+      final receiver = const ParticipantInfo(userId: 'b', displayName: 'B');
+      final at = DateTime.utc(2025, 1, 1);
+      final txn = TransactionModel(
+        id: 't1',
+        payer: payer,
+        receiver: receiver,
+        amount: '10.00',
+        currency: 'BRL',
+        isConfirmed: false,
+        isDisputed: false,
+        createdAt: at,
+      );
+      final oweRow = PairwiseBalanceRowModel(
+        userId: 'u1',
+        displayName: 'Alex',
+        balance: '5.00',
+        currency: 'BRL',
+      );
+      final iOweRows = [
+        const PairwiseBalanceRowModel(
+          userId: 'u2',
+          displayName: 'Bob',
+          balance: '-1.00',
+          currency: 'BRL',
+        ),
+        const PairwiseBalanceRowModel(
+          userId: 'u3',
+          displayName: 'Cara',
+          balance: '-2.00',
+          currency: 'BRL',
+        ),
+        const PairwiseBalanceRowModel(
+          userId: 'u4',
+          displayName: 'Dan',
+          balance: '-3.00',
+          currency: 'BRL',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            balanceSummaryProvider.overrideWith((ref) async => fixedBalance),
+            activityFeedProvider.overrideWith(_EmptyActivityFeed.new),
+            pendingIncomingSettlementsProvider.overrideWith(
+              (ref) async => [txn, txn],
+            ),
+            pendingOutgoingSettlementsProvider.overrideWith(
+              (ref) async => const [],
+            ),
+            pairwiseBalancesProvider.overrideWith((ref) async => iOweRows),
+            owedToMeExpensesProvider.overrideWith((ref) async => [oweRow]),
+            groupListProvider.overrideWith((ref) async => const []),
+          ],
+          child: MaterialApp.router(
+            theme: AppTheme.light,
+            locale: const Locale('pt', 'BR'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            routerConfig: router,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Badge), findsNWidgets(3));
+      expect(find.text('2'), findsOneWidget);
+      expect(find.text('1'), findsOneWidget);
+      expect(find.text('3'), findsOneWidget);
+    });
+
+    testWidgets('shortcut buttons navigate to the expected dashboard routes', (tester) async {
+      final router = buildRouter();
+      await pumpDashboard(
+        tester,
+        physicalSize: const ui.Size(400, 800),
+        router: router,
+      );
+
+      final ctx = tester.element(find.byType(DashboardScreen));
+      final l10n = AppLocalizations.of(ctx)!;
+
+      await tester.tap(find.widgetWithText(OutlinedButton, l10n.dashboardShortcutPendingApprovals));
+      await tester.pumpAndSettle();
+      expect(router.state.uri.path, '/dashboard/pending-approvals');
+
+      router.go('/dashboard');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(OutlinedButton, l10n.dashboardShortcutOwedToYou));
+      await tester.pumpAndSettle();
+      expect(router.state.uri.path, '/dashboard/owed-to-me');
+
+      router.go('/dashboard');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(OutlinedButton, l10n.dashboardShortcutPendingSettlements));
+      await tester.pumpAndSettle();
+      expect(router.state.uri.path, '/dashboard/pending-settlements');
+    });
   });
 }
 
 class _EmptyActivityFeed extends ActivityFeedNotifier {
   @override
   Future<List<ActivityItemModel>> build() async => const [];
+
+  @override
+  Future<void> refresh() async {
+    state = const AsyncData([]);
+  }
 }

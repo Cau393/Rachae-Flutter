@@ -1,5 +1,4 @@
 import 'dart:async' show unawaited;
-import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:decimal/decimal.dart';
@@ -404,9 +403,7 @@ class AddExpenseNotifier extends Notifier<AddExpenseFormState> {
       for (final file in queued) {
         try {
           await _uploadReceipt(detail.id, file);
-        } catch (e, st) {
-          developer.log('Receipt upload failed', error: e, stackTrace: st);
-        }
+        } catch (_) {}
       }
       return detail;
     } finally {

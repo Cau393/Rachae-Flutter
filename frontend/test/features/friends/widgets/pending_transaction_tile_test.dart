@@ -16,10 +16,13 @@ void main() {
     bool isDisputed = false,
     String payerName = 'Pat',
     String receiverName = 'Rex',
+    String? groupId,
+    String? groupName,
   }) =>
       TransactionModel.fromJson(<String, dynamic>{
         'id': 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
-        'group_id': null,
+        'group_id': groupId,
+        'group_name': groupName,
         'payer': <String, dynamic>{
           'user_id': payerId,
           'display_name': payerName,
@@ -159,5 +162,25 @@ void main() {
     );
     expect(fmt.amount.raw, '50.00');
     expect(fmt.amount.currencyCode, 'BRL');
+  });
+
+  testWidgets('shows group name when present', (tester) async {
+    await pumpTile(
+      tester,
+      transaction: txn(groupId: 'g-1', groupName: 'Trip Group'),
+      currentUserId: receiverId,
+    );
+
+    expect(find.text('Trip Group'), findsOneWidget);
+  });
+
+  testWidgets('shows Personal label when group is null', (tester) async {
+    await pumpTile(
+      tester,
+      transaction: txn(groupId: null, groupName: null),
+      currentUserId: receiverId,
+    );
+
+    expect(find.text('Personal'), findsOneWidget);
   });
 }

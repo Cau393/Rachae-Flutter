@@ -333,6 +333,12 @@ abstract class AppLocalizations {
   /// **'Nenhuma atividade ainda.'**
   String get dashboardNoActivity;
 
+  /// No description provided for @dashboardActivityEndOfList.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Não há mais atividades.'**
+  String get dashboardActivityEndOfList;
+
   /// No description provided for @dashboardAddExpense.
   ///
   /// In pt_BR, this message translates to:
@@ -348,7 +354,7 @@ abstract class AppLocalizations {
   /// No description provided for @dashboardShortcutOwedToYou.
   ///
   /// In pt_BR, this message translates to:
-  /// **'Despesas que outros te devem'**
+  /// **'Quem te deve'**
   String get dashboardShortcutOwedToYou;
 
   /// No description provided for @dashboardShortcutPendingSettlements.
@@ -372,13 +378,13 @@ abstract class AppLocalizations {
   /// No description provided for @dashboardOwedToYouTitle.
   ///
   /// In pt_BR, this message translates to:
-  /// **'Despesas que outros te devem'**
+  /// **'Quem te deve'**
   String get dashboardOwedToYouTitle;
 
   /// No description provided for @dashboardOwedToYouEmpty.
   ///
   /// In pt_BR, this message translates to:
-  /// **'Ainda não há despesas em que você pagou e outros te devem.'**
+  /// **'Ninguém te deve nada no momento.'**
   String get dashboardOwedToYouEmpty;
 
   /// No description provided for @dashboardPendingSettlementsTitle.
@@ -504,7 +510,7 @@ abstract class AppLocalizations {
   /// No description provided for @groupBalanceZero.
   ///
   /// In pt_BR, this message translates to:
-  /// **'Quite'**
+  /// **'Quitado'**
   String get groupBalanceZero;
 
   /// No description provided for @createGroupTitle.
@@ -686,6 +692,66 @@ abstract class AppLocalizations {
   /// In pt_BR, this message translates to:
   /// **'(Você)'**
   String get groupMemberCurrentUserSuffix;
+
+  /// No description provided for @groupAddFriendsButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Adicionar amigos'**
+  String get groupAddFriendsButton;
+
+  /// No description provided for @groupAddMembersTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Adicionar amigos ao grupo'**
+  String get groupAddMembersTitle;
+
+  /// No description provided for @groupAddMembersNoFriends.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Você ainda não tem amigos para adicionar.'**
+  String get groupAddMembersNoFriends;
+
+  /// No description provided for @groupAddMembersAllInGroup.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Todos os seus amigos já estão neste grupo.'**
+  String get groupAddMembersAllInGroup;
+
+  /// No description provided for @groupAddMembersAddButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Adicionar'**
+  String get groupAddMembersAddButton;
+
+  /// No description provided for @groupAddMembersConfirmButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Adicionar ao grupo'**
+  String get groupAddMembersConfirmButton;
+
+  /// No description provided for @groupAddMembersConfirmWithCount.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Adicionar ({count})'**
+  String groupAddMembersConfirmWithCount(int count);
+
+  /// No description provided for @groupAddMembersAddedSuccess.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'{count} amigos adicionados ao grupo.'**
+  String groupAddMembersAddedSuccess(int count);
+
+  /// No description provided for @groupAddMembersPartialFailure.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Não foi possível adicionar {failed} de {total}.'**
+  String groupAddMembersPartialFailure(int failed, int total);
+
+  /// No description provided for @groupAddMembersSelectAtLeastOne.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Selecione pelo menos um amigo.'**
+  String get groupAddMembersSelectAtLeastOne;
 
   /// No description provided for @groupSettingsTitle.
   ///
@@ -1149,6 +1215,30 @@ abstract class AppLocalizations {
   /// **'Não foi possível enviar o comprovante.'**
   String get settleUpProofUploadError;
 
+  /// No description provided for @settleUpOffsetButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Compensar dívida (encontro de contas)'**
+  String get settleUpOffsetButton;
+
+  /// No description provided for @settleUpOffsetConfirmTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Compensar esta dívida?'**
+  String get settleUpOffsetConfirmTitle;
+
+  /// No description provided for @settleUpOffsetConfirmMessage.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Isso usa seu crédito existente com esta pessoa para quitar a dívida do grupo sem movimentar dinheiro de verdade.'**
+  String get settleUpOffsetConfirmMessage;
+
+  /// No description provided for @settleUpOffsetConfirmAction.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Compensar'**
+  String get settleUpOffsetConfirmAction;
+
   /// No description provided for @pendingSettlementYouPaidBeforeAmount.
   ///
   /// In pt_BR, this message translates to:
@@ -1395,6 +1485,12 @@ abstract class AppLocalizations {
   /// **'Excluir minha conta'**
   String get profileDeleteAccountButton;
 
+  /// No description provided for @profileDeleteAccountConfirmTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Excluir conta'**
+  String get profileDeleteAccountConfirmTitle;
+
   /// No description provided for @profileDeleteAccountConfirm.
   ///
   /// In pt_BR, this message translates to:
@@ -1443,12 +1539,6 @@ abstract class AppLocalizations {
   /// **'E-mail: pagamento registrado'**
   String get profileEmailSettlementRecorded;
 
-  /// No description provided for @profileEmailWeeklyDigest.
-  ///
-  /// In pt_BR, this message translates to:
-  /// **'Resumo semanal por e-mail'**
-  String get profileEmailWeeklyDigest;
-
   /// No description provided for @profileAdFreeSection.
   ///
   /// In pt_BR, this message translates to:
@@ -1466,6 +1556,36 @@ abstract class AppLocalizations {
   /// In pt_BR, this message translates to:
   /// **'Válido até {date}'**
   String profileAdFreeExpires(String date);
+
+  /// No description provided for @profileAdFreeMonthlyLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Mensal'**
+  String get profileAdFreeMonthlyLabel;
+
+  /// No description provided for @profileAdFreeYearlyLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Anual'**
+  String get profileAdFreeYearlyLabel;
+
+  /// No description provided for @profileAdFreePlanExpires.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Válido até {date}'**
+  String profileAdFreePlanExpires(String date);
+
+  /// No description provided for @profileUpgradeMonthlyButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Assinar plano mensal'**
+  String get profileUpgradeMonthlyButton;
+
+  /// No description provided for @profileUpgradeYearlyButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Assinar plano anual'**
+  String get profileUpgradeYearlyButton;
 
   /// No description provided for @profileUpgradeButton.
   ///
@@ -1515,6 +1635,18 @@ abstract class AppLocalizations {
   /// **'Todos os grupos'**
   String get exportAllGroups;
 
+  /// No description provided for @exportGroupAll.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Todos os grupos'**
+  String get exportGroupAll;
+
+  /// No description provided for @exportShareButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Compartilhar PDF'**
+  String get exportShareButton;
+
   /// No description provided for @exportGenerateButton.
   ///
   /// In pt_BR, this message translates to:
@@ -1538,6 +1670,150 @@ abstract class AppLocalizations {
   /// In pt_BR, this message translates to:
   /// **'Erro ao gerar relatório. Tente novamente.'**
   String get exportError;
+
+  /// No description provided for @sectionLoadError.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Não foi possível carregar esta seção. Tente novamente.'**
+  String get sectionLoadError;
+
+  /// No description provided for @profileLoadError.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Não foi possível carregar seu perfil. Verifique a conexão e tente novamente.'**
+  String get profileLoadError;
+
+  /// No description provided for @profileAdsLoadError.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Não foi possível carregar o status da assinatura.'**
+  String get profileAdsLoadError;
+
+  /// No description provided for @exportPdfDocumentTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Rachae - relatório de despesas'**
+  String get exportPdfDocumentTitle;
+
+  /// No description provided for @exportPdfEmptyReport.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Sem dados para os filtros selecionados.'**
+  String get exportPdfEmptyReport;
+
+  /// No description provided for @exportPdfPeriod.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Período: {fromDate} - {toDate}'**
+  String exportPdfPeriod(String fromDate, String toDate);
+
+  /// No description provided for @exportPdfTotalSpent.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Total gasto do grupo'**
+  String get exportPdfTotalSpent;
+
+  /// No description provided for @exportPdfPerPersonTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Por pessoa (pago / devido / saldo)'**
+  String get exportPdfPerPersonTitle;
+
+  /// No description provided for @exportPdfColumnPerson.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Pessoa'**
+  String get exportPdfColumnPerson;
+
+  /// No description provided for @exportPdfColumnPaid.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Pago'**
+  String get exportPdfColumnPaid;
+
+  /// No description provided for @exportPdfColumnOwed.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Devido'**
+  String get exportPdfColumnOwed;
+
+  /// No description provided for @exportPdfColumnNet.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Saldo'**
+  String get exportPdfColumnNet;
+
+  /// No description provided for @exportPdfExpensesTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Linhas de despesa'**
+  String get exportPdfExpensesTitle;
+
+  /// No description provided for @exportPdfNoExpenses.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Nenhuma despesa neste período.'**
+  String get exportPdfNoExpenses;
+
+  /// No description provided for @exportPdfExpenseDescription.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Descrição'**
+  String get exportPdfExpenseDescription;
+
+  /// No description provided for @exportPdfExpenseAmount.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Valor'**
+  String get exportPdfExpenseAmount;
+
+  /// No description provided for @exportPdfExpenseDate.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Data'**
+  String get exportPdfExpenseDate;
+
+  /// No description provided for @exportPdfExpenseCategory.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Categoria'**
+  String get exportPdfExpenseCategory;
+
+  /// No description provided for @exportPdfSettlementsTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Histórico de acertos'**
+  String get exportPdfSettlementsTitle;
+
+  /// No description provided for @exportPdfNoSettlements.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Nenhum acerto neste período.'**
+  String get exportPdfNoSettlements;
+
+  /// No description provided for @exportPdfSettlementPayer.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Pagador'**
+  String get exportPdfSettlementPayer;
+
+  /// No description provided for @exportPdfSettlementReceiver.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Recebedor'**
+  String get exportPdfSettlementReceiver;
+
+  /// No description provided for @exportPdfSettlementAmount.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Valor'**
+  String get exportPdfSettlementAmount;
+
+  /// No description provided for @exportPdfSettlementDate.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Data'**
+  String get exportPdfSettlementDate;
 
   /// No description provided for @adBannerFallback.
   ///

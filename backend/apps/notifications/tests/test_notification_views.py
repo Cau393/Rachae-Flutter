@@ -109,7 +109,6 @@ def test_get_preferences_returns_all_fields(auth_client):
         "push_group_invitation",
         "email_expense_created",
         "email_settlement_recorded",
-        "email_weekly_digest",
     } == set(data.keys())
 
 
@@ -124,12 +123,12 @@ def test_get_preferences_creates_defaults_on_first_access(auth_client):
 def test_patch_preferences_updates_specific_fields(auth_client):
     auth_client.patch(
         "/api/v1/notifications/preferences/",
-        data={"email_weekly_digest": False},
-        content_type="application/json",
+        data={"email_settlement_recorded": False},
+        format="json",
     )
     response = auth_client.get("/api/v1/notifications/preferences/")
     data = response.json()["data"]
-    assert data["email_weekly_digest"] is False
+    assert data["email_settlement_recorded"] is False
     assert data["push_expense_created"] is True
 
 
@@ -138,7 +137,7 @@ def test_patch_preferences_invalid_field_returns_400(auth_client):
     response = auth_client.patch(
         "/api/v1/notifications/preferences/",
         data={"nonexistent_preference": True},
-        content_type="application/json",
+        format="json",
     )
     assert response.status_code == 400
 
@@ -151,7 +150,7 @@ def test_register_device_token_creates_record(auth_client, auth_user):
     response = auth_client.post(
         "/api/v1/notifications/device-token/",
         data={"token": "fcm_token_abc123", "device_type": "ios"},
-        content_type="application/json",
+        format="json",
     )
     assert response.status_code == 201
     from apps.notifications.models import DeviceToken
@@ -165,7 +164,7 @@ def test_register_device_token_upserts_on_duplicate(auth_client, auth_user):
         auth_client.post(
             "/api/v1/notifications/device-token/",
             data={"token": "fcm_dup_token", "device_type": "android"},
-            content_type="application/json",
+            format="json",
         )
     from apps.notifications.models import DeviceToken
 
@@ -180,7 +179,7 @@ def test_delete_device_token_removes_record(auth_client, auth_user):
     response = auth_client.delete(
         "/api/v1/notifications/device-token/",
         data={"token": "token_to_delete"},
-        content_type="application/json",
+        format="json",
     )
     assert response.status_code == 204
     assert not DeviceToken.objects.filter(token="token_to_delete").exists()

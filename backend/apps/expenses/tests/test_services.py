@@ -1,9 +1,11 @@
 import uuid
 from datetime import date
+from decimal import Decimal
 from unittest.mock import patch
 
 from django.test import TestCase
 
+from apps.expenses.models import Expense, SplitMethod
 from apps.expenses.services import ExpenseService, ReceiptService
 from core.models import AuditLog
 
@@ -90,3 +92,45 @@ class ExpenseServiceTests(ExpenseTestMixin, TestCase):
         self.assertTrue(
             AuditLog.objects.filter(target_id=expense.id, action="RECEIPT_ADDED").exists()
         )
+
+    @patch("tasks.notification_tasks.send_expense_created_push.delay")
+    @patch("tasks.email_tasks.send_expense_notification.delay")
+    @patch("tasks.ledger_tasks.recalculate_group_ledger.delay")
+    def test_create_schedules_email_and_push_for_each_split_user(
+        self,
+        mock_ledger,
+        mock_email,
+        mock_push,
+    ):
+        validated = {
+            "group": self.group,
+            "paid_by": self.user,
+            "amount": Decimal("30.00"),
+            "currency": "BRL",
+            "description": "Coffee",
+            "category": "geral",
+            "split_method": SplitMethod.EQUAL,
+            "splits": [
+                {"user_id": str(self.user.id), "share_value": "1"},
+                {"user_id": str(self.member_user.id), "share_value": "1"},
+            ],
+        }
+
+        with self.captureOnCommitCallbacks(execute=True):
+            expense = ExpenseService.create(self.user, validated)
+
+        self.assertIsInstance(expense, Expense)
+        self.assertEqual(mock_email.call_count, 2)
+        self.assertEqual(mock_push.call_count, 2)
+        user_ids_emailed = {c.args[0] for c in mock_email.call_args_list}
+        user_ids_pushed = {c.args[0] for c in mock_push.call_args_list}
+        self.assertEqual(user_ids_emailed, user_ids_pushed)
+        self.assertEqual(
+            user_ids_emailed,
+            {str(self.user.id), str(self.member_user.id)},
+        )
+        exp_id = str(expense.id)
+        for c in mock_email.call_args_list:
+            self.assertEqual(c.args[1], exp_id)
+        for c in mock_push.call_args_list:
+            self.assertEqual(c.args[1], exp_id)

@@ -67,6 +67,11 @@ void main() {
         'is_disputed': false,
         'created_at': '2026-03-20T15:30:00Z',
       });
+  SettlementCreateResult settlementResult() => SettlementCreateResult(
+        message: 'Settlement processed successfully',
+        totalSettled: '10.00',
+        transactionsCreated: [transaction()],
+      );
 
   List<Override> baseOverrides() => [
         friendsProvider.overrideWith((ref) async => [friend()]),
@@ -108,8 +113,18 @@ void main() {
         currency: any(named: 'currency'),
         groupId: any(named: 'groupId'),
         note: any(named: 'note'),
+        proofUrls: any(named: 'proofUrls'),
+        isOffset: any(named: 'isOffset'),
       ),
-    ).thenAnswer((_) async => transaction());
+    ).thenAnswer((_) async => settlementResult());
+    when(
+      () => mockSettlement.fetchOffsetCreditPreview(
+        withUserId: any(named: 'withUserId'),
+        excludeGroupId: any(named: 'excludeGroupId'),
+      ),
+    ).thenAnswer(
+      (_) async => (credit: '0.00', currency: 'BRL'),
+    );
   });
 
   test('_handleRecord uses mounted guard in finally', () {
@@ -231,6 +246,8 @@ void main() {
         currency: 'BRL',
         groupId: null,
         note: null,
+        proofUrls: null,
+        isOffset: false,
       ),
     ).called(1);
   });
@@ -279,6 +296,8 @@ void main() {
         currency: any(named: 'currency'),
         groupId: any(named: 'groupId'),
         note: any(named: 'note'),
+        proofUrls: any(named: 'proofUrls'),
+        isOffset: any(named: 'isOffset'),
       ),
     ).thenThrow(Exception('network'));
 

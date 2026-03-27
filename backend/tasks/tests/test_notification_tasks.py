@@ -136,3 +136,61 @@ def test_send_push_does_nothing_for_nonexistent_user():
             "expense_created",
         ]
     )
+
+
+@pytest.mark.django_db
+def test_send_expense_created_push_creates_notification_for_participant(
+    expense_with_splits,
+    mock_firebase,
+):
+    from apps.notifications.models import DeviceToken, Notification
+    from tasks.notification_tasks import send_expense_created_push
+
+    expense, participant = expense_with_splits
+    DeviceToken.objects.create(
+        user=participant, token="expense-push-test-token", device_type="ios"
+    )
+    send_expense_created_push(str(participant.id), str(expense.id))
+
+    notif = Notification.objects.get(
+        recipient=participant, notification_type="expense_created"
+    )
+    assert "Jantar" in notif.body
+    assert expense.paid_by.display_name in notif.body
+    mock_firebase.send_each_for_multicast.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_send_expense_created_push_skips_creator(
+    expense_with_splits,
+    mock_firebase,
+):
+    from apps.notifications.models import Notification
+    from tasks.notification_tasks import send_expense_created_push
+
+    expense, _participant = expense_with_splits
+    send_expense_created_push(str(expense.created_by.id), str(expense.id))
+
+    assert not Notification.objects.filter(
+        recipient=expense.created_by, notification_type="expense_created"
+    ).exists()
+    mock_firebase.send_each_for_multicast.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_send_expense_created_push_uses_english_when_locale_not_pt(
+    expense_with_splits,
+    mock_firebase,
+):
+    from apps.users.models import User
+    from apps.notifications.models import Notification
+    from tasks.notification_tasks import send_expense_created_push
+
+    expense, participant = expense_with_splits
+    User.objects.filter(pk=participant.pk).update(preferred_locale="en_US")
+    participant.refresh_from_db()
+
+    send_expense_created_push(str(participant.id), str(expense.id))
+
+    notif = Notification.objects.get(recipient=participant)
+    assert notif.title == "New expense"

@@ -100,6 +100,7 @@ void main() {
           'pending-settlements',
           '/friends/:id',
           '/settle',
+          'add-members',
         ]),
       );
     });
@@ -187,6 +188,90 @@ void main() {
           groupId: gid,
           detailAsync: AsyncData(detailWithMemberRole('ADMIN')),
           authState: AuthState.authenticated(user: authenticatedUser),
+        ),
+        isNull,
+      );
+    });
+  });
+
+  group('groupAddMembersRouteRedirect', () {
+    const gid = '11111111-1111-1111-1111-111111111111';
+    const uid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+
+    GroupDetailModel detailWithMemberRole(String role) {
+      return GroupDetailModel.fromJson(<String, dynamic>{
+        'id': gid,
+        'name': 'G',
+        'description': null,
+        'type': 'trip',
+        'currency': 'BRL',
+        'simplify_debts': true,
+        'created_by': uid,
+        'members': <dynamic>[
+          <String, dynamic>{
+            'user_id': uid,
+            'display_name': 'Current',
+            'avatar_url': null,
+            'role': role,
+            'joined_at': '2025-03-01T09:00:00.000Z',
+            'invited_by': null,
+          },
+        ],
+        'net_balances': <dynamic>[],
+        'created_at': '2025-03-01T08:00:00.000Z',
+      });
+    }
+
+    test('MEMBER is redirected away from add-members', () {
+      expect(
+        groupAddMembersRouteRedirect(
+          groupId: gid,
+          detailAsync: AsyncData(detailWithMemberRole('MEMBER')),
+          currentUserId: uid,
+        ),
+        '/groups/$gid',
+      );
+    });
+
+    test('ADMIN is not redirected', () {
+      expect(
+        groupAddMembersRouteRedirect(
+          groupId: gid,
+          detailAsync: AsyncData(detailWithMemberRole('ADMIN')),
+          currentUserId: uid,
+        ),
+        isNull,
+      );
+    });
+
+    test('loading detail allows add-members route', () {
+      expect(
+        groupAddMembersRouteRedirect(
+          groupId: gid,
+          detailAsync: const AsyncLoading(),
+          currentUserId: uid,
+        ),
+        isNull,
+      );
+    });
+
+    test('error detail allows add-members route', () {
+      expect(
+        groupAddMembersRouteRedirect(
+          groupId: gid,
+          detailAsync: AsyncError(Exception('fail'), StackTrace.empty),
+          currentUserId: uid,
+        ),
+        isNull,
+      );
+    });
+
+    test('empty currentUserId allows navigation when detail is data', () {
+      expect(
+        groupAddMembersRouteRedirect(
+          groupId: gid,
+          detailAsync: AsyncData(detailWithMemberRole('MEMBER')),
+          currentUserId: '',
         ),
         isNull,
       );

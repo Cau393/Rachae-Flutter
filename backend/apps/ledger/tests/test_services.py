@@ -6,7 +6,11 @@ from django.test import TestCase
 
 from apps.expenses.models import Expense
 from apps.groups.models import GroupRole
-from apps.ledger.services import LedgerService
+from apps.ledger.services import (
+    GROUP_BALANCES_CACHE_KEY,
+    GROUP_SIMPLIFIED_CACHE_KEY,
+    LedgerService,
+)
 from apps.splits.models import Split
 from apps.groups.tests.base import GroupTestMixin
 
@@ -78,7 +82,8 @@ class LedgerServiceTests(GroupTestMixin, TestCase):
 
         self.assertEqual(first_payload, second_payload)
         mock_compute_group_net_balances.assert_called_once_with(str(group.id))
-        self.assertEqual(cache.get(f"ledger:balances:{group.id}"), first_payload)
+        cache_key = GROUP_BALANCES_CACHE_KEY.format(group_id=str(group.id))
+        self.assertEqual(cache.get(cache_key), first_payload)
 
     @patch("apps.ledger.services.simplify_group_debts")
     def test_get_simplified_balances_returns_disabled_payload_when_group_does_not_simplify(
@@ -142,4 +147,47 @@ class LedgerServiceTests(GroupTestMixin, TestCase):
 
         self.assertEqual(first_payload, second_payload)
         mock_simplify_group_debts.assert_called_once_with(str(group.id), group.currency)
-        self.assertEqual(cache.get(f"ledger:simplified:{group.id}"), first_payload)
+        cache_key = GROUP_SIMPLIFIED_CACHE_KEY.format(group_id=str(group.id))
+        self.assertEqual(cache.get(cache_key), first_payload)
+
+    def test_get_group_balances_deserializes_task_cached_map_shape(self):
+        group = self._create_group_with_members()
+        cache_key = GROUP_BALANCES_CACHE_KEY.format(group_id=str(group.id))
+        cache.set(
+            cache_key,
+            {
+                str(self.user.id): "12.50",
+                str(self.member_user.id): "-12.50",
+            },
+        )
+
+        payload = LedgerService.get_group_balances(group.id)
+
+        balances = {item["user_id"]: item["balance"] for item in payload["balances"]}
+        self.assertEqual(balances[str(self.user.id)], Decimal("12.50"))
+        self.assertEqual(balances[str(self.member_user.id)], Decimal("-12.50"))
+
+    def test_get_simplified_balances_deserializes_task_cached_list_shape(self):
+        group = self._create_group_with_members(simplify_debts=True)
+        cache_key = GROUP_SIMPLIFIED_CACHE_KEY.format(group_id=str(group.id))
+        cached_list = [
+            {
+                "payer_id": str(self.member_user.id),
+                "payer_name": self.member_user.display_name,
+                "receiver_id": str(self.user.id),
+                "receiver_name": self.user.display_name,
+                "amount": "10.00",
+                "currency": group.currency,
+            }
+        ]
+        cache.set(cache_key, cached_list)
+
+        payload = LedgerService.get_simplified_balances(group)
+
+        self.assertEqual(
+            payload,
+            {
+                "simplify_debts": True,
+                "suggestions": cached_list,
+            },
+        )

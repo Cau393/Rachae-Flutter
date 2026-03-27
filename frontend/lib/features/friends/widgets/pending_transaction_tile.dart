@@ -117,18 +117,33 @@ class PendingTransactionTile extends StatelessWidget {
             ],
           )
         : null;
+    final groupContext = (transaction.groupName != null && transaction.groupName!.isNotEmpty)
+        ? transaction.groupName!
+        : (transaction.groupId == null ? l10n.activitySourcePersonal : null);
 
     return ListTile(
       leading: const Icon(Icons.payments),
       title: title,
       subtitle: Padding(
         padding: const EdgeInsets.only(top: 4),
-        child: Chip(
-          visualDensity: VisualDensity.compact,
-          padding: EdgeInsets.zero,
-          label: Text(chipLabel, style: TextStyle(color: chipFg)),
-          backgroundColor: chipBg,
-          side: BorderSide.none,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (groupContext != null)
+              Text(
+                groupContext,
+                style: theme.textTheme.bodySmall,
+              ),
+            const SizedBox(height: 4),
+            Chip(
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              label: Text(chipLabel, style: TextStyle(color: chipFg)),
+              backgroundColor: chipBg,
+              side: BorderSide.none,
+            ),
+          ],
         ),
       ),
       trailing: trailing,

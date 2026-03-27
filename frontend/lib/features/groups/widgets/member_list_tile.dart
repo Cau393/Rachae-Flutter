@@ -12,6 +12,7 @@ class MemberListTile extends StatelessWidget {
     required this.member,
     required this.isCurrentUser,
     required this.canManage,
+    this.canManageThisMember = true,
     required this.onChangeRole,
     required this.onRemove,
   });
@@ -19,6 +20,9 @@ class MemberListTile extends StatelessWidget {
   final GroupMemberModel member;
   final bool isCurrentUser;
   final bool canManage;
+
+  /// When false, hides role/remove menu (e.g. non-creator admin must not manage the group creator).
+  final bool canManageThisMember;
   final void Function(String role) onChangeRole;
   final VoidCallback onRemove;
 
@@ -62,7 +66,7 @@ class MemberListTile extends StatelessWidget {
       ),
       title: Text(title),
       subtitle: Text(roleDisplayName(l10n, member.role)),
-      trailing: canManage && !isCurrentUser
+      trailing: canManage && canManageThisMember && !isCurrentUser
           ? PopupMenuButton<String>(
               onSelected: (value) {
                 if (value == 'remove') {

@@ -1,6 +1,7 @@
 import secrets
 from decimal import Decimal
 from datetime import timedelta
+from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import UUID, uuid4
 
@@ -177,6 +178,15 @@ class BalanceService:
         }
 
     @classmethod
+    def pairwise_net_balances_for_user(cls, user_id, *, preloaded_expenses=None):
+        """Map counterparty user id -> net in [REPORT_CURRENCY]. Positive => they owe the user.
+
+        When ``preloaded_expenses`` is provided (same shape as ``get_balance_expenses_for_user`` with
+        splits prefetched), skip reloading expenses — used by owed_to_me replay to avoid duplicate work.
+        """
+        return cls._build_pairwise_balances(user_id, preloaded_expenses=preloaded_expenses)
+
+    @classmethod
     def get_pairwise_balance(cls, current_user: User, other_user: User) -> dict:
         balances = cls._build_pairwise_balances(current_user.id, other_user.id)
         net = balances.get(other_user.id, Decimal("0.00"))
@@ -186,13 +196,18 @@ class BalanceService:
         }
 
     @classmethod
-    def list_pairwise_nonzero(cls, user: User) -> list[dict]:
+    def list_pairwise_nonzero(cls, user: User, *, owe_me_only: bool = False) -> list[dict]:
         raw = cls._build_pairwise_balances(user.id)
         out = []
         for uid, amount in raw.items():
             if amount == Decimal("0.00"):
                 continue
-            other = User.objects.get(id=uid)
+            if owe_me_only and amount <= Decimal("0.00"):
+                continue
+            try:
+                other = User.all_objects.get(id=uid)
+            except User.DoesNotExist:
+                continue
             out.append(
                 {
                     "user": other,
@@ -203,18 +218,23 @@ class BalanceService:
         return sorted(out, key=lambda row: row["user"].display_name.lower())
 
     @classmethod
-    def _build_pairwise_balances(cls, user_id, other_user_id=None):
+    def _build_pairwise_balances(cls, user_id, other_user_id=None, *, preloaded_expenses=None):
         balances = {}
-        expenses = (
-            get_pairwise_expenses(user_id, other_user_id)
-            if other_user_id
-            else get_balance_expenses_for_user(user_id)
-        )
+        if preloaded_expenses is not None:
+            if other_user_id is not None:
+                raise ValueError("preloaded_expenses is only valid without other_user_id")
+            expenses = preloaded_expenses
+        else:
+            expenses = (
+                get_pairwise_expenses(user_id, other_user_id)
+                if other_user_id
+                else get_balance_expenses_for_user(user_id)
+            )
         transactions = (
             get_pairwise_transactions(user_id, other_user_id)
             if other_user_id
             else get_transactions_for_user(user_id)
-        ).filter(is_confirmed=True)
+        ).filter(is_disputed=False)
 
         for expense in expenses:
             base_currency = expense.group.currency if expense.group_id else expense.currency
@@ -231,7 +251,7 @@ class BalanceService:
         for settlement in transactions:
             converted_amount = convert_amount(settlement.amount, settlement.currency, cls.REPORT_CURRENCY)
             if settlement.payer_id == user_id:
-                balances[settlement.receiver_id] = balances.get(settlement.receiver_id, Decimal("0.00")) - converted_amount
+                balances[settlement.receiver_id] = balances.get(settlement.receiver_id, Decimal("0.00")) + converted_amount
             else:
                 balances[settlement.payer_id] = balances.get(settlement.payer_id, Decimal("0.00")) - converted_amount
 

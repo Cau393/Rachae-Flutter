@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/features/dashboard/models/activity_item_model.dart';
 import 'package:frontend/features/dashboard/providers/balance_summary_provider.dart';
 
+/// Page size for [ActivityFeedNotifier] and [GroupActivityFeedNotifier].
+const int kActivityFeedPageSize = 20;
+
 final activityFeedProvider =
     AsyncNotifierProvider<ActivityFeedNotifier, List<ActivityItemModel>>(
       ActivityFeedNotifier.new,
@@ -32,16 +35,17 @@ class ActivityFeedNotifier extends AsyncNotifier<List<ActivityItemModel>> {
   bool _hasMore = true;
   bool _loadingMore = false;
 
+  bool get hasMore => _hasMore;
+  bool get isLoadingMore => _loadingMore;
+
   @override
   Future<List<ActivityItemModel>> build() async {
     _currentPage = 1;
     _hasMore = true;
     _loadingMore = false;
     final repo = ref.watch(dashboardRepositoryProvider);
-    final list = await repo.fetchActivity(page: 1, limit: 20);
-    if (list.isEmpty) {
-      _hasMore = false;
-    }
+    final list = await repo.fetchActivity(page: 1, limit: kActivityFeedPageSize);
+    _hasMore = list.length >= kActivityFeedPageSize;
     return list;
   }
 
@@ -54,12 +58,16 @@ class ActivityFeedNotifier extends AsyncNotifier<List<ActivityItemModel>> {
     try {
       final repo = ref.read(dashboardRepositoryProvider);
       _currentPage++;
-      final more = await repo.fetchActivity(page: _currentPage, limit: 20);
+      final more =
+          await repo.fetchActivity(page: _currentPage, limit: kActivityFeedPageSize);
       if (more.isEmpty) {
         _hasMore = false;
         return;
       }
       state = AsyncData(mergeActivityDedupe(current, more));
+      if (more.length < kActivityFeedPageSize) {
+        _hasMore = false;
+      }
     } finally {
       _loadingMore = false;
     }
@@ -71,10 +79,8 @@ class ActivityFeedNotifier extends AsyncNotifier<List<ActivityItemModel>> {
     _hasMore = true;
     state = const AsyncLoading<List<ActivityItemModel>>();
     final repo = ref.read(dashboardRepositoryProvider);
-    final list = await repo.fetchActivity(page: 1, limit: 20);
-    if (list.isEmpty) {
-      _hasMore = false;
-    }
+    final list = await repo.fetchActivity(page: 1, limit: kActivityFeedPageSize);
+    _hasMore = list.length >= kActivityFeedPageSize;
     state = AsyncData(list);
   }
 }
@@ -88,17 +94,21 @@ class GroupActivityFeedNotifier extends AsyncNotifier<List<ActivityItemModel>> {
   bool _hasMore = true;
   bool _loadingMore = false;
 
+  bool get hasMore => _hasMore;
+  bool get isLoadingMore => _loadingMore;
+
   @override
   Future<List<ActivityItemModel>> build() async {
     _currentPage = 1;
     _hasMore = true;
     _loadingMore = false;
     final repo = ref.watch(dashboardRepositoryProvider);
-    final list =
-        await repo.fetchActivity(page: 1, limit: 20, groupId: groupId);
-    if (list.isEmpty) {
-      _hasMore = false;
-    }
+    final list = await repo.fetchActivity(
+      page: 1,
+      limit: kActivityFeedPageSize,
+      groupId: groupId,
+    );
+    _hasMore = list.length >= kActivityFeedPageSize;
     return list;
   }
 
@@ -113,7 +123,7 @@ class GroupActivityFeedNotifier extends AsyncNotifier<List<ActivityItemModel>> {
       _currentPage++;
       final more = await repo.fetchActivity(
         page: _currentPage,
-        limit: 20,
+        limit: kActivityFeedPageSize,
         groupId: groupId,
       );
       if (more.isEmpty) {
@@ -121,6 +131,9 @@ class GroupActivityFeedNotifier extends AsyncNotifier<List<ActivityItemModel>> {
         return;
       }
       state = AsyncData(mergeActivityDedupe(current, more));
+      if (more.length < kActivityFeedPageSize) {
+        _hasMore = false;
+      }
     } finally {
       _loadingMore = false;
     }
@@ -132,11 +145,12 @@ class GroupActivityFeedNotifier extends AsyncNotifier<List<ActivityItemModel>> {
     _hasMore = true;
     state = const AsyncLoading<List<ActivityItemModel>>();
     final repo = ref.read(dashboardRepositoryProvider);
-    final list =
-        await repo.fetchActivity(page: 1, limit: 20, groupId: groupId);
-    if (list.isEmpty) {
-      _hasMore = false;
-    }
+    final list = await repo.fetchActivity(
+      page: 1,
+      limit: kActivityFeedPageSize,
+      groupId: groupId,
+    );
+    _hasMore = list.length >= kActivityFeedPageSize;
     state = AsyncData(list);
   }
 }

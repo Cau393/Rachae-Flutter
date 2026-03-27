@@ -30,6 +30,7 @@ class AppConfig {
     }
     return iosRedirectUrl;
   }
+
   // Local dev: flutter run --dart-define=API_BASE_URL=http://localhost:8000/api/v1/
   static const apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
@@ -45,4 +46,20 @@ class AppConfig {
     'ANDROID_PLAY_STORE_URL',
     defaultValue: 'https://play.google.com/',
   );
+
+  /// AdSense publisher id (`ca-pub-…`). Override via `--dart-define=AD_SENSE_CLIENT=…`.
+  /// Must match the `client` query on `adsbygoogle.js` in [web/index.html] for releases.
+  static const adSenseClient = String.fromEnvironment(
+    'AD_SENSE_CLIENT',
+    defaultValue: 'ca-pub-7543427210522470',
+  );
+
+  /// AdSense display unit slot id. `--dart-define=AD_SENSE_SLOT=…`
+  static const adSenseSlot = String.fromEnvironment(
+    'AD_SENSE_SLOT',
+    defaultValue: '1298705263',
+  );
+
+  /// Reserved strip height for the responsive AdSense unit on web.
+  static const double adSenseBannerHeight = 100;
 }

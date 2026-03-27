@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import 'package:frontend/features/groups/models/group_balance_model.dart';
 import 'package:frontend/features/groups/models/group_detail_model.dart';
+import 'package:frontend/features/groups/models/group_report_model.dart';
 import 'package:frontend/features/groups/models/group_member_model.dart';
 import 'package:frontend/features/groups/models/group_summary_model.dart';
 import 'package:frontend/features/groups/models/settlement_suggestion_model.dart';
@@ -125,5 +126,31 @@ class GroupRepository {
 
   Future<void> leaveGroup(String groupId) async {
     await _dio.post<void>('/groups/$groupId/leave/');
+  }
+
+  Future<GroupReportModel> fetchGroupReport(
+    String groupId, {
+    DateTime? from,
+    DateTime? to,
+  }) async {
+    final queryParameters = <String, dynamic>{};
+    if (from != null) {
+      queryParameters['from'] = _formatReportDate(from);
+    }
+    if (to != null) {
+      queryParameters['to'] = _formatReportDate(to);
+    }
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/groups/$groupId/report/',
+      queryParameters: queryParameters.isEmpty ? null : queryParameters,
+    );
+    return GroupReportModel.fromJson(response.data!);
+  }
+
+  String _formatReportDate(DateTime d) {
+    final y = d.year.toString().padLeft(4, '0');
+    final m = d.month.toString().padLeft(2, '0');
+    final day = d.day.toString().padLeft(2, '0');
+    return '$y-$m-$day';
   }
 }

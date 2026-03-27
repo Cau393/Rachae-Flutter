@@ -10,16 +10,20 @@ class SettlementSuggestionTile extends StatelessWidget {
     super.key,
     required this.groupId,
     required this.suggestion,
+    required this.currentUserId,
   });
 
   final String groupId;
   final SettlementSuggestionModel suggestion;
+  final String currentUserId;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final amountLabel =
         CurrencyFormatter.format(suggestion.amountAsMoneyAmount);
+    final isPayer = currentUserId.isNotEmpty &&
+        suggestion.payerId == currentUserId;
     return ListTile(
       leading: const Icon(Icons.arrow_forward),
       title: Text(
@@ -29,20 +33,22 @@ class SettlementSuggestionTile extends StatelessWidget {
           suggestion.receiverName,
         ),
       ),
-      trailing: TextButton(
-        onPressed: () {
-          final uri = Uri(
-            path: '/settle',
-            queryParameters: <String, String>{
-              'group_id': groupId,
-              'receiver_id': suggestion.receiverId,
-              'amount': suggestion.amount,
-            },
-          );
-          context.go(uri.toString());
-        },
-        child: Text(l10n.groupDetailSettleUp),
-      ),
+      trailing: isPayer
+          ? TextButton(
+              onPressed: () {
+                final uri = Uri(
+                  path: '/settle',
+                  queryParameters: <String, String>{
+                    'group_id': groupId,
+                    'receiver_id': suggestion.receiverId,
+                    'amount': suggestion.amount,
+                  },
+                );
+                context.go(uri.toString());
+              },
+              child: Text(l10n.groupDetailSettleUp),
+            )
+          : null,
     );
   }
 }
