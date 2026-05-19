@@ -6,6 +6,7 @@ class AdsStatusSerializer(serializers.Serializer):
     subscription_status = serializers.CharField(allow_null=True)
     plan_expires_at = serializers.DateTimeField(allow_null=True)
     plan_type = serializers.CharField(allow_null=True)
+    stripe_portal_available = serializers.BooleanField()
 
 
 class CreateCheckoutSessionSerializer(serializers.Serializer):

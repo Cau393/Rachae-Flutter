@@ -1359,6 +1359,18 @@ abstract class AppLocalizations {
   /// **'Google Play'**
   String get invitePlayStoreButton;
 
+  /// No description provided for @inviteOpenInAppHint.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Já tem o Rachae instalado? Abra o app para aceitar este convite.'**
+  String get inviteOpenInAppHint;
+
+  /// No description provided for @inviteOpenInAppButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Abrir no app'**
+  String get inviteOpenInAppButton;
+
   /// No description provided for @friendDetailTitle.
   ///
   /// In pt_BR, this message translates to:
@@ -1416,7 +1428,7 @@ abstract class AppLocalizations {
   /// No description provided for @friendDetailAddedToGroupSuccess.
   ///
   /// In pt_BR, this message translates to:
-  /// **'{friendName} foi adicionado a {groupName}.'**
+  /// **'{friendName} foi adicionado(a) a {groupName}!'**
   String friendDetailAddedToGroupSuccess(String friendName, String groupName);
 
   /// No description provided for @profileTitle.
@@ -1569,6 +1581,48 @@ abstract class AppLocalizations {
   /// **'Anual'**
   String get profileAdFreeYearlyLabel;
 
+  /// No description provided for @profileAdFreeLifetimeLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Vitalício'**
+  String get profileAdFreeLifetimeLabel;
+
+  /// No description provided for @profileAdFreePlanUnknown.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Assinatura ativa'**
+  String get profileAdFreePlanUnknown;
+
+  /// No description provided for @profileAdFreeCurrentPlanLabel.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Plano atual: {planName}'**
+  String profileAdFreeCurrentPlanLabel(String planName);
+
+  /// No description provided for @profilePlanChangeStripePortalFootnote.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Use Gerenciar assinatura para mudar o plano. O Stripe aplica upgrades, downgrades e a cobrança conforme as regras da sua assinatura.'**
+  String get profilePlanChangeStripePortalFootnote;
+
+  /// No description provided for @profileIosSubscriptionChangeFootnote.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Para mudar o período de cobrança ou cancelar, use Gerenciar assinatura. A Apple faz upgrade/downgrade na mesma assinatura—evite comprar outro plano pelo paywall enquanto já estiver assinando.'**
+  String get profileIosSubscriptionChangeFootnote;
+
+  /// No description provided for @profileSeeRachaeProPlansButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Ver planos'**
+  String get profileSeeRachaeProPlansButton;
+
+  /// No description provided for @profileSubscriptionManagedElsewhere.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Alterações de assinatura não estão disponíveis no app. Entre em contato com o suporte se precisar de ajuda.'**
+  String get profileSubscriptionManagedElsewhere;
+
   /// No description provided for @profileAdFreePlanExpires.
   ///
   /// In pt_BR, this message translates to:
@@ -1688,6 +1742,36 @@ abstract class AppLocalizations {
   /// In pt_BR, this message translates to:
   /// **'Não foi possível carregar o status da assinatura.'**
   String get profileAdsLoadError;
+
+  /// No description provided for @profileCheckoutSessionError.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Não foi possível iniciar o pagamento. Tente novamente.'**
+  String get profileCheckoutSessionError;
+
+  /// No description provided for @profileCheckoutAlreadySubscribed.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Você já tem uma assinatura ativa.'**
+  String get profileCheckoutAlreadySubscribed;
+
+  /// No description provided for @profileCheckoutCannotOpenUrl.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Não foi possível abrir a página de pagamento. Tente novamente.'**
+  String get profileCheckoutCannotOpenUrl;
+
+  /// No description provided for @profileIapOfferingsUnavailable.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'As opções de assinatura não estão disponíveis no momento. Tente mais tarde.'**
+  String get profileIapOfferingsUnavailable;
+
+  /// No description provided for @profileRevenueCatMissingApiKey.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Compras no app não estão configuradas nesta build. Execute com REVENUECAT_IOS_API_KEY (ex.: flutter run --dart-define-from-file=../.env na pasta frontend) e configure produtos na App Store Connect e no RevenueCat.'**
+  String get profileRevenueCatMissingApiKey;
 
   /// No description provided for @exportPdfDocumentTitle.
   ///
@@ -1844,6 +1928,18 @@ abstract class AppLocalizations {
   /// In pt_BR, this message translates to:
   /// **'Anual'**
   String get adFreeYearlyPlan;
+
+  /// No description provided for @adFreeMonthlyPlanOption.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Mensal (R\$ 4,99)'**
+  String get adFreeMonthlyPlanOption;
+
+  /// No description provided for @adFreeYearlyPlanOption.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Anual (R\$ 29,99)'**
+  String get adFreeYearlyPlanOption;
 
   /// No description provided for @adFreeUpgradeButton.
   ///

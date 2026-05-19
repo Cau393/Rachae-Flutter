@@ -696,6 +696,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get invitePlayStoreButton => 'Google Play';
 
   @override
+  String get inviteOpenInAppHint =>
+      'Já tem o Rachae instalado? Abra o app para aceitar este convite.';
+
+  @override
+  String get inviteOpenInAppButton => 'Abrir no app';
+
+  @override
   String get friendDetailTitle => 'Detalhes';
 
   @override
@@ -725,7 +732,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String friendDetailAddedToGroupSuccess(String friendName, String groupName) {
-    return '$friendName foi adicionado a $groupName.';
+    return '$friendName foi adicionado(a) a $groupName!';
   }
 
   @override
@@ -807,6 +814,32 @@ class AppLocalizationsPt extends AppLocalizations {
   String get profileAdFreeYearlyLabel => 'Anual';
 
   @override
+  String get profileAdFreeLifetimeLabel => 'Vitalício';
+
+  @override
+  String get profileAdFreePlanUnknown => 'Assinatura ativa';
+
+  @override
+  String profileAdFreeCurrentPlanLabel(String planName) {
+    return 'Plano atual: $planName';
+  }
+
+  @override
+  String get profilePlanChangeStripePortalFootnote =>
+      'Use Gerenciar assinatura para mudar o plano. O Stripe aplica upgrades, downgrades e a cobrança conforme as regras da sua assinatura.';
+
+  @override
+  String get profileIosSubscriptionChangeFootnote =>
+      'Para mudar o período de cobrança ou cancelar, use Gerenciar assinatura. A Apple faz upgrade/downgrade na mesma assinatura—evite comprar outro plano pelo paywall enquanto já estiver assinando.';
+
+  @override
+  String get profileSeeRachaeProPlansButton => 'Ver planos';
+
+  @override
+  String get profileSubscriptionManagedElsewhere =>
+      'Alterações de assinatura não estão disponíveis no app. Entre em contato com o suporte se precisar de ajuda.';
+
+  @override
   String profileAdFreePlanExpires(String date) {
     return 'Válido até $date';
   }
@@ -870,6 +903,26 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get profileAdsLoadError =>
       'Não foi possível carregar o status da assinatura.';
+
+  @override
+  String get profileCheckoutSessionError =>
+      'Não foi possível iniciar o pagamento. Tente novamente.';
+
+  @override
+  String get profileCheckoutAlreadySubscribed =>
+      'Você já tem uma assinatura ativa.';
+
+  @override
+  String get profileCheckoutCannotOpenUrl =>
+      'Não foi possível abrir a página de pagamento. Tente novamente.';
+
+  @override
+  String get profileIapOfferingsUnavailable =>
+      'As opções de assinatura não estão disponíveis no momento. Tente mais tarde.';
+
+  @override
+  String get profileRevenueCatMissingApiKey =>
+      'Compras no app não estão configuradas nesta build. Execute com REVENUECAT_IOS_API_KEY (ex.: flutter run --dart-define-from-file=../.env na pasta frontend) e configure produtos na App Store Connect e no RevenueCat.';
 
   @override
   String get exportPdfDocumentTitle => 'Rachae - relatório de despesas';
@@ -951,6 +1004,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get adFreeYearlyPlan => 'Anual';
+
+  @override
+  String get adFreeMonthlyPlanOption => 'Mensal (R\$ 4,99)';
+
+  @override
+  String get adFreeYearlyPlanOption => 'Anual (R\$ 29,99)';
 
   @override
   String get adFreeUpgradeButton => 'Assinar';
@@ -1665,6 +1724,13 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get invitePlayStoreButton => 'Google Play';
 
   @override
+  String get inviteOpenInAppHint =>
+      'Já tem o Rachae instalado? Abra o app para aceitar este convite.';
+
+  @override
+  String get inviteOpenInAppButton => 'Abrir no app';
+
+  @override
   String get friendDetailTitle => 'Detalhes';
 
   @override
@@ -1694,7 +1760,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String friendDetailAddedToGroupSuccess(String friendName, String groupName) {
-    return '$friendName foi adicionado a $groupName.';
+    return '$friendName foi adicionado(a) a $groupName!';
   }
 
   @override
@@ -1776,6 +1842,32 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get profileAdFreeYearlyLabel => 'Anual';
 
   @override
+  String get profileAdFreeLifetimeLabel => 'Vitalício';
+
+  @override
+  String get profileAdFreePlanUnknown => 'Assinatura ativa';
+
+  @override
+  String profileAdFreeCurrentPlanLabel(String planName) {
+    return 'Plano atual: $planName';
+  }
+
+  @override
+  String get profilePlanChangeStripePortalFootnote =>
+      'Use Gerenciar assinatura para mudar o plano. O Stripe aplica upgrades, downgrades e a cobrança conforme as regras da sua assinatura.';
+
+  @override
+  String get profileIosSubscriptionChangeFootnote =>
+      'Para mudar o período de cobrança ou cancelar, use Gerenciar assinatura. A Apple faz upgrade/downgrade na mesma assinatura—evite comprar outro plano pelo paywall enquanto já estiver assinando.';
+
+  @override
+  String get profileSeeRachaeProPlansButton => 'Ver planos';
+
+  @override
+  String get profileSubscriptionManagedElsewhere =>
+      'Alterações de assinatura não estão disponíveis no app. Entre em contato com o suporte se precisar de ajuda.';
+
+  @override
   String profileAdFreePlanExpires(String date) {
     return 'Válido até $date';
   }
@@ -1839,6 +1931,26 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get profileAdsLoadError =>
       'Não foi possível carregar o status da assinatura.';
+
+  @override
+  String get profileCheckoutSessionError =>
+      'Não foi possível iniciar o pagamento. Tente novamente.';
+
+  @override
+  String get profileCheckoutAlreadySubscribed =>
+      'Você já tem uma assinatura ativa.';
+
+  @override
+  String get profileCheckoutCannotOpenUrl =>
+      'Não foi possível abrir a página de pagamento. Tente novamente.';
+
+  @override
+  String get profileIapOfferingsUnavailable =>
+      'As opções de assinatura não estão disponíveis no momento. Tente mais tarde.';
+
+  @override
+  String get profileRevenueCatMissingApiKey =>
+      'Compras no app não estão configuradas nesta build. Execute com REVENUECAT_IOS_API_KEY (ex.: flutter run --dart-define-from-file=../.env na pasta frontend) e configure produtos na App Store Connect e no RevenueCat.';
 
   @override
   String get exportPdfDocumentTitle => 'Rachae - relatório de despesas';
@@ -1920,6 +2032,12 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get adFreeYearlyPlan => 'Anual';
+
+  @override
+  String get adFreeMonthlyPlanOption => 'Mensal (R\$ 4,99)';
+
+  @override
+  String get adFreeYearlyPlanOption => 'Anual (R\$ 29,99)';
 
   @override
   String get adFreeUpgradeButton => 'Assinar';

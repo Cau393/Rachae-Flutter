@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -259,12 +260,46 @@ void main() {
           adsStatus: const AdsStatusModel(
             isAdFree: true,
             planType: 'monthly',
+            stripePortalAvailable: true,
           ),
         ),
       );
 
       expect(find.byType(ManageSubscriptionButton), findsOneWidget);
       expect(find.byType(AdFreeUpgradeCard), findsNothing);
+      expect(find.textContaining('Current plan'), findsOneWidget);
+      expect(find.text('Manage subscription'), findsOneWidget);
+    });
+
+    testWidgets(
+        'on iOS, ManageSubscription uses RevenueCat even when '
+        'stripePortalAvailable is true',
+        (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        final profileRepo = _MockProfileRepository();
+        final adsRepo = _MockAdsRepository();
+        final notifRepo = _MockNotificationsRepository();
+
+        await pumpProfile(
+          tester,
+          overrides: baseOverrides(
+            profileRepo: profileRepo,
+            adsRepo: adsRepo,
+            notifRepo: notifRepo,
+            adsStatus: const AdsStatusModel(
+              isAdFree: true,
+              planType: 'monthly',
+              stripePortalAvailable: true,
+            ),
+          ),
+        );
+
+        expect(find.byType(ManageSubscriptionButton), findsOneWidget);
+        expect(find.text('Manage subscription'), findsOneWidget);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
     });
 
     testWidgets('tapping sign out shows confirmation dialog', (tester) async {

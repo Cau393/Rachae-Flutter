@@ -691,6 +691,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invitePlayStoreButton => 'Google Play';
 
   @override
+  String get inviteOpenInAppHint =>
+      'Already have Rachae installed? Open the app to accept this invite.';
+
+  @override
+  String get inviteOpenInAppButton => 'Open in app';
+
+  @override
   String get friendDetailTitle => 'Details';
 
   @override
@@ -720,7 +727,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String friendDetailAddedToGroupSuccess(String friendName, String groupName) {
-    return '$friendName was added to $groupName.';
+    return '$friendName was added to $groupName!';
   }
 
   @override
@@ -802,6 +809,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileAdFreeYearlyLabel => 'Yearly';
 
   @override
+  String get profileAdFreeLifetimeLabel => 'Lifetime';
+
+  @override
+  String get profileAdFreePlanUnknown => 'Active subscription';
+
+  @override
+  String profileAdFreeCurrentPlanLabel(String planName) {
+    return 'Current plan: $planName';
+  }
+
+  @override
+  String get profilePlanChangeStripePortalFootnote =>
+      'Use Manage subscription to change your plan. Stripe applies upgrades, downgrades, and billing timing according to your subscription.';
+
+  @override
+  String get profileIosSubscriptionChangeFootnote =>
+      'To change your billing period or cancel, use Manage subscription. Apple applies upgrades and downgrades in one subscription—avoid buying a second plan from the paywall while already subscribed.';
+
+  @override
+  String get profileSeeRachaeProPlansButton => 'See plans';
+
+  @override
+  String get profileSubscriptionManagedElsewhere =>
+      'Subscription changes are not available in the app. Contact support if you need help.';
+
+  @override
   String profileAdFreePlanExpires(String date) {
     return 'Valid until $date';
   }
@@ -863,6 +896,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileAdsLoadError => 'Could not load subscription status.';
+
+  @override
+  String get profileCheckoutSessionError =>
+      'Could not start checkout. Try again.';
+
+  @override
+  String get profileCheckoutAlreadySubscribed =>
+      'You already have an active subscription.';
+
+  @override
+  String get profileCheckoutCannotOpenUrl =>
+      'Could not open the payment page. Try again.';
+
+  @override
+  String get profileIapOfferingsUnavailable =>
+      'Subscription options are not available right now. Try again later.';
+
+  @override
+  String get profileRevenueCatMissingApiKey =>
+      'In-app purchases are not configured in this build. Run the app with REVENUECAT_IOS_API_KEY (e.g. flutter run --dart-define-from-file=../.env from the frontend folder), then set up products in App Store Connect and RevenueCat.';
 
   @override
   String get exportPdfDocumentTitle => 'Rachae - expense report';
@@ -944,6 +997,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adFreeYearlyPlan => 'Yearly';
+
+  @override
+  String get adFreeMonthlyPlanOption => 'Monthly (R\$ 4.99)';
+
+  @override
+  String get adFreeYearlyPlanOption => 'Yearly (R\$ 29.99)';
 
   @override
   String get adFreeUpgradeButton => 'Subscribe';

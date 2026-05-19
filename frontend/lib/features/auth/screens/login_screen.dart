@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:frontend/features/auth/auth_notifier.dart';
 import 'package:frontend/features/auth/auth_state.dart';
+import 'package:frontend/features/auth/invite_handoff.dart';
 import 'package:frontend/features/auth/pending_friend_invite_token_provider.dart';
 import 'package:frontend/features/auth/pending_friend_invite_token_storage.dart';
 import 'package:frontend/features/auth/widgets/auth_loading_overlay.dart';
@@ -31,13 +32,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isLoading = false;
   bool _processingInvite = false;
   String? _lastSyncedInviteToken;
+  bool _autoIosHandoffAttempted = false;
 
   String? _inviteTokenFromCurrentUrl() {
-    final routerToken = GoRouter.maybeOf(context)
-        ?.state
-        .uri
-        .queryParameters['invite_token']
-        ?.trim();
+    final routerToken = GoRouter.maybeOf(
+      context,
+    )?.state.uri.queryParameters['invite_token']?.trim();
     if (routerToken != null && routerToken.isNotEmpty) {
       return routerToken;
     }
@@ -46,6 +46,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return baseToken;
     }
     return null;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (kIsWeb) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _maybeAutoTryIosHandoff(),
+      );
+    }
+  }
+
+  void _maybeAutoTryIosHandoff() {
+    if (!mounted || _autoIosHandoffAttempted) return;
+    if (!isMobileInviteHandoffBrowser()) return;
+    final token = _inviteTokenFromCurrentUrl();
+    if (token == null || token.isEmpty) return;
+    _autoIosHandoffAttempted = true;
+    Future<void>.delayed(const Duration(milliseconds: 400), () {
+      if (!mounted) return;
+      tryOpenInstalledIosAppForInvite(token);
+    });
+  }
+
+  void _openInInstalledIosApp() {
+    final uriToken = _inviteTokenFromCurrentUrl();
+    final pending = ref.read(pendingFriendInviteTokenProvider);
+    final token = (pending != null && pending.isNotEmpty) ? pending : uriToken;
+    if (token != null && token.isNotEmpty) {
+      tryOpenInstalledIosAppForInvite(token);
+    }
   }
 
   @override
@@ -64,12 +95,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final token = router.state.uri.queryParameters['invite_token']?.trim();
     final baseToken = Uri.base.queryParameters['invite_token']?.trim();
     final storedToken = readPendingFriendInviteToken();
-    final effectiveToken =
-        (token != null && token.isNotEmpty)
-            ? token
-            : (baseToken != null && baseToken.isNotEmpty)
-            ? baseToken
-            : storedToken;
+    final effectiveToken = (token != null && token.isNotEmpty)
+        ? token
+        : (baseToken != null && baseToken.isNotEmpty)
+        ? baseToken
+        : storedToken;
     if (effectiveToken != null && effectiveToken.isNotEmpty) {
       if (_lastSyncedInviteToken == effectiveToken) {
         return;
@@ -94,12 +124,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final uriToken = _inviteTokenFromCurrentUrl();
     final pending = ref.read(pendingFriendInviteTokenProvider);
     final storedToken = readPendingFriendInviteToken();
-    final token =
-        (pending != null && pending.isNotEmpty)
-            ? pending
-            : (uriToken != null && uriToken.isNotEmpty)
-            ? uriToken
-            : storedToken;
+    final token = (pending != null && pending.isNotEmpty)
+        ? pending
+        : (uriToken != null && uriToken.isNotEmpty)
+        ? uriToken
+        : storedToken;
     if (token == null || token.isEmpty) return;
 
     _processingInvite = true;
@@ -109,15 +138,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ref.read(pendingFriendInviteTokenProvider.notifier).clear();
       clearPendingFriendInviteTokenStorage();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.friendAcceptSuccess)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.friendAcceptSuccess)));
       router?.go('/friends');
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.errorGeneric)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.errorGeneric)));
     } finally {
       _processingInvite = false;
     }
@@ -135,7 +164,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       });
     });
 
-    final hasInviteToken = (_inviteTokenFromCurrentUrl()?.isNotEmpty ?? false) ||
+    final hasInviteToken =
+        (_inviteTokenFromCurrentUrl()?.isNotEmpty ?? false) ||
         (ref.watch(pendingFriendInviteTokenProvider)?.isNotEmpty ?? false);
 
     return Scaffold(
@@ -167,6 +197,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       if (kIsWeb && hasInviteToken) ...[
                         const SizedBox(height: 24),
+                        if (isMobileInviteHandoffBrowser()) ...[
+                          Text(
+                            l10n.inviteOpenInAppHint,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 12),
+                          OutlinedButton(
+                            onPressed: _openInInstalledIosApp,
+                            child: Text(l10n.inviteOpenInAppButton),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
                         Text(
                           l10n.inviteGetTheAppHint,
                           textAlign: TextAlign.center,
@@ -228,16 +271,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       final uriToken = _inviteTokenFromCurrentUrl();
       final pending = ref.read(pendingFriendInviteTokenProvider);
-      final token = (pending != null && pending.isNotEmpty) ? pending : uriToken;
+      final token = (pending != null && pending.isNotEmpty)
+          ? pending
+          : uriToken;
       await ref
           .read(authNotifierProvider.notifier)
           .signInWithGoogle(inviteToken: token);
     } catch (_) {
       if (!mounted) return;
       final l10n = AppLocalizations.of(context)!;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.oauthFailed)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.oauthFailed)));
     }
     if (!mounted) return;
     setState(() => _isLoading = false);

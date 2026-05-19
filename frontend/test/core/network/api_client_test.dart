@@ -38,10 +38,7 @@ void main() {
       when(() => session.accessToken).thenReturn('test_token');
 
       final interceptor = SupabaseTokenInterceptor(mockSupabase);
-      final options = RequestOptions(
-        path: '/x',
-        baseUrl: testBaseUrl,
-      );
+      final options = RequestOptions(path: '/x', baseUrl: testBaseUrl);
       final handler = RequestInterceptorHandler();
       interceptor.onRequest(options, handler);
       await pumpEventQueue();
@@ -56,10 +53,7 @@ void main() {
       when(() => mockAuth.currentSession).thenReturn(null);
 
       final interceptor = SupabaseTokenInterceptor(mockSupabase);
-      final options = RequestOptions(
-        path: '/x',
-        baseUrl: testBaseUrl,
-      );
+      final options = RequestOptions(path: '/x', baseUrl: testBaseUrl);
       final handler = RequestInterceptorHandler();
       interceptor.onRequest(options, handler);
       await pumpEventQueue();
@@ -77,10 +71,12 @@ void main() {
 
       final client = ApiClient(supabaseClient: mockSupabase);
       final mockAdapter = MockHttpClientAdapter();
-      when(() => mockAdapter.close(force: any(named: 'force'))).thenReturn(null);
-      when(() => mockAdapter.fetch(any(), any(), any())).thenAnswer(
-        (_) async => ResponseBody.fromString('{}', statusCode),
-      );
+      when(
+        () => mockAdapter.close(force: any(named: 'force')),
+      ).thenReturn(null);
+      when(
+        () => mockAdapter.fetch(any(), any(), any()),
+      ).thenAnswer((_) async => ResponseBody.fromString('{}', statusCode));
       client.dio.httpClientAdapter = mockAdapter;
 
       await expectLater(
@@ -119,7 +115,9 @@ void main() {
 
       final client = ApiClient(supabaseClient: mockSupabase);
       final mockAdapter = MockHttpClientAdapter();
-      when(() => mockAdapter.close(force: any(named: 'force'))).thenReturn(null);
+      when(
+        () => mockAdapter.close(force: any(named: 'force')),
+      ).thenReturn(null);
       when(() => mockAdapter.fetch(any(), any(), any())).thenAnswer(
         (_) async => ResponseBody.fromString(
           '{"data":{"status":"ok"}}',

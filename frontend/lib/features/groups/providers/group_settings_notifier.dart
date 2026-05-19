@@ -44,10 +44,16 @@ class GroupSettingsNotifier extends AsyncNotifier<void> {
     state = const AsyncLoading<void>();
     try {
       await ref.read(groupRepositoryProvider).updateGroup(groupId, changed);
+      if (!ref.mounted) {
+        return;
+      }
       ref.invalidate(groupDetailProvider(groupId));
       ref.read(groupSettingsOnSaveSuccessProvider)?.call();
       state = const AsyncData<void>(null);
     } catch (e, s) {
+      if (!ref.mounted) {
+        return;
+      }
       state = AsyncError<void>(e, s);
     }
   }
@@ -56,11 +62,17 @@ class GroupSettingsNotifier extends AsyncNotifier<void> {
     state = const AsyncLoading<void>();
     try {
       await ref.read(groupRepositoryProvider).deleteGroup(groupId);
+      if (!ref.mounted) {
+        return;
+      }
       ref.invalidate(groupListProvider);
       ref.invalidate(groupDetailProvider(groupId));
       ref.read(groupSettingsAfterLeaveProvider)();
       state = const AsyncData<void>(null);
     } catch (e, s) {
+      if (!ref.mounted) {
+        return;
+      }
       state = AsyncError<void>(e, s);
     }
   }
@@ -69,11 +81,17 @@ class GroupSettingsNotifier extends AsyncNotifier<void> {
     state = const AsyncLoading<void>();
     try {
       await ref.read(groupRepositoryProvider).leaveGroup(groupId);
+      if (!ref.mounted) {
+        return;
+      }
       ref.invalidate(groupListProvider);
       ref.invalidate(groupDetailProvider(groupId));
       ref.read(groupSettingsAfterLeaveProvider)();
       state = const AsyncData<void>(null);
     } catch (e, s) {
+      if (!ref.mounted) {
+        return;
+      }
       state = AsyncError<void>(e, s);
     }
   }
@@ -84,11 +102,17 @@ class GroupSettingsNotifier extends AsyncNotifier<void> {
       await ref
           .read(groupRepositoryProvider)
           .addMember(groupId, userId, role);
+      if (!ref.mounted) {
+        return;
+      }
       ref.invalidate(groupMembersProvider(groupId));
       ref.invalidate(groupDetailProvider(groupId));
       ref.invalidate(friendsNotInGroupProvider(groupId));
       state = const AsyncData<void>(null);
     } catch (e, s) {
+      if (!ref.mounted) {
+        return;
+      }
       state = AsyncError<void>(e, s);
     }
   }
@@ -109,6 +133,18 @@ class GroupSettingsNotifier extends AsyncNotifier<void> {
       } catch (_) {
         failedUserIds.add(id);
       }
+      if (!ref.mounted) {
+        return AddMembersBatchResult(
+          addedCount: addedCount,
+          failedUserIds: failedUserIds,
+        );
+      }
+    }
+    if (!ref.mounted) {
+      return AddMembersBatchResult(
+        addedCount: addedCount,
+        failedUserIds: failedUserIds,
+      );
     }
     ref.invalidate(groupMembersProvider(groupId));
     ref.invalidate(groupDetailProvider(groupId));
@@ -127,9 +163,15 @@ class GroupSettingsNotifier extends AsyncNotifier<void> {
       await ref
           .read(groupRepositoryProvider)
           .changeMemberRole(groupId, userId, role);
+      if (!ref.mounted) {
+        return;
+      }
       ref.invalidate(groupMembersProvider(groupId));
       state = const AsyncData<void>(null);
     } catch (e, s) {
+      if (!ref.mounted) {
+        return;
+      }
       state = AsyncError<void>(e, s);
     }
   }
@@ -138,9 +180,15 @@ class GroupSettingsNotifier extends AsyncNotifier<void> {
     state = const AsyncLoading<void>();
     try {
       await ref.read(groupRepositoryProvider).removeMember(groupId, userId);
+      if (!ref.mounted) {
+        return;
+      }
       ref.invalidate(groupMembersProvider(groupId));
       state = const AsyncData<void>(null);
     } catch (e, s) {
+      if (!ref.mounted) {
+        return;
+      }
       state = AsyncError<void>(e, s);
     }
   }

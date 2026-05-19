@@ -2,6 +2,11 @@
 .env
 .env.local
 .env.*.local
+docs/
+.env.prod
+
+# Git
+.gitignore
 
 # Python
 __pycache__/
@@ -29,7 +34,6 @@ build/
 *.ipr
 *.iws
 
-
 # iOS
 ios/Runner/GoogleService-Info.plist
 *.xcuserstate
@@ -45,3 +49,10 @@ ios/Runner/GoogleService-Info.plist
 # Secrets
 *.pem
 *.secrets/
+
+# Opespec
+openspec/
+
+# Claude
+.claude/
+*CLAUDE.md

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:frontend/features/auth/auth_notifier.dart';
 import 'package:frontend/features/groups/widgets/currency_dropdown.dart';
 import 'package:frontend/features/profile/providers/ads_status_provider.dart';
+import 'package:frontend/features/profile/providers/revenuecat_ads_sync_provider.dart';
 import 'package:frontend/features/profile/providers/profile_notifier.dart';
 import 'package:frontend/features/profile/widgets/ad_free_upgrade_card.dart';
 import 'package:frontend/features/profile/widgets/avatar_editor.dart';
@@ -18,6 +19,7 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(revenueCatAdsSyncProvider);
     final l10n = AppLocalizations.of(context)!;
     final profileAsync = ref.watch(profileNotifierProvider);
     final adsAsync = ref.watch(adsStatusProvider);

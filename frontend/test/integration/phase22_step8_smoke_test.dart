@@ -191,8 +191,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(AdFreeUpgradeCard), findsOneWidget);
-      expect(find.text('Monthly'), findsOneWidget);
-      expect(find.text('Yearly'), findsOneWidget);
+      expect(find.text(r'Monthly (R$ 4.99)'), findsOneWidget);
+      expect(find.text(r'Yearly (R$ 29.99)'), findsOneWidget);
     });
 
     testWidgets('ProfileScreen: ManageSubscription shows expiry when planExpiresAt set',
@@ -210,6 +210,7 @@ void main() {
           isAdFree: true,
           planType: 'monthly',
           planExpiresAt: expires,
+          stripePortalAvailable: true,
         ),
       );
       when(() => notifRepo.fetchPreferences()).thenAnswer((_) async => prefs);

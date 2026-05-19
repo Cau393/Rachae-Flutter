@@ -1,6 +1,8 @@
+import ssl
 from functools import lru_cache
 from uuid import UUID
 
+import certifi
 import jwt
 from django.conf import settings
 from rest_framework import authentication, exceptions
@@ -10,7 +12,13 @@ from apps.users.services import UserService
 
 @lru_cache(maxsize=1)
 def get_jwk_client():
-    return jwt.PyJWKClient(f"{settings.SUPABASE_URL}/auth/v1/.well-known/jwks.json")
+    # Use certifi CA bundle so JWKS HTTPS fetch verifies on macOS/python.org
+    # builds where the default SSL context can lack trusted roots.
+    ctx = ssl.create_default_context(cafile=certifi.where())
+    return jwt.PyJWKClient(
+        f"{settings.SUPABASE_URL}/auth/v1/.well-known/jwks.json",
+        ssl_context=ctx,
+    )
 
 
 def verify_supabase_token(token: str) -> dict:

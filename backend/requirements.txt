@@ -20,6 +20,8 @@ django-environ==0.13.0
 djangorestframework==3.16.1
 ecdsa==0.19.1
 firebase-admin==6.2.0
+# Production WSGI server (Procfile `web` uses gunicorn).
+gunicorn==23.0.0
 # Local ASGI dev — use: python -m uvicorn … so the venv interpreter loads deps (e.g. firebase_admin)
 uvicorn[standard]==0.34.0
 idna==3.11

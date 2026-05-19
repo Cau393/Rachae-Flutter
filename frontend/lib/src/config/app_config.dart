@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'oauth_redirect_uri.dart';
 
@@ -36,6 +37,38 @@ class AppConfig {
     'API_BASE_URL',
     defaultValue: 'https://your-backend.railway.app/api/v1/',
   );
+
+  /// RevenueCat public SDK key (Apple / iOS).
+  ///
+  /// **Physical device / simulator:** repo `../.env` is on the Mac, not on the
+  /// device, so [loadRepoDotenv] usually cannot read `REVENUECAT_IOS_API_KEY`
+  /// there. Use either:
+  /// - `flutter run --dart-define-from-file=../.env` (from `frontend/`), or
+  /// - `flutter run --dart-define=REVENUECAT_IOS_API_KEY=your_public_sdk_key`
+  ///
+  /// **Desktop / tests** when the process cwd is `frontend/`, [loadRepoDotenv]
+  /// may load repo-root `.env` into [dotenv] as a fallback.
+  static String get revenueCatIosApiKey {
+    const fromDefine = String.fromEnvironment(
+      'REVENUECAT_IOS_API_KEY',
+      defaultValue: '',
+    );
+    final trimmedDefine = fromDefine.trim();
+    if (trimmedDefine.isNotEmpty) {
+      return trimmedDefine;
+    }
+    try {
+      if (dotenv.isInitialized) {
+        final v = dotenv.maybeGet('REVENUECAT_IOS_API_KEY')?.trim();
+        if (v != null && v.isNotEmpty) {
+          return v;
+        }
+      }
+    } catch (_) {
+      // dotenv not loaded or not initialized
+    }
+    return '';
+  }
 
   /// Public app listing URLs (optional overrides via `--dart-define`).
   static const iosAppStoreListingUrl = String.fromEnvironment(

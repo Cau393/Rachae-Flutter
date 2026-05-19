@@ -18,7 +18,9 @@ def test_get_status_returns_correct_shape(subscribed_user):
     assert "subscription_status" in status
     assert "plan_expires_at" in status
     assert "plan_type" in status
+    assert "stripe_portal_available" in status
     assert status["is_ad_free"] is True
+    assert status["stripe_portal_available"] is True
 
 
 def test_create_checkout_session_uses_monthly_price(settings, mock_stripe_api):
@@ -114,3 +116,47 @@ def test_apply_subscription_event_sets_correct_fields(settings):
     assert user.subscription_status == "active"
     assert user.plan_type == "monthly"
     assert user.plan_expires_at is not None
+
+def test_apply_subscription_event_unknown_customer_no_op(settings):
+    from apps.ads.services import AdsService
+
+    settings.STRIPE_PRICE_MONTHLY = "price_m_999"
+    user = User.objects.create(
+        supabase_uid=uuid.uuid4(),
+        email="unknowncus@rachae.app",
+        display_name="U",
+        stripe_customer_id="cus_known",
+        is_ad_free=False,
+    )
+    subscription_obj = {
+        "customer": "cus_unknown_xyz",
+        "status": "active",
+        "current_period_end": 9999999999,
+        "items": {"data": [{"price": {"id": "price_m_999"}}]},
+    }
+
+    AdsService.apply_subscription_event(subscription_obj, grant=True)
+    user.refresh_from_db()
+    assert user.is_ad_free is False
+
+
+def test_apply_subscription_event_missing_customer_id_no_op(settings):
+    from apps.ads.services import AdsService
+
+    user = User.objects.create(
+        supabase_uid=uuid.uuid4(),
+        email="nocust@rachae.app",
+        display_name="U",
+        stripe_customer_id="cus_x",
+        is_ad_free=False,
+    )
+    subscription_obj = {
+        "status": "active",
+        "current_period_end": 9999999999,
+        "items": {"data": [{"price": {"id": settings.STRIPE_PRICE_MONTHLY}}]},
+    }
+
+    AdsService.apply_subscription_event(subscription_obj, grant=True)
+    user.refresh_from_db()
+    assert user.is_ad_free is False
+

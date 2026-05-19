@@ -166,11 +166,14 @@ AWS_S3_REGION = os.environ.get('AWS_S3_REGION', 'sa-east-1')
 AWS_S3_BUCKET = os.environ.get('AWS_S3_BUCKET', 'rachae-receipts')
 CLOUDFRONT_DOMAIN = os.environ.get('CLOUDFRONT_DOMAIN', '')
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+# Use the Dashboard endpoint signing secret in deployed envs. For local `stripe listen`,
+# paste the CLI's "Webhook signing secret" (whsec_...) — it differs from Dashboard.
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
 STRIPE_PRICE_MONTHLY = os.environ.get('STRIPE_PRICE_MONTHLY', '')
 STRIPE_PRICE_YEARLY = os.environ.get('STRIPE_PRICE_YEARLY', '')
+# RevenueCat dashboard → Webhooks → Authorization (optional). If set, POSTs must send the same token in Authorization (Bearer prefix or raw secret).
+REVENUECAT_WEBHOOK_SECRET = os.environ.get('REVENUECAT_WEBHOOK_SECRET', '')
 SUPABASE_URL = os.environ.get('SUPABASE_URL', '')
-SUPABASE_JWT_SECRET = os.environ.get('SUPABASE_JWT_SECRET', '')
 EXCHANGE_RATE_API_KEY = os.environ.get('EXCHANGE_RATE_API_KEY', '')
 EXCHANGE_RATE_API_URL = 'https://v6.exchangerate-api.com/v6'
 SENTRY_DSN = os.environ.get('SENTRY_DSN', '')

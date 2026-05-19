@@ -1,6 +1,12 @@
+import base64
 from unittest.mock import MagicMock
 
 import pytest
+
+
+def _stripe_payload_b64(data: bytes = b"payload") -> str:
+    """Matches StripeWebhookView: body is base64-encoded for Celery JSON transport."""
+    return base64.b64encode(data).decode("ascii")
 
 
 def _make_subscription_event(
@@ -40,7 +46,7 @@ def test_process_webhook_subscription_created_sets_ad_free(
 
     from tasks.stripe_tasks import process_stripe_webhook
 
-    process_stripe_webhook("payload", "sig_header")
+    process_stripe_webhook(_stripe_payload_b64(), "sig_header")
 
     stripe_user.refresh_from_db()
     assert stripe_user.is_ad_free is True
@@ -66,7 +72,7 @@ def test_process_webhook_subscription_created_yearly_sets_plan_type(
 
     from tasks.stripe_tasks import process_stripe_webhook
 
-    process_stripe_webhook("payload", "sig_header")
+    process_stripe_webhook(_stripe_payload_b64(), "sig_header")
 
     stripe_user.refresh_from_db()
     assert stripe_user.plan_type == "yearly"
@@ -87,7 +93,7 @@ def test_process_webhook_subscription_deleted_clears_ad_free(
 
     from tasks.stripe_tasks import process_stripe_webhook
 
-    process_stripe_webhook("payload", "sig_header")
+    process_stripe_webhook(_stripe_payload_b64(), "sig_header")
 
     stripe_user_subscribed.refresh_from_db()
     assert stripe_user_subscribed.is_ad_free is False
@@ -111,7 +117,7 @@ def test_process_webhook_subscription_updated_past_due_revokes_ad_free(
 
     from tasks.stripe_tasks import process_stripe_webhook
 
-    process_stripe_webhook("payload", "sig_header")
+    process_stripe_webhook(_stripe_payload_b64(), "sig_header")
 
     stripe_user_subscribed.refresh_from_db()
     assert stripe_user_subscribed.is_ad_free is False
@@ -133,7 +139,7 @@ def test_process_webhook_subscription_updated_trialing_grants_ad_free(
 
     from tasks.stripe_tasks import process_stripe_webhook
 
-    process_stripe_webhook("payload", "sig_header")
+    process_stripe_webhook(_stripe_payload_b64(), "sig_header")
 
     stripe_user.refresh_from_db()
     assert stripe_user.is_ad_free is True
@@ -148,7 +154,7 @@ def test_process_webhook_unknown_event_type_is_ignored(mock_stripe):
 
     from tasks.stripe_tasks import process_stripe_webhook
 
-    result = process_stripe_webhook.apply(args=["payload", "sig_header"])
+    result = process_stripe_webhook.apply(args=[_stripe_payload_b64(), "sig_header"])
     assert result.state != "FAILURE"
 
 
@@ -162,7 +168,7 @@ def test_process_webhook_invalid_signature_does_not_retry(mock_stripe):
         "sig_header",
     )
 
-    result = process_stripe_webhook.apply(args=["payload", "bad_sig"])
+    result = process_stripe_webhook.apply(args=[_stripe_payload_b64(), "bad_sig"])
     assert result.state != "FAILURE"
 
 
@@ -174,7 +180,7 @@ def test_process_webhook_retries_on_stripe_api_error(mock_stripe):
     mock_stripe.Webhook.construct_event.side_effect = stripe_lib.error.StripeError("API down")
 
     with pytest.raises(Exception):
-        process_stripe_webhook.apply(args=["payload", "sig_header"])
+        process_stripe_webhook.apply(args=[_stripe_payload_b64(), "sig_header"])
 
 
 @pytest.mark.django_db
@@ -212,3 +218,163 @@ def test_create_stripe_customer_retries_on_stripe_error(
 
     with pytest.raises(Exception):
         create_stripe_customer.apply(args=[str(user_without_stripe.id)])
+
+
+@pytest.mark.django_db
+def test_process_webhook_checkout_session_completed_binds_customer(
+    user_without_stripe,
+    mock_stripe,
+):
+    event = {
+        "type": "checkout.session.completed",
+        "data": {
+            "object": {
+                "client_reference_id": str(user_without_stripe.id),
+                "customer": "cus_from_checkout",
+            }
+        },
+    }
+    mock_stripe.Webhook.construct_event.return_value = event
+
+    from tasks.stripe_tasks import process_stripe_webhook
+
+    process_stripe_webhook(_stripe_payload_b64(), "sig_header")
+
+    user_without_stripe.refresh_from_db()
+    assert user_without_stripe.stripe_customer_id == "cus_from_checkout"
+    mock_stripe.Subscription.retrieve.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_process_webhook_checkout_session_completed_syncs_subscription_entitlements(
+    user_without_stripe,
+    mock_stripe,
+    settings,
+):
+    settings.STRIPE_PRICE_MONTHLY = "price_monthly_test"
+    event = {
+        "type": "checkout.session.completed",
+        "data": {
+            "object": {
+                "client_reference_id": str(user_without_stripe.id),
+                "customer": "cus_from_checkout",
+                "subscription": "sub_after_checkout",
+            }
+        },
+    }
+    mock_stripe.Webhook.construct_event.return_value = event
+    mock_stripe.Subscription.retrieve.return_value = {
+        "customer": "cus_from_checkout",
+        "status": "active",
+        "current_period_end": 9999999999,
+        "items": {"data": [{"price": {"id": "price_monthly_test"}}]},
+    }
+
+    from tasks.stripe_tasks import process_stripe_webhook
+
+    process_stripe_webhook(_stripe_payload_b64(), "sig_header")
+
+    mock_stripe.Subscription.retrieve.assert_called_once_with(
+        "sub_after_checkout",
+        expand=["items.data.price"],
+    )
+    user_without_stripe.refresh_from_db()
+    assert user_without_stripe.stripe_customer_id == "cus_from_checkout"
+    assert user_without_stripe.is_ad_free is True
+    assert user_without_stripe.subscription_status == "active"
+
+
+@pytest.mark.django_db
+def test_process_webhook_checkout_completed_thin_payload_expands_session(
+    user_without_stripe,
+    mock_stripe,
+    settings,
+):
+    """Webhook session object may omit subscription; expand via Session.retrieve."""
+    settings.STRIPE_PRICE_MONTHLY = "price_monthly_test"
+    sid = "cs_test_expand"
+    event = {
+        "type": "checkout.session.completed",
+        "data": {
+            "object": {
+                "id": sid,
+                "mode": "subscription",
+                "client_reference_id": str(user_without_stripe.id),
+                "customer": "cus_from_checkout",
+            }
+        },
+    }
+    mock_stripe.Webhook.construct_event.return_value = event
+    mock_stripe.checkout.Session.retrieve.return_value = {
+        "id": sid,
+        "mode": "subscription",
+        "client_reference_id": str(user_without_stripe.id),
+        "customer": "cus_from_checkout",
+        "subscription": {"id": "sub_from_expand", "object": "subscription"},
+    }
+    mock_stripe.Subscription.retrieve.return_value = {
+        "customer": "cus_from_checkout",
+        "status": "active",
+        "current_period_end": 9999999999,
+        "items": {"data": [{"price": {"id": "price_monthly_test"}}]},
+    }
+
+    from tasks.stripe_tasks import process_stripe_webhook
+
+    process_stripe_webhook(_stripe_payload_b64(), "sig_header")
+
+    mock_stripe.checkout.Session.retrieve.assert_called_once_with(
+        sid,
+        expand=["customer", "subscription", "payment_intent.customer"],
+    )
+    user_without_stripe.refresh_from_db()
+    assert user_without_stripe.is_ad_free is True
+
+
+@pytest.mark.django_db
+def test_process_webhook_checkout_session_completed_missing_ref_skipped(
+    user_without_stripe,
+    mock_stripe,
+):
+    event = {
+        "type": "checkout.session.completed",
+        "data": {
+            "object": {
+                "client_reference_id": None,
+                "customer": "cus_x",
+            }
+        },
+    }
+    mock_stripe.Webhook.construct_event.return_value = event
+
+    from tasks.stripe_tasks import process_stripe_webhook
+
+    process_stripe_webhook(_stripe_payload_b64(), "sig_header")
+
+    user_without_stripe.refresh_from_db()
+    assert user_without_stripe.stripe_customer_id is None
+
+
+@pytest.mark.django_db
+def test_process_webhook_subscription_unknown_customer_returns_cleanly(
+    user_without_stripe,
+    mock_stripe,
+    settings,
+):
+    settings.STRIPE_PRICE_MONTHLY = "price_monthly_test"
+    event = _make_subscription_event(
+        "customer.subscription.created",
+        customer_id="cus_never_bound",
+        status="active",
+        price_id="price_monthly_test",
+    )
+    mock_stripe.Webhook.construct_event.return_value = event
+
+    from tasks.stripe_tasks import process_stripe_webhook
+
+    result = process_stripe_webhook.apply(args=[_stripe_payload_b64(), "sig_header"])
+    assert result.state != "FAILURE"
+
+    user_without_stripe.refresh_from_db()
+    assert user_without_stripe.is_ad_free is False
+

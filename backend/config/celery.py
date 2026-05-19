@@ -15,6 +15,7 @@ app.autodiscover_tasks(
         "tasks.currency_tasks",
         "tasks.notification_tasks",
         "tasks.stripe_tasks",
+        "tasks.revenuecat_tasks",
     ]
 )
 

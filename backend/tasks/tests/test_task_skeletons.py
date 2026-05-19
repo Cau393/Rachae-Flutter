@@ -1,3 +1,4 @@
+import base64
 import uuid
 from unittest.mock import MagicMock, patch
 
@@ -6,6 +7,7 @@ import stripe
 
 from tasks.ledger_tasks import run_debt_simplification_all_groups
 from tasks.notification_tasks import send_push_notification
+from tasks.revenuecat_tasks import process_rc_webhook
 from tasks.stripe_tasks import create_stripe_customer, process_stripe_webhook
 
 
@@ -23,13 +25,21 @@ def test_process_stripe_webhook_invalid_signature_returns_none(settings):
         "sig_header",
     )
     with patch("stripe.Webhook.construct_event", side_effect=error):
-        result = process_stripe_webhook.apply(args=["{}", "sig_header"], throw=True)
+        result = process_stripe_webhook.apply(
+            args=[base64.b64encode(b"{}").decode("ascii"), "sig_header"],
+            throw=True,
+        )
 
     assert result.get() is None
 
 
 def test_create_stripe_customer_delay_completes_without_error():
     result = create_stripe_customer.delay(str(uuid.uuid4()))
+    assert result.get() is None
+
+
+def test_process_rc_webhook_delay_completes_without_error():
+    result = process_rc_webhook.delay({"event": {"type": "IGNORED"}})
     assert result.get() is None
 
 

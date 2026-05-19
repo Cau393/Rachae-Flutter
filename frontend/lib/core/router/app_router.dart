@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:frontend/features/auth/auth_notifier.dart';
 import 'package:frontend/features/auth/auth_state.dart';
+import 'package:frontend/features/auth/invite_deep_link_bootstrap.dart';
 import 'package:frontend/features/auth/screens/login_screen.dart';
 import 'package:frontend/features/auth/screens/splash_screen.dart';
 import 'package:frontend/features/dashboard/screens/dashboard_screen.dart';
@@ -29,7 +30,9 @@ import 'package:frontend/features/shell/app_shell.dart';
 /// Pure, testable redirect function.
 String? computeRedirect(AuthState authState, Uri uri) {
   final location = uri.path;
-  final hasInviteToken = (uri.queryParameters['invite_token'] ?? '').trim().isNotEmpty;
+  final hasInviteToken = (uri.queryParameters['invite_token'] ?? '')
+      .trim()
+      .isNotEmpty;
   final isAuthenticated = authState.isAuthenticated;
   String? redirect;
   if (location == '/') {
@@ -96,7 +99,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authNotifierProvider);
 
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: inviteAwareInitialLocation(),
     routes: [
       GoRoute(path: '/', builder: (_, _) => const SplashScreen()),
       GoRoute(
@@ -119,15 +122,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/expenses/:id',
-        builder: (context, state) => ExpenseDetailScreen(
-          expenseId: state.pathParameters['id']!,
-        ),
+        builder: (context, state) =>
+            ExpenseDetailScreen(expenseId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/friends/:id',
-        builder: (context, state) => FriendDetailScreen(
-          friendId: state.pathParameters['id']!,
-        ),
+        builder: (context, state) =>
+            FriendDetailScreen(friendId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/settle',
@@ -184,10 +185,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                           if (groupId == null) return null;
                           final djangoId = ref
                               .read(profileNotifierProvider)
-                              .maybeWhen(
-                                data: (p) => p.id,
-                                orElse: () => '',
-                              );
+                              .maybeWhen(data: (p) => p.id, orElse: () => '');
                           final supabaseUid = ref
                               .read(authNotifierProvider)
                               .maybeWhen(
@@ -198,12 +196,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                                 },
                                 orElse: () => '',
                               );
-                          final currentUserId =
-                              djangoId.isNotEmpty ? djangoId : supabaseUid;
+                          final currentUserId = djangoId.isNotEmpty
+                              ? djangoId
+                              : supabaseUid;
                           return groupAddMembersRouteRedirect(
                             groupId: groupId,
-                            detailAsync:
-                                ref.read(groupDetailProvider(groupId)),
+                            detailAsync: ref.read(groupDetailProvider(groupId)),
                             currentUserId: currentUserId,
                           );
                         },
@@ -218,10 +216,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                           if (groupId == null) return null;
                           return groupSettingsRouteRedirect(
                             groupId: groupId,
-                            detailAsync:
-                                ref.read(groupDetailProvider(groupId)),
-                            authState:
-                                ref.read(authNotifierProvider).value,
+                            detailAsync: ref.read(groupDetailProvider(groupId)),
+                            authState: ref.read(authNotifierProvider).value,
                           );
                         },
                         builder: (context, state) => GroupSettingsScreen(

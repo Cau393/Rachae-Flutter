@@ -34,4 +34,5 @@ def test_all_task_files_importable():
     import tasks.ledger_tasks  # noqa: F401
     import tasks.notification_tasks  # noqa: F401
     import tasks.s3_tasks  # noqa: F401
+    import tasks.revenuecat_tasks  # noqa: F401
     import tasks.stripe_tasks  # noqa: F401

@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:frontend/features/groups/models/group_summary_model.dart';
 import 'package:frontend/features/groups/providers/eligible_friend_groups_provider.dart';
-import 'package:frontend/features/groups/providers/group_settings_notifier.dart';
+import 'package:frontend/features/groups/providers/group_detail_provider.dart';
+import 'package:frontend/features/groups/providers/group_members_provider.dart'
+    show friendsNotInGroupProvider, groupMembersProvider;
+import 'package:frontend/features/groups/providers/group_repository_provider.dart';
 import 'package:frontend/src/l10n/generated/app_localizations.dart';
 
 class AddFriendToGroupSheet extends ConsumerStatefulWidget {
@@ -24,29 +27,65 @@ class AddFriendToGroupSheet extends ConsumerStatefulWidget {
 class _AddFriendToGroupSheetState extends ConsumerState<AddFriendToGroupSheet> {
   String? _submittingGroupId;
 
+  /// Groups hidden immediately after a successful add (before eligible list refetch).
+  final Set<String> _removedGroupIds = <String>{};
+
+  List<GroupSummaryModel> _visibleGroups(List<GroupSummaryModel> serverGroups) {
+    return serverGroups
+        .where((g) => !_removedGroupIds.contains(g.id))
+        .toList();
+  }
+
   Future<void> _addToGroup(GroupSummaryModel group) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _submittingGroupId = group.id;
     });
     try {
-      final messenger = ScaffoldMessenger.of(context);
-      await ref
-          .read(groupSettingsNotifierProvider(group.id).notifier)
-          .addMember(widget.friendId, 'MEMBER');
+      await ref.read(groupRepositoryProvider).addMember(
+        group.id,
+        widget.friendId,
+        'MEMBER',
+      );
+      ref.invalidate(groupMembersProvider(group.id));
+      ref.invalidate(groupDetailProvider(group.id));
+      ref.invalidate(friendsNotInGroupProvider(group.id));
+      if (mounted) {
+        setState(() {
+          _removedGroupIds.add(group.id);
+        });
+      }
       ref.invalidate(eligibleFriendGroupsProvider(widget.friendId));
+      try {
+        await ref.read(eligibleFriendGroupsProvider(widget.friendId).future);
+        if (mounted) {
+          final async = ref.read(eligibleFriendGroupsProvider(widget.friendId));
+          if (async.hasValue) {
+            final ids = async.value!.map((g) => g.id).toSet();
+            setState(() {
+              _removedGroupIds.removeWhere((id) => !ids.contains(id));
+            });
+          }
+        }
+      } catch (_) {
+        // List refresh failed; optimistic row stays hidden; Retry refetches.
+      }
       if (!mounted) {
         return;
       }
-      Navigator.of(context).pop();
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(
-              context,
-            )!.friendDetailAddedToGroupSuccess(widget.friendName, group.name),
+      if (messenger != null && l10n != null) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              l10n.friendDetailAddedToGroupSuccess(
+                widget.friendName,
+                group.name,
+              ),
+            ),
           ),
-        ),
-      );
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -90,7 +129,8 @@ class _AddFriendToGroupSheetState extends ConsumerState<AddFriendToGroupSheet> {
             ),
           ),
           data: (groups) {
-            if (groups.isEmpty) {
+            final visible = _visibleGroups(groups);
+            if (visible.isEmpty) {
               return SizedBox(
                 height: 160,
                 child: Center(
@@ -114,10 +154,10 @@ class _AddFriendToGroupSheetState extends ConsumerState<AddFriendToGroupSheet> {
                 Flexible(
                   child: ListView.separated(
                     shrinkWrap: true,
-                    itemCount: groups.length,
+                    itemCount: visible.length,
                     separatorBuilder: (_, _) => const Divider(height: 1),
                     itemBuilder: (context, index) {
-                      final group = groups[index];
+                      final group = visible[index];
                       final isSubmitting = _submittingGroupId == group.id;
                       return ListTile(
                         contentPadding: EdgeInsets.zero,

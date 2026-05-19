@@ -28,6 +28,7 @@ void main() {
               'subscription_status': null,
               'plan_expires_at': null,
               'plan_type': null,
+              'stripe_portal_available': false,
             },
           },
           statusCode: 200,
@@ -38,6 +39,7 @@ void main() {
       final model = await repo.fetchAdsStatus();
 
       expect(model.isAdFree, isFalse);
+      expect(model.stripePortalAvailable, isFalse);
     });
 
     test('createCheckoutSession returns checkout_url string', () async {

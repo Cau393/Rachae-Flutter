@@ -18,6 +18,7 @@ class AdsService:
             "subscription_status": user.subscription_status,
             "plan_expires_at": user.plan_expires_at,
             "plan_type": user.plan_type,
+            "stripe_portal_available": bool(user.stripe_customer_id),
         }
 
     @staticmethod
@@ -66,11 +67,22 @@ class AdsService:
 
         from apps.users.models import User
 
-        customer_id = subscription_obj.get("customer")
+        raw_customer = subscription_obj.get("customer")
+        customer_id = (
+            raw_customer
+            if isinstance(raw_customer, str)
+            else (raw_customer or {}).get("id")
+        )
+        if not customer_id:
+            logger.warning("[AdsService] subscription webhook missing customer id")
+            return
         try:
             user = User.objects.get(stripe_customer_id=customer_id)
         except User.DoesNotExist:
-            logger.warning("[AdsService] no user for customer=%s", customer_id)
+            logger.warning(
+                "Received subscription webhook for unknown Stripe Customer: %s",
+                customer_id,
+            )
             return
 
         status = subscription_obj.get("status", "")
@@ -99,4 +111,36 @@ class AdsService:
             user.id,
             status,
             user.is_ad_free,
+        )
+
+    @staticmethod
+    def apply_revenuecat_entitlement(
+        user,
+        *,
+        grant: bool,
+        subscription_status: str | None,
+        plan_expires_at,
+        plan_type: str | None,
+    ) -> None:
+        user.is_ad_free = grant
+        user.subscription_status = subscription_status
+        if grant:
+            user.plan_type = plan_type
+            user.plan_expires_at = plan_expires_at
+        else:
+            user.plan_type = None
+            user.plan_expires_at = None
+        user.save(
+            update_fields=[
+                "is_ad_free",
+                "subscription_status",
+                "plan_type",
+                "plan_expires_at",
+            ]
+        )
+        logger.info(
+            "[AdsService] apply_revenuecat_entitlement: user=%s grant=%s status=%s",
+            user.id,
+            grant,
+            subscription_status,
         )
