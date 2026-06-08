@@ -1,3 +1,7 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
 # Environment
 .env
 .env.local
@@ -49,6 +53,9 @@ ios/Runner/GoogleService-Info.plist
 # Secrets
 *.pem
 *.secrets/
+
+# Deployment scratch (may contain secrets)
+backend/launching.txt
 
 # Opespec
 openspec/
