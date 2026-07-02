@@ -150,6 +150,10 @@ def test_cleanup_orphan_handles_paginated_s3_response(
             "Contents": [{"Key": orphan_key}],
             "IsTruncated": False,
         },
+        {
+            "Contents": [],
+            "IsTruncated": False,
+        },
     ]
 
     with patch("tasks.s3_tasks.delete_s3_object") as mock_delete_task:

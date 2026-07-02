@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: rachae-backend
+    runtime: python
+    plan: starter
+    region: virginia
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    preDeployCommand: python manage.py migrate --noinput
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2
+    healthCheckPath: /api/v1/health/
+    envVars:
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: .onrender.com
+      - key: SUPABASE_URL
+        value: https://tjjaojtwsmnwmxfqorse.supabase.co
+      - key: AWS_S3_REGION
+        value: sa-east-1
+      - key: AWS_S3_BUCKET
+        value: rachae-receipts
+      - key: FIREBASE_SKIP_INIT
+        value: "1"
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: FRONTEND_INVITE_URL
+        sync: false
+      - key: DJANGO_SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false

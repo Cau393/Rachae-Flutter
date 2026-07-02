@@ -162,6 +162,8 @@ class ExpenseViewTests(ExpenseTestMixin, TestCase):
             group=self.group,
             paid_by=self.user,
             description="Lunch",
+            amount="50.00",
+            amount_in_group_currency="50.00",
         )
         self.create_split(shared, self.user, "25.00")
         self.create_split(shared, self.member_user, "25.00")
@@ -191,6 +193,8 @@ class ExpenseViewTests(ExpenseTestMixin, TestCase):
             group=None,
             paid_by=self.user,
             description="Personal lunch",
+            amount="50.00",
+            amount_in_group_currency="50.00",
         )
         self.create_split(shared, self.user, "25.00")
         self.create_split(shared, self.member_user, "25.00")
