@@ -97,7 +97,7 @@ Splitwise is great — but its free tier is increasingly limited, and the premiu
 | Service | Purpose |
 |---|---|
 | Vercel | Flutter web (static build) |
-| Render | Django API (web + worker + beat) |
+| Railway | Django API (web + worker + beat) |
 | AWS RDS | PostgreSQL — `sa-east-1` |
 | AWS S3 | File storage — `sa-east-1` |
 | Upstash | Serverless Redis |
@@ -252,15 +252,15 @@ The project ships to:
 | Component | Platform |
 |---|---|
 | Flutter web | Vercel (static build) |
-| Django API | Render (web service) |
+| Django API | Railway (web service) |
 | Database | AWS RDS PostgreSQL |
 | Redis | Upstash |
 | Auth | Supabase |
 | iOS app | App Store |
 
-A detailed step-by-step deployment runbook (AWS security groups, Supabase redirect config, Render service setup, Vercel build args, iOS signing) is maintained in the project's [deployment plan](.claude/plans/).
+A detailed step-by-step deployment runbook (AWS security groups, Supabase redirect config, Railway service setup, Vercel build args, iOS signing) is maintained in the project's [deployment plan](.claude/plans/).
 
-> **Note:** Celery worker and beat are defined in the `Procfile` but are deployed as separate Render services. The web API runs independently — async tasks are queued but not consumed until the worker is running.
+> **Note:** Celery worker and beat are defined in the `Procfile` but are deployed as separate Railway services. The web API runs independently — async tasks are queued but not consumed until the worker is running.
 
 ---
 
