@@ -184,12 +184,26 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 # Copy and fill in the environment file
-cp .env.example .env   # edit with your Supabase URL, DB URL, Redis URL
+cp ../.env.example .env   # edit with your Supabase URL, DB URL, Redis URL
 
 # Apply migrations and start the dev server
 python manage.py migrate
 make asgi              # → http://localhost:8000
 ```
+
+> Settings read `.env` from the **repo root** (`ROOT_DIR/.env`), so copy the
+> template to the root, not into `backend/`. Only `DJANGO_SECRET_KEY`,
+> `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`,
+> `CORS_ALLOWED_ORIGIN_REGEXES`, and `DATABASE_URL` are required to boot; the
+> rest are optional integrations.
+
+> **Firebase push notifications are optional.** `FIREBASE_CREDENTIALS_JSON` is a
+> **file path** to a service-account JSON (not the JSON contents). Leave it
+> **unset** to run without FCM — it degrades gracefully. If you set it, the file
+> **must exist** or `manage.py` (including `collectstatic`) crashes at startup
+> with `ImproperlyConfigured: Firebase credentials file not found`. The
+> credential file and `.secrets/` are gitignored, so they are never present in a
+> fresh clone.
 
 The dev server runs with Uvicorn (ASGI). The API is available at `http://localhost:8000/api/v1/`. Health check: `GET /api/v1/health/`.
 
@@ -261,6 +275,14 @@ The project ships to:
 A detailed step-by-step deployment runbook (AWS security groups, Supabase redirect config, Railway service setup, Vercel build args, iOS signing) is maintained in the project's [deployment plan](.claude/plans/).
 
 > **Note:** Celery worker and beat are defined in the `Procfile` but are deployed as separate Railway services. The web API runs independently — async tasks are queued but not consumed until the worker is running.
+
+> **Railway/Firebase gotcha:** Do **not** set `FIREBASE_CREDENTIALS_JSON` to a
+> file path in Railway variables. The value is read as a filesystem path, but the
+> credential file is gitignored and never shipped to the container, so the build
+> fails during `collectstatic` with `ImproperlyConfigured: Firebase credentials
+> file not found`. Leave the variable unset on Railway (push notifications
+> degrade gracefully) until file-based secrets are wired in, e.g. via a Railway
+> volume or a build step that materializes the JSON from a base64 variable.
 
 ---
 
