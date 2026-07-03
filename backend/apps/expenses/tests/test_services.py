@@ -134,3 +134,33 @@ class ExpenseServiceTests(ExpenseTestMixin, TestCase):
             self.assertEqual(c.args[1], exp_id)
         for c in mock_push.call_args_list:
             self.assertEqual(c.args[1], exp_id)
+
+    @patch("tasks.notification_tasks.send_expense_created_push.delay")
+    @patch("tasks.email_tasks.send_expense_notification.delay")
+    @patch("tasks.ledger_tasks.recalculate_group_ledger.delay", side_effect=ConnectionError("broker down"))
+    def test_create_persists_expense_even_if_broker_is_unreachable(
+        self,
+        mock_ledger,
+        mock_email,
+        mock_push,
+    ):
+        """A committed expense must not surface as a request failure just
+        because the post-commit Celery enqueue can't reach the broker."""
+        validated = {
+            "group": self.group,
+            "paid_by": self.user,
+            "amount": Decimal("30.00"),
+            "currency": "BRL",
+            "description": "Coffee",
+            "category": "geral",
+            "split_method": SplitMethod.EQUAL,
+            "splits": [
+                {"user_id": str(self.user.id), "share_value": "1"},
+                {"user_id": str(self.member_user.id), "share_value": "1"},
+            ],
+        }
+
+        with self.captureOnCommitCallbacks(execute=True):
+            expense = ExpenseService.create(self.user, validated)
+
+        self.assertTrue(Expense.objects.filter(id=expense.id).exists())

@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/currency/default_currency.dart';
+import 'package:frontend/core/network/api_client.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -136,13 +137,16 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
           e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.sendTimeout;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            isTimeout ? l10n.addExpenseTimeoutError : l10n.addExpenseError,
-          ),
-        ),
-      );
+      // Surface the backend's actual validation message (e.g. which split
+      // failed) instead of a generic string — the interceptor already wraps
+      // 4xx/5xx errors as ApiException in api_client.dart.
+      final apiError = e.error;
+      final errorMessage = isTimeout
+          ? l10n.addExpenseTimeoutError
+          : apiError is ApiException
+          ? apiError.message
+          : l10n.addExpenseError;
+      messenger.showSnackBar(SnackBar(content: Text(errorMessage)));
       return;
     } catch (_) {
       if (!mounted) return;

@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
+import 'package:frontend/core/network/api_client.dart';
 import 'package:frontend/core/theme/app_theme.dart';
 import 'package:frontend/core/widgets/ad_banner.dart' show AdBanner;
 import 'package:frontend/features/auth/auth_notifier.dart';
@@ -439,6 +440,46 @@ void main() {
 
         expect(find.text(l.addExpenseError), findsOneWidget);
         expect(find.byType(AddExpenseScreen), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'submit error with ApiException shows the backend validation message',
+      (tester) async {
+        final mockRepo = _MockExpenseRepository();
+        when(() => mockRepo.createExpense(any())).thenThrow(
+          DioException(
+            requestOptions: RequestOptions(path: '/expenses/'),
+            type: DioExceptionType.badResponse,
+            error: const ApiException(
+              statusCode: 400,
+              message: '{splits: Users x do not exist.}',
+            ),
+          ),
+        );
+
+        final detail = _groupDetail();
+        final router = buildRouter(
+          initialLocation: '/expenses/new?group_id=${detail.id}',
+        );
+        await pumpScreen(
+          tester,
+          router: router,
+          overrides: baseOverrides(mockRepo, detail),
+        );
+
+        final l = l10nFrom(tester);
+        await tester.enterText(find.byType(TextField).first, '10');
+        await tester.tap(
+          find.widgetWithText(FilledButton, l.addExpenseSaveButton),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text('{splits: Users x do not exist.}'),
+          findsOneWidget,
+        );
+        expect(find.text(l.addExpenseError), findsNothing);
       },
     );
 

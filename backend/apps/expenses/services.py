@@ -1,3 +1,4 @@
+import logging
 import uuid
 from decimal import Decimal
 from importlib import import_module
@@ -15,6 +16,8 @@ from apps.groups.models import Group, GroupMember
 from apps.splits.models import Split
 from core.models import AuditLog
 from core.storage import generate_presigned_upload_url
+
+logger = logging.getLogger(__name__)
 
 ONE_EXCHANGE_RATE = Decimal("1.000000")
 RECEIPT_UPLOAD_EXPIRATION_SECONDS = 900
@@ -273,9 +276,16 @@ def _schedule_optional_task(module_path: str, task_name: str, *task_args) -> Non
     if task is None:
         return
 
-    transaction.on_commit(
-        lambda task=task, task_args=task_args: task.delay(*task_args)
-    )
+    def _enqueue(task=task, task_name=task_name, task_args=task_args):
+        # Runs after commit — the expense/split rows are already saved, so a
+        # broker outage here must not turn a successful write into a 500.
+        # Notifications/ledger recalc are best-effort; log and move on.
+        try:
+            task.delay(*task_args)
+        except Exception:
+            logger.exception("Failed to enqueue task %s%s", task_name, task_args)
+
+    transaction.on_commit(_enqueue)
 
 
 def _schedule_group_ledger_recalculation(group_id) -> None:

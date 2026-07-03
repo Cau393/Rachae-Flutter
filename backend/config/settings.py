@@ -140,9 +140,12 @@ _default_cache = {
     "LOCATION": REDIS_URL,
     "KEY_PREFIX": "rachae",
     "TIMEOUT": 300,
+    # A Redis blip must degrade to a DB read (e.g. get_exchange_rate), not
+    # raise and fail the whole request — cache is an optimization here.
+    "OPTIONS": {"IGNORE_EXCEPTIONS": True},
 }
 if REDIS_URL.startswith("rediss://"):
-    _default_cache["OPTIONS"] = {"ssl_cert_reqs": "none"}
+    _default_cache["OPTIONS"]["ssl_cert_reqs"] = "none"
 CACHES = {"default": _default_cache}
 if TESTING:
     CACHES = {
@@ -227,6 +230,7 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
+    "EXCEPTION_HANDLER": "core.exceptions.logging_exception_handler",
 }
 
 SUPABASE_ISSUER = f"{SUPABASE_URL}/auth/v1"
