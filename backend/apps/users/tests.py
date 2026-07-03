@@ -178,6 +178,23 @@ class UsersPhaseThreeTests(TestCase):
         self.assertIsNone(User.objects.get(supabase_uid=first_uid).phone)
         self.assertIsNone(User.objects.get(supabase_uid=second_uid).phone)
 
+    @patch("core.authentication.verify_supabase_token")
+    def test_token_with_new_uid_but_existing_email_returns_401_not_500(self, mock_verify):
+        # A recreated Supabase project can re-issue an existing email a new uid.
+        # The email unique constraint must surface as a clean 401, never a 500.
+        mock_verify.return_value = {
+            "sub": str(uuid.uuid4()),
+            "email": self.user.email,
+            "user_metadata": {"full_name": "Impostor Uid"},
+        }
+
+        response = self.client.get(
+            "/api/v1/users/me/",
+            HTTP_AUTHORIZATION="Bearer mocked-token",
+        )
+
+        self.assertEqual(response.status_code, 401)
+
     def test_users_me_patch_updates_profile(self):
         self.authenticate()
 

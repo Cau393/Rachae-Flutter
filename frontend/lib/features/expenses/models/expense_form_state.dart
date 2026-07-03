@@ -50,6 +50,7 @@ class AddExpenseFormState {
     this.convertedPreview,
     this.isSubmitting = false,
     this.validationError,
+    this.failedReceiptCount = 0,
   }) : expenseDate = expenseDate ?? DateTime.now();
 
   final String amount;
@@ -66,6 +67,10 @@ class AddExpenseFormState {
   final String? convertedPreview;
   final bool isSubmitting;
   final String? validationError;
+
+  /// Receipts that failed to upload after the expense itself saved
+  /// successfully. Surfaced to the user via a partial-failure snackbar.
+  final int failedReceiptCount;
 
   static const _sentinel = Object();
 
@@ -84,6 +89,7 @@ class AddExpenseFormState {
     Object? convertedPreview = _sentinel,
     bool? isSubmitting,
     Object? validationError = _sentinel,
+    int? failedReceiptCount,
   }) {
     return AddExpenseFormState(
       amount: amount ?? this.amount,
@@ -106,6 +112,7 @@ class AddExpenseFormState {
       validationError: validationError == _sentinel
           ? this.validationError
           : validationError as String?,
+      failedReceiptCount: failedReceiptCount ?? this.failedReceiptCount,
     );
   }
 }

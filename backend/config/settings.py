@@ -231,6 +231,24 @@ REST_FRAMEWORK = {
 
 SUPABASE_ISSUER = f"{SUPABASE_URL}/auth/v1"
 
+# Emit unhandled 500 tracebacks to stderr (→ Railway logs). Django's default
+# routes django.request errors to mail_admins only, so with DEBUG=False and no
+# email backend they are silently dropped and production 500s look invisible.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {"format": "[{levelname}] {asctime} {name}: {message}", "style": "{"},
+    },
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "verbose"},
+    },
+    "root": {"handlers": ["console"], "level": "INFO"},
+    "loggers": {
+        "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": False},
+    },
+}
+
 # TLS for Redis (Upstash / secure Redis).
 # redis-py 7+ validates ssl_cert_reqs only for strings "none" | "optional" | "required"
 # (see redis.connection.SSLConnection); ssl.CERT_NONE can surface as invalid "CERT_NONE".

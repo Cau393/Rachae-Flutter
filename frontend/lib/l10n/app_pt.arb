@@ -166,6 +166,8 @@
   "addExpenseSaveButton": "Salvar despesa",
   "addExpenseSuccess": "Despesa adicionada!",
   "addExpenseError": "Erro ao salvar. Tente novamente.",
+  "addExpenseTimeoutError": "A requisição demorou demais. Verifique sua conexão e tente novamente.",
+  "addExpenseReceiptUploadPartialFailure": "Despesa salva, mas alguns comprovantes não foram enviados.",
   "addExpenseFriendLabel": "Amigo",
   "addExpenseFriendHint": "Escolha o amigo envolvido nesta despesa",
   "addExpenseFriendRequired": "Escolha um amigo para esta despesa.",

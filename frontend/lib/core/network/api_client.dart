@@ -91,10 +91,38 @@ class ApiClient {
 
 String _resolveApiBaseUrl() {
   const defined = String.fromEnvironment('API_BASE_URL', defaultValue: '');
-  if (defined.isNotEmpty) {
-    return defined;
+  return resolveApiBaseUrlForTesting(
+    isReleaseMode: kReleaseMode,
+    isWeb: kIsWeb,
+    definedValue: defined,
+  );
+}
+
+/// Extracted so the release-web guard is unit-testable: `kReleaseMode` is
+/// always `false` under `flutter test`, so [_resolveApiBaseUrl] alone can
+/// never exercise the throw path. Production callers should go through
+/// [_resolveApiBaseUrl]; this stays behaviorally identical for them.
+@visibleForTesting
+String resolveApiBaseUrlForTesting({
+  required bool isReleaseMode,
+  required bool isWeb,
+  String definedValue = '',
+}) {
+  if (definedValue.isNotEmpty) {
+    return definedValue;
   }
-  if (kIsWeb) {
+  // The web shim (`api_base_url_html.dart`) derives a URL from
+  // `window.location`, which is silently wrong for hosts (e.g. Vercel) that
+  // don't serve the API on the same origin — it must never win in a release
+  // web build.
+  if (isReleaseMode && isWeb) {
+    throw StateError(
+      'API_BASE_URL must be provided via --dart-define for release web '
+      'builds. Build with `flutter build web --release '
+      '--dart-define=API_BASE_URL=<url>`.',
+    );
+  }
+  if (isWeb) {
     final fromWindow = webApiBaseUrl();
     if (fromWindow.isNotEmpty) {
       return fromWindow;
@@ -104,7 +132,7 @@ String _resolveApiBaseUrl() {
   // repo, e.g. desktop / tests). Physical iOS/Android devices can't read the
   // repo `.env` — use `--dart-define-from-file=../.env` instead.
   try {
-    if (!kIsWeb && dotenv.isInitialized) {
+    if (!isWeb && dotenv.isInitialized) {
       final v = dotenv.maybeGet('API_BASE_URL')?.trim();
       if (v != null && v.isNotEmpty) {
         return v;
@@ -115,7 +143,7 @@ String _resolveApiBaseUrl() {
   }
   // Debug-only warning: `localhost` on a physical device points at the device
   // itself, so nothing the Mac serves is reachable. See README dev setup.
-  if (kDebugMode && !kIsWeb) {
+  if (kDebugMode && !isWeb) {
     debugPrint(
       '[ApiClient] No API_BASE_URL provided; falling back to '
       'http://localhost:8000/api/v1/. On a physical device this WILL fail '

@@ -445,6 +445,14 @@ class AppLocalizationsPt extends AppLocalizations {
   String get addExpenseError => 'Erro ao salvar. Tente novamente.';
 
   @override
+  String get addExpenseTimeoutError =>
+      'A requisição demorou demais. Verifique sua conexão e tente novamente.';
+
+  @override
+  String get addExpenseReceiptUploadPartialFailure =>
+      'Despesa salva, mas alguns comprovantes não foram enviados.';
+
+  @override
   String get addExpenseFriendLabel => 'Amigo';
 
   @override
@@ -1471,6 +1479,14 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get addExpenseError => 'Erro ao salvar. Tente novamente.';
+
+  @override
+  String get addExpenseTimeoutError =>
+      'A requisição demorou demais. Verifique sua conexão e tente novamente.';
+
+  @override
+  String get addExpenseReceiptUploadPartialFailure =>
+      'Despesa salva, mas alguns comprovantes não foram enviados.';
 
   @override
   String get addExpenseFriendLabel => 'Amigo';

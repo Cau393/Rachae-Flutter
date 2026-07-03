@@ -384,6 +384,7 @@ void main() {
 
       expect(result, isNotNull);
       expect(state().isSubmitting, isFalse);
+      expect(state().failedReceiptCount, 1);
       verify(() => mockRepo.createExpense(any())).called(1);
       verify(
         () => mockRepo.fetchReceiptUploadUrl(
@@ -394,4 +395,18 @@ void main() {
       verifyNever(() => mockRepo.confirmReceiptUpload(any(), any()));
     },
   );
+
+  test('successful submit resets failedReceiptCount to zero', () async {
+    when(
+      () => mockRepo.createExpense(any()),
+    ).thenAnswer((_) async => _expenseDetail('e-no-receipts'));
+
+    final n = notifier();
+    n.updateSplitMethod('equal');
+    n.updateAmount('20.00');
+
+    await n.submit();
+
+    expect(state().failedReceiptCount, 0);
+  });
 }

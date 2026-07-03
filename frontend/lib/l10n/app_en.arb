@@ -166,6 +166,8 @@
   "addExpenseSaveButton": "Save expense",
   "addExpenseSuccess": "Expense added!",
   "addExpenseError": "Error saving. Try again.",
+  "addExpenseTimeoutError": "The request timed out. Check your connection and try again.",
+  "addExpenseReceiptUploadPartialFailure": "Expense saved, but some receipts failed to upload.",
   "addExpenseFriendLabel": "Friend",
   "addExpenseFriendHint": "Choose the friend involved in this expense",
   "addExpenseFriendRequired": "Choose a friend for this expense.",

@@ -6,7 +6,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import UUID, uuid4
 
 from django.conf import settings
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from apps.users.models import FriendInvite, FriendInviteStatus, User
@@ -52,26 +52,32 @@ class UserService:
             "avatar_url": user_metadata.get("avatar_url"),
         }
 
-        with transaction.atomic():
-            user, created = User.all_objects.get_or_create(
-                supabase_uid=supabase_uid,
-                defaults=defaults,
-            )
-            if created:
-                return user
+        try:
+            with transaction.atomic():
+                user, created = User.all_objects.get_or_create(
+                    supabase_uid=supabase_uid,
+                    defaults=defaults,
+                )
+                if created:
+                    return user
 
-            if user.is_deleted:
-                raise ValueError("This user account has been deleted.")
+                if user.is_deleted:
+                    raise ValueError("This user account has been deleted.")
 
-            updated_fields = []
-            for field, value in defaults.items():
-                if getattr(user, field) != value:
-                    setattr(user, field, value)
-                    updated_fields.append(field)
+                updated_fields = []
+                for field, value in defaults.items():
+                    if getattr(user, field) != value:
+                        setattr(user, field, value)
+                        updated_fields.append(field)
 
-            if updated_fields:
-                updated_fields.append("updated_at")
-                user.save(update_fields=updated_fields)
+                if updated_fields:
+                    updated_fields.append("updated_at")
+                    user.save(update_fields=updated_fields)
+        except IntegrityError as exc:
+            # A different supabase_uid already owns this email (e.g. the Supabase
+            # project was recreated and re-issued the user a new id). Surface a
+            # clean auth failure instead of a 500 rather than silently re-linking.
+            raise ValueError("An account with this email already exists under a different identity.") from exc
 
         return user
 
@@ -198,15 +204,23 @@ class BalanceService:
     @classmethod
     def list_pairwise_nonzero(cls, user: User, *, owe_me_only: bool = False) -> list[dict]:
         raw = cls._build_pairwise_balances(user.id)
-        out = []
+        nonzero = {}
         for uid, amount in raw.items():
             if amount == Decimal("0.00"):
                 continue
             if owe_me_only and amount <= Decimal("0.00"):
                 continue
-            try:
-                other = User.all_objects.get(id=uid)
-            except User.DoesNotExist:
+            nonzero[uid] = amount
+
+        users_by_id = {
+            other.id: other
+            for other in User.all_objects.filter(id__in=nonzero.keys())
+        }
+
+        out = []
+        for uid, amount in nonzero.items():
+            other = users_by_id.get(uid)
+            if other is None:
                 continue
             out.append(
                 {

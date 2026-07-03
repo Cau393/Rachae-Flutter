@@ -46,10 +46,18 @@ class SplitInputSerializer(serializers.Serializer):
         allow_null=True,
     )
 
-    def validate_user_id(self, value):
-        if not User.objects.filter(id=value, is_deleted=False).exists():
-            raise serializers.ValidationError("Selected user does not exist.")
-        return value
+
+def _validate_split_users_exist(splits_data: list) -> None:
+    """Bulk existence check for split participants (replaces per-field N+1 lookup)."""
+    user_ids = [split.get("user_id") for split in splits_data]
+    existing_ids = set(
+        User.objects.filter(id__in=user_ids, is_deleted=False).values_list("id", flat=True)
+    )
+    missing_ids = list(dict.fromkeys(str(user_id) for user_id in user_ids if user_id not in existing_ids))
+    if missing_ids:
+        raise serializers.ValidationError(
+            {"splits": f"Users {', '.join(missing_ids)} do not exist."}
+        )
 
 
 class SplitOutputSerializer(serializers.ModelSerializer):
@@ -122,6 +130,7 @@ class ExpenseCreateSerializer(serializers.Serializer):
         amount_in_group_currency = amount * exchange_rate
         amount_in_group_currency = amount_in_group_currency.quantize(Decimal("0.01"))
 
+        _validate_split_users_exist(splits_data)
         SplitService.validate_splits(
             split_method,
             splits_data,
@@ -166,9 +175,11 @@ class ExpenseUpdateSerializer(serializers.Serializer):
             amount * expense.exchange_rate_to_group_currency
         ).quantize(Decimal("0.01"))
 
+        splits_data = attrs.get("splits", [])
+        _validate_split_users_exist(splits_data)
         SplitService.validate_splits(
             attrs["split_method"],
-            attrs.get("splits", []),
+            splits_data,
             amount_in_group_currency,
         )
 

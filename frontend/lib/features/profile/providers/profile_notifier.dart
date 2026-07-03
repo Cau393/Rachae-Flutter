@@ -65,6 +65,12 @@ class ProfileNotifier extends AsyncNotifier<ProfileModel> {
 
   Future<void> deleteAccount() async {
     await ref.read(profileRepositoryProvider).deleteAccount();
+    // Sign out here (not in the widget) so the Supabase session is always
+    // cleared once the account is gone. Leaving it to the caller's
+    // `context.mounted` guard let the token survive on unmount, and the
+    // interceptor kept attaching it — firing endless hidden 401 requests
+    // against the now-deleted account.
+    await ref.read(authNotifierProvider.notifier).signOut();
   }
 
   static String _contentType(File f) {

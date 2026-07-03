@@ -39,7 +39,10 @@ def verify_supabase_token(token: str) -> dict:
         raise exceptions.AuthenticationFailed("Supabase token is missing the subject claim.") from exc
     except ValueError as exc:
         raise exceptions.AuthenticationFailed("Supabase token subject is not a valid UUID.") from exc
-    except jwt.InvalidTokenError as exc:
+    except (jwt.InvalidTokenError, jwt.PyJWKClientError) as exc:
+        # PyJWKClientError (raised when the token's signing key can't be resolved
+        # from the JWKS) is NOT a subclass of InvalidTokenError, so it must be
+        # caught explicitly — otherwise it escapes as an unhandled 500.
         raise exceptions.AuthenticationFailed("Supabase token verification failed.") from exc
 
 

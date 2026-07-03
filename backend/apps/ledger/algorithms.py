@@ -2,7 +2,8 @@ import heapq
 from decimal import Decimal
 from typing import Any
 
-from django.db.models import Sum
+from django.db.models import DecimalField, Sum
+from django.db.models.functions import Coalesce
 
 THRESHOLD = Decimal("0.005")
 ZERO = Decimal("0")
@@ -58,55 +59,73 @@ def run_min_cash_flow(net_balances: dict[str, Decimal]) -> list[dict[str, Any]]:
 def compute_group_net_balances(group_id: str) -> dict[str, Decimal]:
     """
     Compute paid minus owed for each active member in a group.
+
+    Runs 4 bulk aggregate (GROUP BY) queries total instead of 4 queries per member.
     """
     from apps.expenses.models import Expense
     from apps.groups.models import GroupMember
     from apps.splits.models import Split
     from apps.transactions.models import Transaction
 
-    result: dict[str, Decimal] = {}
+    decimal_zero = Decimal("0")
+    money_field = DecimalField(max_digits=12, decimal_places=2)
 
-    members = GroupMember.objects.filter(
-        group_id=group_id,
-        is_deleted=False,
-    ).select_related("user")
+    member_ids = list(
+        GroupMember.objects.filter(
+            group_id=group_id,
+            is_deleted=False,
+        ).values_list("user_id", flat=True)
+    )
 
-    for member in members:
-        user = member.user
+    result: dict[str, Decimal] = {str(user_id): decimal_zero for user_id in member_ids}
 
-        paid_expenses = (
-            Expense.objects.filter(
-                group_id=group_id,
-                paid_by=user,
-                is_deleted=False,
-            ).aggregate(total=Sum("amount_in_group_currency"))["total"]
-        ) or Decimal("0")
+    paid_expenses_by_user = {
+        row["paid_by_id"]: row["total"]
+        for row in Expense.objects.filter(
+            group_id=group_id,
+            is_deleted=False,
+        )
+        .values("paid_by_id")
+        .annotate(total=Coalesce(Sum("amount_in_group_currency"), decimal_zero, output_field=money_field))
+    }
 
-        owed_splits = (
-            Split.objects.filter(
-                expense__group_id=group_id,
-                expense__is_deleted=False,
-                user=user,
-            ).aggregate(total=Sum("amount_owed"))["total"]
-        ) or Decimal("0")
+    owed_splits_by_user = {
+        row["user_id"]: row["total"]
+        for row in Split.objects.filter(
+            expense__group_id=group_id,
+            expense__is_deleted=False,
+        )
+        .values("user_id")
+        .annotate(total=Coalesce(Sum("amount_owed"), decimal_zero, output_field=money_field))
+    }
 
-        paid_txns = (
-            Transaction.objects.filter(
-                group_id=group_id,
-                payer=user,
-                is_disputed=False,
-            ).aggregate(total=Sum("amount"))["total"]
-        ) or Decimal("0")
+    paid_txns_by_user = {
+        row["payer_id"]: row["total"]
+        for row in Transaction.objects.filter(
+            group_id=group_id,
+            is_disputed=False,
+        )
+        .values("payer_id")
+        .annotate(total=Coalesce(Sum("amount"), decimal_zero, output_field=money_field))
+    }
 
-        received_txns = (
-            Transaction.objects.filter(
-                group_id=group_id,
-                receiver=user,
-                is_disputed=False,
-            ).aggregate(total=Sum("amount"))["total"]
-        ) or Decimal("0")
+    received_txns_by_user = {
+        row["receiver_id"]: row["total"]
+        for row in Transaction.objects.filter(
+            group_id=group_id,
+            is_disputed=False,
+        )
+        .values("receiver_id")
+        .annotate(total=Coalesce(Sum("amount"), decimal_zero, output_field=money_field))
+    }
 
-        result[str(user.id)] = (paid_expenses + paid_txns) - (owed_splits + received_txns)
+    for user_id in member_ids:
+        paid_expenses = paid_expenses_by_user.get(user_id, decimal_zero)
+        owed_splits = owed_splits_by_user.get(user_id, decimal_zero)
+        paid_txns = paid_txns_by_user.get(user_id, decimal_zero)
+        received_txns = received_txns_by_user.get(user_id, decimal_zero)
+
+        result[str(user_id)] = (paid_expenses + paid_txns) - (owed_splits + received_txns)
 
     return result
 

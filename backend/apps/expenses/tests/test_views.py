@@ -1,3 +1,4 @@
+import uuid
 from decimal import Decimal
 from unittest.mock import patch
 
@@ -522,3 +523,52 @@ class ExpenseViewTests(ExpenseTestMixin, TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+
+    @patch("apps.expenses.serializers.get_exchange_rate")
+    def test_create_expense_with_nonexistent_split_user_returns_splits_error(self, mock_rate):
+        mock_rate.return_value = Decimal("1.0")
+        missing_id = str(uuid.uuid4())
+
+        self.authenticate(self.user)
+
+        response = self.client.post(
+            "/api/v1/expenses/",
+            data={
+                "paid_by": str(self.user.id),
+                "description": "Dinner",
+                "amount": "50.00",
+                "splits": [
+                    {"user_id": str(self.user.id), "amount_owed": "25.00"},
+                    {"user_id": missing_id, "amount_owed": "25.00"},
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(missing_id, str(response.json()["splits"]))
+
+    @patch("apps.expenses.serializers.get_exchange_rate")
+    def test_create_expense_with_soft_deleted_split_user_returns_splits_error(self, mock_rate):
+        mock_rate.return_value = Decimal("1.0")
+        self.other_user.is_deleted = True
+        self.other_user.save()
+
+        self.authenticate(self.user)
+
+        response = self.client.post(
+            "/api/v1/expenses/",
+            data={
+                "paid_by": str(self.user.id),
+                "description": "Dinner",
+                "amount": "50.00",
+                "splits": [
+                    {"user_id": str(self.user.id), "amount_owed": "25.00"},
+                    {"user_id": str(self.other_user.id), "amount_owed": "25.00"},
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(str(self.other_user.id), str(response.json()["splits"]))

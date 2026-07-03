@@ -93,6 +93,7 @@ class ExpenseListCreateView(ExpenseBaseView):
         except ValueError as exc:
             raise ValidationError({"detail": str(exc)}) from exc
 
+        expense = self.get_expense(expense.id)
         return _response_data(
             ExpenseDetailSerializer(expense).data,
             status_code=status.HTTP_201_CREATED,

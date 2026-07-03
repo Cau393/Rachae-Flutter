@@ -915,6 +915,18 @@ abstract class AppLocalizations {
   /// **'Erro ao salvar. Tente novamente.'**
   String get addExpenseError;
 
+  /// No description provided for @addExpenseTimeoutError.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'A requisição demorou demais. Verifique sua conexão e tente novamente.'**
+  String get addExpenseTimeoutError;
+
+  /// No description provided for @addExpenseReceiptUploadPartialFailure.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Despesa salva, mas alguns comprovantes não foram enviados.'**
+  String get addExpenseReceiptUploadPartialFailure;
+
   /// No description provided for @addExpenseFriendLabel.
   ///
   /// In pt_BR, this message translates to:

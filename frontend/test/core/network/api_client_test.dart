@@ -135,4 +135,43 @@ void main() {
       expect(data['data']['status'], 'ok');
     });
   });
+
+  group('resolveApiBaseUrlForTesting', () {
+    test('returns the defined value when API_BASE_URL is provided', () {
+      final result = resolveApiBaseUrlForTesting(
+        isReleaseMode: true,
+        isWeb: true,
+        definedValue: 'https://api.example.com/api/v1/',
+      );
+
+      expect(result, 'https://api.example.com/api/v1/');
+    });
+
+    test(
+      'throws StateError for release web builds with no defined value',
+      () {
+        expect(
+          () => resolveApiBaseUrlForTesting(
+            isReleaseMode: true,
+            isWeb: true,
+          ),
+          throwsA(isA<StateError>()),
+        );
+      },
+    );
+
+    test('does not throw for release non-web builds with no defined value', () {
+      expect(
+        () => resolveApiBaseUrlForTesting(isReleaseMode: true, isWeb: false),
+        returnsNormally,
+      );
+    });
+
+    test('does not throw for debug web builds with no defined value', () {
+      expect(
+        () => resolveApiBaseUrlForTesting(isReleaseMode: false, isWeb: true),
+        returnsNormally,
+      );
+    });
+  });
 }

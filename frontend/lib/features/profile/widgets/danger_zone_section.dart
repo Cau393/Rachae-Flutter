@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:frontend/features/auth/auth_notifier.dart';
 import 'package:frontend/features/profile/providers/profile_notifier.dart';
 import 'package:frontend/src/l10n/generated/app_localizations.dart';
 
@@ -45,10 +44,9 @@ class DangerZoneSection extends ConsumerWidget {
                 ),
               );
               if (ok == true && context.mounted) {
+                // deleteAccount() signs out internally, so the session is
+                // cleared even if this widget unmounts mid-await.
                 await ref.read(profileNotifierProvider.notifier).deleteAccount();
-                if (context.mounted) {
-                  await ref.read(authNotifierProvider.notifier).signOut();
-                }
               }
             },
             child: Text(l10n.profileDeleteAccountButton),

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/currency/default_currency.dart';
@@ -24,6 +25,7 @@ import 'package:frontend/features/expenses/widgets/split_method_selector.dart';
 import 'package:frontend/features/friends/models/friend_model.dart';
 import 'package:frontend/features/friends/providers/friends_provider.dart';
 import 'package:frontend/features/groups/models/group_member_model.dart';
+import 'package:frontend/features/groups/providers/group_balances_provider.dart';
 import 'package:frontend/features/groups/providers/group_detail_provider.dart';
 import 'package:frontend/features/groups/providers/group_list_provider.dart';
 import 'package:frontend/features/groups/widgets/currency_dropdown.dart';
@@ -128,6 +130,20 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
     ExpenseDetailModel? detail;
     try {
       detail = await notifier.submit();
+    } on DioException catch (e) {
+      if (!mounted) return;
+      final isTimeout =
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            isTimeout ? l10n.addExpenseTimeoutError : l10n.addExpenseError,
+          ),
+        ),
+      );
+      return;
     } catch (_) {
       if (!mounted) return;
       messenger.showSnackBar(SnackBar(content: Text(l10n.addExpenseError)));
@@ -137,9 +153,14 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
     if (!mounted) return;
     if (detail == null) return;
 
+    final failedReceiptCount = ref
+        .read(addExpenseNotifierProvider(params))
+        .failedReceiptCount;
+
     final gid = groupId;
     if (gid != null && gid.isNotEmpty) {
       ref.invalidate(groupExpenseListProvider(gid));
+      ref.invalidate(groupBalancesProvider(gid));
     }
     ref.invalidate(balanceSummaryProvider);
     ref.invalidate(activityFeedProvider);
@@ -147,7 +168,15 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
 
     if (!mounted) return;
     _exitScreen(groupId);
-    messenger.showSnackBar(SnackBar(content: Text(l10n.addExpenseSuccess)));
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          failedReceiptCount > 0
+              ? l10n.addExpenseReceiptUploadPartialFailure
+              : l10n.addExpenseSuccess,
+        ),
+      ),
+    );
   }
 
   Widget _buildForm(

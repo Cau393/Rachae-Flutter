@@ -395,16 +395,25 @@ class AddExpenseNotifier extends Notifier<AddExpenseFormState> {
       return null;
     }
 
-    state = state.copyWith(isSubmitting: true, validationError: null);
+    state = state.copyWith(
+      isSubmitting: true,
+      validationError: null,
+      failedReceiptCount: 0,
+    );
     try {
       final body = _buildBody();
       final detail = await _repo.createExpense(body);
       final queued = List<File>.from(state.receiptQueue);
-      for (final file in queued) {
-        try {
-          await _uploadReceipt(detail.id, file);
-        } catch (_) {}
-      }
+      final uploads = await Future.wait(
+        queued.map(
+          (file) => _uploadReceipt(
+            detail.id,
+            file,
+          ).then((_) => true).catchError((_) => false),
+        ),
+      );
+      final failedCount = uploads.where((succeeded) => !succeeded).length;
+      state = state.copyWith(failedReceiptCount: failedCount);
       return detail;
     } finally {
       state = state.copyWith(isSubmitting: false);
@@ -418,11 +427,13 @@ class AddExpenseNotifier extends Notifier<AddExpenseFormState> {
       contentType: contentType,
     );
     final bytes = await file.readAsBytes();
-    final response = await http.put(
-      Uri.parse(url.uploadUrl),
-      body: bytes,
-      headers: <String, String>{'Content-Type': contentType},
-    );
+    final response = await http
+        .put(
+          Uri.parse(url.uploadUrl),
+          body: bytes,
+          headers: <String, String>{'Content-Type': contentType},
+        )
+        .timeout(const Duration(seconds: 60));
     if (response.statusCode >= 400) {
       throw Exception('S3 upload failed: ${response.statusCode}');
     }

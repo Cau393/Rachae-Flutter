@@ -441,6 +441,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addExpenseError => 'Error saving. Try again.';
 
   @override
+  String get addExpenseTimeoutError =>
+      'The request timed out. Check your connection and try again.';
+
+  @override
+  String get addExpenseReceiptUploadPartialFailure =>
+      'Expense saved, but some receipts failed to upload.';
+
+  @override
   String get addExpenseFriendLabel => 'Friend';
 
   @override

@@ -442,6 +442,39 @@ void main() {
       },
     );
 
+    testWidgets(
+      'submit timeout shows addExpenseTimeoutError snackbar and stays on screen',
+      (tester) async {
+        final mockRepo = _MockExpenseRepository();
+        when(() => mockRepo.createExpense(any())).thenThrow(
+          DioException(
+            requestOptions: RequestOptions(path: '/expenses/'),
+            type: DioExceptionType.connectionTimeout,
+          ),
+        );
+
+        final detail = _groupDetail();
+        final router = buildRouter(
+          initialLocation: '/expenses/new?group_id=${detail.id}',
+        );
+        await pumpScreen(
+          tester,
+          router: router,
+          overrides: baseOverrides(mockRepo, detail),
+        );
+
+        final l = l10nFrom(tester);
+        await tester.enterText(find.byType(TextField).first, '10');
+        await tester.tap(
+          find.widgetWithText(FilledButton, l.addExpenseSaveButton),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text(l.addExpenseTimeoutError), findsOneWidget);
+        expect(find.byType(AddExpenseScreen), findsOneWidget);
+      },
+    );
+
     testWidgets('personal flow requires a friend before saving', (
       tester,
     ) async {

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rachae — Privacy Policy</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 760px; margin: 0 auto; padding: 32px 20px 80px; line-height: 1.6; color: #1a1a1a; }
+  h1 { font-size: 1.8rem; margin-bottom: 4px; }
+  h2 { font-size: 1.25rem; margin-top: 2.2rem; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+  h3 { font-size: 1rem; margin-top: 1.4rem; }
+  .updated { color: #666; font-size: 0.9rem; margin-bottom: 2rem; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.92rem; }
+  th, td { border: 1px solid #ddd; padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #f7f7f7; }
+  code { background: #f2f2f2; padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+  .lang-section { margin-top: 3.5rem; padding-top: 2rem; border-top: 3px solid #333; }
+  a { color: #0d6efd; }
+</style>
+</head>
+<body>
+
+<h1>Rachae — Privacy Policy</h1>
+<p class="updated">Last updated: July 2, 2026</p>
+
+<p>Rachae ("the app", "we", "us") is a free, open-source expense-splitting app. This policy explains what data we collect, why, and how you can control it.</p>
+
+<h2>1. Data We Collect</h2>
+<table>
+<tr><th>Category</th><th>Examples</th><th>Source</th></tr>
+<tr><td>Account data</td><td>Email address, display name, profile photo (if you sign in with Google)</td><td>Supabase Auth (email/password or Google OAuth)</td></tr>
+<tr><td>Financial data you enter</td><td>Expenses, amounts, currencies, group names, balances, settlement records</td><td>You, directly in the app</td></tr>
+<tr><td>Files you upload</td><td>Receipt photos, settlement proof images, PDF exports</td><td>You, stored in AWS S3</td></tr>
+<tr><td>Purchase data</td><td>Subscription/entitlement status for the ad-free upgrade (no card numbers — payment is handled by Apple, RevenueCat, or Stripe directly)</td><td>RevenueCat, Stripe</td></tr>
+<tr><td>Advertising identifiers</td><td>Device advertising ID (IDFA on iOS, only after you grant App Tracking Transparency permission), ad interaction data</td><td>Google AdMob</td></tr>
+<tr><td>Push notification token</td><td>Device token used to deliver notifications about group activity</td><td>Firebase Cloud Messaging</td></tr>
+<tr><td>Diagnostic data</td><td>Crash reports, error logs</td><td>Sentry</td></tr>
+</table>
+
+<h2>2. How We Use Data</h2>
+<ul>
+<li>To provide the core service: tracking shared expenses, computing balances, and settling debts between the people you choose to group with.</li>
+<li>To send transactional email (invites, notifications) via Brevo, and push notifications via Firebase.</li>
+<li>To show ads (mobile via Google AdMob, web via Google AdSense) that fund free use of the app, and to process your purchase if you choose the ad-free upgrade.</li>
+<li>To diagnose crashes and fix bugs (Sentry).</li>
+<li>We do not sell your data, and we do not use your financial data (expenses, balances) for advertising.</li>
+</ul>
+
+<h2>3. App Tracking Transparency (iOS)</h2>
+<p>On iOS, Rachae asks for tracking permission before AdMob can use your device's advertising identifier (IDFA) to personalize ads. If you decline, ads still show, but are not personalized to you. You can change this anytime in <strong>Settings → Privacy &amp; Security → Tracking</strong>.</p>
+
+<h2>4. Data Sharing</h2>
+<p>We share the minimum data necessary with the following processors, each bound by their own privacy/data-processing terms:</p>
+<ul>
+<li><strong>Supabase</strong> — authentication and identity</li>
+<li><strong>AWS S3</strong> — file storage (receipts, exports)</li>
+<li><strong>Google AdMob / AdSense</strong> — advertising</li>
+<li><strong>RevenueCat / Stripe / Apple</strong> — in-app purchase and subscription processing</li>
+<li><strong>Firebase (Google)</strong> — push notifications</li>
+<li><strong>Brevo</strong> — transactional email delivery</li>
+<li><strong>Sentry</strong> — crash and error diagnostics</li>
+</ul>
+<p>Members of a group you join can see the expenses, balances, and names you share within that group — this is core to how the app works.</p>
+
+<h2>5. Data Retention &amp; Deletion</h2>
+<p>You can delete your account at any time from <strong>Profile → Danger Zone</strong>. This removes your account and personal data from our systems, except where retention is required by law (e.g. financial records) or where data is embedded in another user's group history (e.g. a settled expense they still need a record of).</p>
+<p>To request deletion or ask any privacy question, email <a href="mailto:cau393dev@gmail.com">cau393dev@gmail.com</a>.</p>
+
+<h2>6. Children's Privacy</h2>
+<p>Rachae is not directed at children under 13, and we do not knowingly collect data from them.</p>
+
+<h2>7. Changes to This Policy</h2>
+<p>We'll update the "Last updated" date above if this policy changes materially. Continued use of the app after a change means you accept the update.</p>
+
+<h2>8. Contact</h2>
+<p><a href="mailto:cau393dev@gmail.com">cau393dev@gmail.com</a></p>
+
+
+<div class="lang-section" lang="pt-BR">
+<h1>Rachae — Política de Privacidade</h1>
+<p class="updated">Última atualização: 2 de julho de 2026</p>
+
+<p>O Rachae ("o app", "nós") é um aplicativo gratuito e de código aberto para dividir despesas. Esta política explica quais dados coletamos, por quê, e como você pode controlá-los.</p>
+
+<h2>1. Dados que Coletamos</h2>
+<table>
+<tr><th>Categoria</th><th>Exemplos</th><th>Origem</th></tr>
+<tr><td>Dados da conta</td><td>E-mail, nome exibido, foto de perfil (se login via Google)</td><td>Supabase Auth (e-mail/senha ou Google OAuth)</td></tr>
+<tr><td>Dados financeiros inseridos por você</td><td>Despesas, valores, moedas, nomes de grupos, saldos, acertos</td><td>Você, diretamente no app</td></tr>
+<tr><td>Arquivos enviados</td><td>Fotos de recibos, comprovantes de pagamento, exportações em PDF</td><td>Você, armazenados na AWS S3</td></tr>
+<tr><td>Dados de compra</td><td>Status de assinatura do upgrade sem anúncios (sem número de cartão — o pagamento é processado pela Apple, RevenueCat ou Stripe)</td><td>RevenueCat, Stripe</td></tr>
+<tr><td>Identificadores de publicidade</td><td>ID de publicidade do aparelho (IDFA no iOS, somente após permissão de rastreamento), dados de interação com anúncios</td><td>Google AdMob</td></tr>
+<tr><td>Token de notificação push</td><td>Token do dispositivo para notificações de atividade nos grupos</td><td>Firebase Cloud Messaging</td></tr>
+<tr><td>Dados de diagnóstico</td><td>Relatórios de erros e falhas</td><td>Sentry</td></tr>
+</table>
+
+<h2>2. Como Usamos os Dados</h2>
+<ul>
+<li>Para fornecer o serviço principal: registrar despesas compartilhadas, calcular saldos e acertar dívidas entre as pessoas do seu grupo.</li>
+<li>Para enviar e-mails transacionais (convites, notificações) via Brevo, e notificações push via Firebase.</li>
+<li>Para exibir anúncios (Google AdMob no app, Google AdSense na web) que sustentam o uso gratuito do app, e processar sua compra caso escolha o upgrade sem anúncios.</li>
+<li>Para diagnosticar falhas e corrigir bugs (Sentry).</li>
+<li>Não vendemos seus dados, e não usamos seus dados financeiros (despesas, saldos) para publicidade.</li>
+</ul>
+
+<h2>3. Transparência de Rastreamento (iOS)</h2>
+<p>No iOS, o Rachae solicita permissão de rastreamento antes que o AdMob possa usar o identificador de publicidade do seu dispositivo (IDFA) para personalizar anúncios. Se você recusar, os anúncios continuam aparecendo, mas sem personalização. Você pode alterar isso a qualquer momento em <strong>Ajustes → Privacidade e Segurança → Rastreamento</strong>.</p>
+
+<h2>4. Compartilhamento de Dados</h2>
+<p>Compartilhamos o mínimo necessário com os seguintes processadores:</p>
+<ul>
+<li><strong>Supabase</strong> — autenticação e identidade</li>
+<li><strong>AWS S3</strong> — armazenamento de arquivos</li>
+<li><strong>Google AdMob / AdSense</strong> — publicidade</li>
+<li><strong>RevenueCat / Stripe / Apple</strong> — processamento de compras e assinaturas</li>
+<li><strong>Firebase (Google)</strong> — notificações push</li>
+<li><strong>Brevo</strong> — envio de e-mails transacionais</li>
+<li><strong>Sentry</strong> — diagnóstico de falhas e erros</li>
+</ul>
+<p>Membros de um grupo que você participa podem ver as despesas, saldos e nomes compartilhados dentro daquele grupo — isso é essencial ao funcionamento do app.</p>
+
+<h2>5. Retenção e Exclusão de Dados</h2>
+<p>Você pode excluir sua conta a qualquer momento em <strong>Perfil → Zona de Perigo</strong>. Isso remove sua conta e dados pessoais de nossos sistemas, exceto quando a retenção for exigida por lei (ex.: registros financeiros) ou quando o dado estiver incorporado ao histórico de outro usuário (ex.: uma despesa já acertada que ele ainda precisa manter registrada).</p>
+<p>Para solicitar exclusão ou tirar dúvidas sobre privacidade, envie um e-mail para <a href="mailto:cau393dev@gmail.com">cau393dev@gmail.com</a>.</p>
+
+<h2>6. Privacidade de Crianças</h2>
+<p>O Rachae não é direcionado a menores de 13 anos, e não coletamos dados desse público conscientemente.</p>
+
+<h2>7. Alterações Nesta Política</h2>
+<p>Atualizaremos a data acima caso esta política mude significativamente. O uso continuado do app após uma alteração significa que você aceita a atualização.</p>
+
+<h2>8. Contato</h2>
+<p><a href="mailto:cau393dev@gmail.com">cau393dev@gmail.com</a></p>
+</div>
+
+</body>
+</html>
