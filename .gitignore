@@ -21,6 +21,10 @@ __pycache__/
 venv/
 .venv/
 env/
+# Flutter --dart-define-from-file configs (frontend/env/prod.json) are
+# intentionally tracked; only the Python virtualenv pattern above is ignored.
+!frontend/env/
+!frontend/env/**
 
 # Django
 *.log

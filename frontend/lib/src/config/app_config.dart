@@ -32,11 +32,13 @@ class AppConfig {
     return iosRedirectUrl;
   }
 
-  // Local dev: flutter run --dart-define=API_BASE_URL=http://localhost:8000/api/v1/
-  static const apiBaseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'https://your-backend.railway.app/api/v1/',
-  );
+  /// Production backend URL (Railway). Used as the release-mode, native
+  /// (non-web) fallback in [resolveApiBaseUrlForTesting] when no
+  /// `API_BASE_URL` dart-define or dotenv value is provided, so a release
+  /// build never silently falls back to `localhost`. See
+  /// `frontend/env/prod.json` for `--dart-define-from-file` usage.
+  static const productionApiBaseUrl =
+      'https://rachae-flutter-production-11b3.up.railway.app/api/v1/';
 
   /// RevenueCat public SDK key (Apple / iOS).
   ///

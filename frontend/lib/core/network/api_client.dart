@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:frontend/src/config/api_base_url.dart';
+import 'package:frontend/src/config/app_config.dart';
 
 class ApiException implements Exception {
   const ApiException({required this.statusCode, required this.message});
@@ -107,6 +108,9 @@ String _resolveApiBaseUrl() {
 /// always `false` under `flutter test`, so [_resolveApiBaseUrl] alone can
 /// never exercise the throw path. Production callers should go through
 /// [_resolveApiBaseUrl]; this stays behaviorally identical for them.
+bool _isNgrokUrl(String url) =>
+    url.contains('ngrok-free.dev') || url.contains('ngrok.io');
+
 @visibleForTesting
 String resolveApiBaseUrlForTesting({
   required bool isReleaseMode,
@@ -114,6 +118,15 @@ String resolveApiBaseUrlForTesting({
   String definedValue = '',
 }) {
   if (definedValue.isNotEmpty) {
+    // Dev tunnels must never ship: a release build pointed at an ngrok URL
+    // means the API_BASE_URL wasn't actually configured for production.
+    if (isReleaseMode && _isNgrokUrl(definedValue)) {
+      throw StateError(
+        'API_BASE_URL="$definedValue" looks like an ngrok dev tunnel, which '
+        'must never be used in a release build. Use the production URL '
+        '(see `frontend/env/prod.json`) via `--dart-define-from-file`.',
+      );
+    }
     return definedValue;
   }
   // The web shim (`api_base_url_html.dart`) derives a URL from
@@ -140,11 +153,29 @@ String resolveApiBaseUrlForTesting({
     if (!isWeb && dotenv.isInitialized) {
       final v = dotenv.maybeGet('API_BASE_URL')?.trim();
       if (v != null && v.isNotEmpty) {
+        if (isReleaseMode && _isNgrokUrl(v)) {
+          throw StateError(
+            'API_BASE_URL="$v" (from .env) looks like an ngrok dev tunnel, '
+            'which must never be used in a release build. Use the '
+            'production URL (see `frontend/env/prod.json`) via '
+            '`--dart-define-from-file`.',
+          );
+        }
         return v;
       }
     }
+  } on StateError {
+    rethrow;
   } catch (_) {
     // dotenv not initialized on this platform; fall through.
+  }
+  // Release native (iOS/Android) with no dart-define and no dotenv value:
+  // fall back to the production backend instead of `localhost`, which would
+  // silently ship a build that can never reach the API. See
+  // `frontend/env/prod.json` for how to set API_BASE_URL explicitly via
+  // `--dart-define-from-file`.
+  if (isReleaseMode && !isWeb) {
+    return AppConfig.productionApiBaseUrl;
   }
   // Debug-only warning: `localhost` on a physical device points at the device
   // itself, so nothing the Mac serves is reachable. See README dev setup.

@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide Headers;
 
 import 'package:frontend/core/network/api_client.dart';
+import 'package:frontend/src/config/app_config.dart';
 
 class MockSupabaseClient extends Mock implements SupabaseClient {}
 
@@ -163,6 +164,60 @@ void main() {
     test('does not throw for release non-web builds with no defined value', () {
       expect(
         () => resolveApiBaseUrlForTesting(isReleaseMode: true, isWeb: false),
+        returnsNormally,
+      );
+    });
+
+    test(
+      'falls back to the production URL for release native builds with no '
+      'defined value',
+      () {
+        final result = resolveApiBaseUrlForTesting(
+          isReleaseMode: true,
+          isWeb: false,
+        );
+
+        expect(result, AppConfig.productionApiBaseUrl);
+        expect(result, isNot(contains('localhost')));
+      },
+    );
+
+    test(
+      'throws StateError for release builds with an ngrok-free.dev '
+      'defined value',
+      () {
+        expect(
+          () => resolveApiBaseUrlForTesting(
+            isReleaseMode: true,
+            isWeb: false,
+            definedValue: 'https://abc123.ngrok-free.dev/api/v1/',
+          ),
+          throwsA(isA<StateError>()),
+        );
+      },
+    );
+
+    test(
+      'throws StateError for release builds with an ngrok.io defined value',
+      () {
+        expect(
+          () => resolveApiBaseUrlForTesting(
+            isReleaseMode: true,
+            isWeb: true,
+            definedValue: 'https://abc123.ngrok.io/api/v1/',
+          ),
+          throwsA(isA<StateError>()),
+        );
+      },
+    );
+
+    test('does not throw for debug builds with an ngrok defined value', () {
+      expect(
+        () => resolveApiBaseUrlForTesting(
+          isReleaseMode: false,
+          isWeb: false,
+          definedValue: 'https://abc123.ngrok-free.dev/api/v1/',
+        ),
         returnsNormally,
       );
     });

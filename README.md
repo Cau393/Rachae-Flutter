@@ -257,6 +257,21 @@ flutter build ipa --release \
   --dart-define=REVENUECAT_IOS_API_KEY=your_key
 ```
 
+**Production iOS build:**
+
+Release native (iOS/Android) builds fall back to the production Railway API
+if `API_BASE_URL` isn't provided, but the recommended path is to pin it (and
+the RevenueCat key) explicitly via `frontend/env/prod.json`:
+
+```bash
+cd frontend
+flutter build ipa --release --dart-define-from-file=env/prod.json
+```
+
+Dev tunnel URLs (`ngrok-free.dev` / `ngrok.io`) are rejected with a
+`StateError` in release builds — they must never ship in a TestFlight or
+App Store build.
+
 ---
 
 ## Deployment
