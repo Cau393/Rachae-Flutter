@@ -21,6 +21,23 @@ class AdsRepository {
     }
   }
 
+  /// Actively pulls the caller's entitlement from RevenueCat server-side and
+  /// applies it synchronously, returning the fresh status. Call this right
+  /// after a purchase/restore or when resuming from a Stripe Checkout
+  /// redirect so the UI does not have to wait for a webhook to land.
+  Future<AdsStatusModel> syncAdsStatus() async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>('/ads/sync/');
+      final data = response.data;
+      if (data == null) {
+        throw const ApiException(statusCode: 0, message: 'Empty response');
+      }
+      return AdsStatusModel.fromJson(data);
+    } on DioException catch (e) {
+      throw _mapDioToApi(e);
+    }
+  }
+
   Future<String> createCheckoutSession({required String plan}) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(

@@ -469,7 +469,13 @@ def mock_stripe(settings):
     mock_s.Webhook.construct_event.return_value = {}
     mock_s.Customer.create.return_value = MagicMock(id="cus_mock123")
 
-    with patch.dict(sys.modules, {"stripe": mock_s}):
+    # process_stripe_webhook is now a thin wrapper around
+    # AdsService.process_stripe_event, which holds its own module-level
+    # `stripe` reference bound at import time — patch both so a webhook
+    # test exercised through the Celery task sees the same mock.
+    with patch.dict(sys.modules, {"stripe": mock_s}), patch(
+        "apps.ads.services.stripe", mock_s
+    ):
         yield mock_s
 
 

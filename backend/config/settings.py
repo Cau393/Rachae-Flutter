@@ -115,10 +115,10 @@ if DATABASES["default"]["ENGINE"] == "django.db.backends.postgresql":
 
 
 def _normalize_redis_url(url: str) -> str:
-    """Map legacy SSL query flags to redis-py 7+ allowed strings (none/optional/required).
+    """Normalize Redis URLs for redis-py 7+ and Celery.
 
-    Hosts often append ``ssl_cert_reqs=CERT_NONE``; redis treats that as an invalid *string*
-    (only ``none`` is valid), raising ``Invalid SSL Certificate Requirements Flag: CERT_NONE``.
+    - Maps legacy ``ssl_cert_reqs=CERT_*`` query flags to ``none``/``optional``/``required``.
+    - Upgrades ``redis://`` → ``rediss://`` when SSL params are present (Upstash).
     """
     for old, new in (
         ("ssl_cert_reqs=CERT_NONE", "ssl_cert_reqs=none"),
@@ -127,6 +127,12 @@ def _normalize_redis_url(url: str) -> str:
     ):
         if old in url:
             url = url.replace(old, new)
+    needs_tls = (
+        "ssl_cert_reqs=" in url
+        or ".upstash.io" in url
+    )
+    if needs_tls and url.startswith("redis://"):
+        url = "rediss://" + url[len("redis://") :]
     return url
 
 
@@ -176,6 +182,9 @@ STRIPE_PRICE_MONTHLY = os.environ.get('STRIPE_PRICE_MONTHLY', '')
 STRIPE_PRICE_YEARLY = os.environ.get('STRIPE_PRICE_YEARLY', '')
 # RevenueCat dashboard → Webhooks → Authorization (optional). If set, POSTs must send the same token in Authorization (Bearer prefix or raw secret).
 REVENUECAT_WEBHOOK_SECRET = os.environ.get('REVENUECAT_WEBHOOK_SECRET', '')
+# RevenueCat dashboard → API keys → Secret API key. Used server-side by POST /ads/sync/
+# to pull a user's current entitlement directly instead of waiting on a webhook.
+REVENUECAT_API_KEY = os.environ.get('REVENUECAT_API_KEY', '')
 SUPABASE_URL = os.environ.get('SUPABASE_URL', '')
 EXCHANGE_RATE_API_KEY = os.environ.get('EXCHANGE_RATE_API_KEY', '')
 EXCHANGE_RATE_API_URL = 'https://v6.exchangerate-api.com/v6'
@@ -256,13 +265,16 @@ LOGGING = {
 # TLS for Redis (Upstash / secure Redis).
 # redis-py 7+ validates ssl_cert_reqs only for strings "none" | "optional" | "required"
 # (see redis.connection.SSLConnection); ssl.CERT_NONE can surface as invalid "CERT_NONE".
-CELERY_BROKER_USE_SSL = {
-    "ssl_cert_reqs": "none",
-}
-
-CELERY_REDIS_BACKEND_USE_SSL = {
-    "ssl_cert_reqs": "none",
-}
+if REDIS_URL.startswith("rediss://"):
+    CELERY_BROKER_USE_SSL = {
+        "ssl_cert_reqs": "none",
+    }
+    CELERY_REDIS_BACKEND_USE_SSL = {
+        "ssl_cert_reqs": "none",
+    }
+else:
+    CELERY_BROKER_USE_SSL = None
+    CELERY_REDIS_BACKEND_USE_SSL = None
 
 # Task execution behaviour
 CELERY_TASK_TRACK_STARTED = True

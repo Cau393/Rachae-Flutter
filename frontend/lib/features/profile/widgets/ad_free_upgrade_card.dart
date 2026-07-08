@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -38,9 +40,26 @@ class _AdFreeUpgradeCardState extends ConsumerState<AdFreeUpgradeCard>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && _isCheckoutPending) {
       if (!mounted) return;
-      setState(() => _isCheckoutPending = false);
+      setState(() {
+        _isCheckoutPending = false;
+        _isLoading = true;
+      });
+      unawaited(_syncAdsStatusAndRefresh());
+    }
+  }
+
+  Future<void> _syncAdsStatusAndRefresh() async {
+    try {
+      await ref.read(adsRepositoryProvider).syncAdsStatus();
+    } catch (_) {
+      // Sync is best-effort here — the periodic adsStatusProvider fetch and
+      // any pending webhook will still reconcile state eventually.
+    } finally {
       ref.invalidate(adsStatusProvider);
       ref.invalidate(profileNotifierProvider);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -77,11 +96,15 @@ class _AdFreeUpgradeCardState extends ConsumerState<AdFreeUpgradeCard>
         switch (result) {
           case RevenueCatPaywallFlowResult.purchased:
           case RevenueCatPaywallFlowResult.restored:
-            ref.invalidate(adsStatusProvider);
-            ref.invalidate(profileNotifierProvider);
+            await _syncAdsStatusAndRefresh();
             break;
           case RevenueCatPaywallFlowResult.cancelled:
           case RevenueCatPaywallFlowResult.notPresented:
+            break;
+          case RevenueCatPaywallFlowResult.notConfigured:
+            ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+              SnackBar(content: Text(l10n.profileIapNotConfigured)),
+            );
             break;
           case RevenueCatPaywallFlowResult.error:
             ScaffoldMessenger.maybeOf(context)?.showSnackBar(

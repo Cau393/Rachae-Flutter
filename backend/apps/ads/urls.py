@@ -2,6 +2,7 @@ from django.urls import path
 
 from apps.ads.views import (
     AdsStatusView,
+    AdsSyncView,
     CreateCheckoutSessionView,
     CreatePortalSessionView,
     RevenueCatWebhookView,
@@ -10,6 +11,7 @@ from apps.ads.views import (
 
 urlpatterns = [
     path("ads/status/", AdsStatusView.as_view()),
+    path("ads/sync/", AdsSyncView.as_view()),
     path("ads/create-checkout-session/", CreateCheckoutSessionView.as_view()),
     path("ads/create-portal-session/", CreatePortalSessionView.as_view()),
     # Alias: Stripe CLI / docs often use .../ads/webhook/; canonical path is stripe-webhook.

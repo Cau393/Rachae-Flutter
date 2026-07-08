@@ -1,5 +1,6 @@
 import logging
 
+import requests
 import stripe
 from django.conf import settings
 
@@ -8,6 +9,127 @@ logger = logging.getLogger(__name__)
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 _ACTIVE_STATUSES = {"active", "trialing"}
+_RC_GRANT_TYPES = frozenset({"INITIAL_PURCHASE", "RENEWAL", "PRODUCT_CHANGE"})
+_RC_REVOKE_TYPES = frozenset({"CANCELLATION", "EXPIRATION"})
+_REVENUECAT_API_BASE = "https://api.revenuecat.com/v1"
+
+
+def _stripe_id_value(raw):
+    if raw is None:
+        return None
+    if isinstance(raw, str):
+        return raw
+    if isinstance(raw, dict):
+        return raw.get("id")
+    return None
+
+
+def _subscription_id_from_session(session: dict):
+    raw_sub = session.get("subscription")
+    return raw_sub.get("id") if isinstance(raw_sub, dict) else raw_sub
+
+
+def _payment_intent_id_from_session(session: dict):
+    raw = session.get("payment_intent")
+    return raw.get("id") if isinstance(raw, dict) else raw
+
+
+def _resolve_stripe_customer_id_from_session(session: dict, stripe_module):
+    cid = _stripe_id_value(session.get("customer"))
+    if cid:
+        return cid
+    pi = session.get("payment_intent")
+    if isinstance(pi, dict):
+        cid = _stripe_id_value(pi.get("customer"))
+        if cid:
+            return cid
+    pi_id = _payment_intent_id_from_session(session)
+    if not pi_id:
+        return None
+    try:
+        pi_obj = stripe_module.PaymentIntent.retrieve(
+            pi_id,
+            expand=["customer"],
+        )
+        pi_dict = pi_obj if isinstance(pi_obj, dict) else pi_obj.to_dict()
+        return _stripe_id_value(pi_dict.get("customer"))
+    except Exception:
+        logger.exception(
+            "[AdsService] checkout.session.completed PaymentIntent.retrieve(%s) failed",
+            pi_id,
+        )
+        return None
+
+
+def _plan_type_from_rc_event(event: dict) -> str | None:
+    pid = str(event.get("product_id") or "").lower()
+    if any(
+        s in pid
+        for s in (
+            "lifetime",
+            "life_time",
+            "non_renewing",
+            "nonrenewing",
+            "one_time",
+            "onetime",
+        )
+    ):
+        return "lifetime"
+    if any(s in pid for s in ("year", "annual", "yr")):
+        return "yearly"
+    if any(s in pid for s in ("month", "monthly")):
+        return "monthly"
+    period = str(event.get("period_type") or "").upper()
+    if period in ("YEARLY", "ANNUAL"):
+        return "yearly"
+    if period in ("MONTHLY", "NORMAL"):
+        return "monthly"
+    return None
+
+
+def _expires_from_rc_event(event: dict):
+    from datetime import datetime, timezone as tz
+
+    raw = event.get("expiration_at_ms")
+    if raw is None:
+        return None
+    try:
+        return datetime.fromtimestamp(int(raw) / 1000.0, tz=tz.utc)
+    except (TypeError, ValueError, OSError):
+        return None
+
+
+def _plan_type_from_rc_entitlement(entitlement: dict) -> str | None:
+    pid = str(entitlement.get("product_identifier") or "").lower()
+    if any(
+        s in pid
+        for s in (
+            "lifetime",
+            "life_time",
+            "non_renewing",
+            "nonrenewing",
+            "one_time",
+            "onetime",
+        )
+    ):
+        return "lifetime"
+    if any(s in pid for s in ("year", "annual", "yr")):
+        return "yearly"
+    if any(s in pid for s in ("month", "monthly")):
+        return "monthly"
+    return None
+
+
+def _expires_from_rc_entitlement(entitlement: dict):
+    from datetime import datetime, timezone as tz
+
+    raw = entitlement.get("expires_date")
+    if not raw:
+        return None
+    try:
+        return datetime.fromisoformat(str(raw).replace("Z", "+00:00")).astimezone(tz.utc)
+    except (TypeError, ValueError):
+        return None
 
 
 class AdsService:
@@ -144,3 +266,247 @@ class AdsService:
             grant,
             subscription_status,
         )
+
+    @staticmethod
+    def process_stripe_event(payload_bytes: bytes, sig_header: str) -> None:
+        """Verify and apply a Stripe webhook event synchronously.
+
+        Called in-request by StripeWebhookView so is_ad_free updates land
+        before the 200 response, and by the Celery task wrapper for retries.
+        """
+        try:
+            event = stripe.Webhook.construct_event(
+                payload_bytes,
+                sig_header,
+                settings.STRIPE_WEBHOOK_SECRET,
+            )
+        except stripe.error.SignatureVerificationError as exc:
+            logger.error("[AdsService] invalid Stripe webhook signature: %s", exc)
+            return
+
+        event_type = event["type"]
+        logger.info("[AdsService] stripe event_type=%s", event_type)
+
+        if event_type == "checkout.session.completed":
+            raw_session = event["data"]["object"]
+            if isinstance(raw_session, dict):
+                session = dict(raw_session)
+            else:
+                session = raw_session.to_dict()
+
+            session_id = session.get("id")
+            if session_id:
+                try:
+                    loaded = stripe.checkout.Session.retrieve(
+                        session_id,
+                        expand=["customer", "subscription", "payment_intent.customer"],
+                    )
+                    session = loaded if isinstance(loaded, dict) else loaded.to_dict()
+                except Exception:
+                    logger.exception(
+                        "[AdsService] checkout.session.completed Session.retrieve(%s) failed",
+                        session_id,
+                    )
+
+            client_reference_id = session.get("client_reference_id")
+            stripe_customer_id = _resolve_stripe_customer_id_from_session(session, stripe)
+
+            if not client_reference_id:
+                logger.warning(
+                    "[AdsService] checkout.session.completed missing client_reference_id "
+                    "session_id=%r — ensure Checkout Session.create sets client_reference_id",
+                    session_id,
+                )
+            elif not stripe_customer_id:
+                logger.warning(
+                    "[AdsService] checkout.session.completed missing customer id "
+                    "(session.customer and payment_intent.customer empty) session_id=%r",
+                    session_id,
+                )
+            else:
+                from apps.users.models import User
+
+                rows = User.objects.filter(id=client_reference_id).update(
+                    stripe_customer_id=stripe_customer_id,
+                )
+                if rows == 0:
+                    logger.warning(
+                        "[AdsService] checkout.session.completed zero rows updated — "
+                        "client_reference_id=%r does not match any User.id",
+                        client_reference_id,
+                    )
+                logger.info(
+                    "[AdsService] checkout.session.completed user=%s customer=%s rows=%s",
+                    client_reference_id,
+                    stripe_customer_id,
+                    rows,
+                )
+                # Subscription webhooks can arrive before this event, while User.stripe_customer_id
+                # is still empty — apply_subscription_event then no-ops. Sync entitlements here.
+                subscription_id = _subscription_id_from_session(session)
+                if session.get("mode") == "payment":
+                    logger.warning(
+                        "[AdsService] checkout.session.completed mode=payment — "
+                        "binding stripe_customer_id only; is_ad_free requires a subscription "
+                        "Checkout Session (in-app upgrade uses mode=subscription).",
+                    )
+
+                # subscription_id is only set for subscription checkouts; payment mode must not run this.
+                if subscription_id and session.get("mode") != "payment":
+                    try:
+                        sub = stripe.Subscription.retrieve(
+                            subscription_id,
+                            expand=["items.data.price"],
+                        )
+                        sub_payload = sub if isinstance(sub, dict) else sub.to_dict()
+                    except Exception:
+                        logger.exception(
+                            "[AdsService] checkout.session.completed subscription retrieve failed",
+                        )
+                    else:
+                        AdsService.apply_subscription_event(sub_payload, grant=True)
+                        logger.info(
+                            "[AdsService] checkout.session.completed synced subscription=%s",
+                            subscription_id,
+                        )
+                elif session.get("mode") not in (None, "payment") and not subscription_id:
+                    logger.warning(
+                        "[AdsService] checkout.session.completed no subscription id after "
+                        "expand session=%s customer=%s mode=%s",
+                        session.get("id"),
+                        stripe_customer_id,
+                        session.get("mode"),
+                    )
+        elif event_type == "customer.subscription.created":
+            subscription_obj = event["data"]["object"]
+            AdsService.apply_subscription_event(subscription_obj, grant=True)
+        elif event_type == "customer.subscription.updated":
+            subscription_obj = event["data"]["object"]
+            grant = subscription_obj.get("status", "") in _ACTIVE_STATUSES
+            AdsService.apply_subscription_event(subscription_obj, grant=grant)
+        elif event_type == "customer.subscription.deleted":
+            subscription_obj = event["data"]["object"]
+            AdsService.apply_subscription_event(subscription_obj, grant=False)
+        else:
+            logger.debug("[AdsService] unhandled stripe event_type=%s - ignoring", event_type)
+
+    @staticmethod
+    def process_rc_event(payload: dict) -> None:
+        """Apply a RevenueCat webhook event synchronously.
+
+        Called in-request by RevenueCatWebhookView so is_ad_free updates land
+        before the 200 response, and by the Celery task wrapper for retries.
+        """
+        from apps.users.models import User
+
+        event = payload.get("event") or {}
+        if not isinstance(event, dict):
+            event = {}
+        event_type = event.get("type") or ""
+        app_user_id = event.get("app_user_id")
+        if not app_user_id:
+            logger.warning("[AdsService] RevenueCat webhook missing app_user_id")
+            return
+
+        try:
+            user = User.objects.get(id=app_user_id)
+        except User.DoesNotExist:
+            logger.warning(
+                "[AdsService] RevenueCat webhook unknown app_user_id=%s",
+                app_user_id,
+            )
+            return
+        except (ValueError, TypeError):
+            logger.warning(
+                "[AdsService] RevenueCat webhook invalid app_user_id=%r",
+                app_user_id,
+            )
+            return
+
+        plan_type = _plan_type_from_rc_event(event)
+        expires = _expires_from_rc_event(event)
+
+        if event_type in _RC_GRANT_TYPES:
+            AdsService.apply_revenuecat_entitlement(
+                user,
+                grant=True,
+                subscription_status="active",
+                plan_expires_at=expires,
+                plan_type=plan_type,
+            )
+        elif event_type in _RC_REVOKE_TYPES:
+            sub_status = "canceled" if event_type == "CANCELLATION" else "expired"
+            AdsService.apply_revenuecat_entitlement(
+                user,
+                grant=False,
+                subscription_status=sub_status,
+                plan_expires_at=None,
+                plan_type=None,
+            )
+        else:
+            logger.debug("[AdsService] ignoring RevenueCat event_type=%s", event_type)
+
+    @staticmethod
+    def sync_revenuecat_status(user) -> dict:
+        """Query the RevenueCat REST API for `user` and apply the current
+        entitlement synchronously, then return the fresh status payload.
+
+        If REVENUECAT_API_KEY is unset, this is a no-op and just returns the
+        current DB-backed status (no error).
+        """
+        api_key = (getattr(settings, "REVENUECAT_API_KEY", None) or "").strip()
+        if not api_key:
+            return AdsService.get_status(user)
+
+        try:
+            response = requests.get(
+                f"{_REVENUECAT_API_BASE}/subscribers/{user.id}",
+                headers={"Authorization": f"Bearer {api_key}"},
+                timeout=10,
+            )
+            response.raise_for_status()
+            body = response.json()
+        except Exception:
+            logger.exception(
+                "[AdsService] sync_revenuecat_status: RevenueCat API call failed for user=%s",
+                user.id,
+            )
+            return AdsService.get_status(user)
+
+        entitlements = (
+            body.get("subscriber", {}).get("entitlements", {}) if isinstance(body, dict) else {}
+        )
+        entitlement = entitlements.get("ad_free") if isinstance(entitlements, dict) else None
+
+        if isinstance(entitlement, dict) and entitlement.get("expires_date"):
+            expires_at = _expires_from_rc_entitlement(entitlement)
+            from datetime import datetime, timezone as tz
+
+            is_active = expires_at is None or expires_at > datetime.now(tz.utc)
+            if is_active:
+                AdsService.apply_revenuecat_entitlement(
+                    user,
+                    grant=True,
+                    subscription_status="active",
+                    plan_expires_at=expires_at,
+                    plan_type=_plan_type_from_rc_entitlement(entitlement),
+                )
+            else:
+                AdsService.apply_revenuecat_entitlement(
+                    user,
+                    grant=False,
+                    subscription_status="expired",
+                    plan_expires_at=None,
+                    plan_type=None,
+                )
+        elif isinstance(entitlement, dict):
+            # Entitlement present with no expiry (e.g. lifetime/non-renewing) is active.
+            AdsService.apply_revenuecat_entitlement(
+                user,
+                grant=True,
+                subscription_status="active",
+                plan_expires_at=None,
+                plan_type=_plan_type_from_rc_entitlement(entitlement),
+            )
+
+        return AdsService.get_status(user)

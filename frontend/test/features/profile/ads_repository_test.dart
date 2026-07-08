@@ -118,5 +118,31 @@ void main() {
 
       expect(url, 'https://billing.stripe.com/portal');
     });
+
+    test('syncAdsStatus posts to /ads/sync/ and returns AdsStatusModel',
+        () async {
+      when(() => mockDio.post<Map<String, dynamic>>('/ads/sync/')).thenAnswer(
+        (_) async => Response<Map<String, dynamic>>(
+          data: <String, dynamic>{
+            'data': <String, dynamic>{
+              'is_ad_free': true,
+              'subscription_status': 'active',
+              'plan_expires_at': null,
+              'plan_type': 'monthly',
+              'stripe_portal_available': false,
+            },
+          },
+          statusCode: 200,
+          requestOptions: RequestOptions(path: '/ads/sync/'),
+        ),
+      );
+
+      final model = await repo.syncAdsStatus();
+
+      expect(model.isAdFree, isTrue);
+      expect(model.planType, 'monthly');
+      verify(() => mockDio.post<Map<String, dynamic>>('/ads/sync/'))
+          .called(1);
+    });
   });
 }

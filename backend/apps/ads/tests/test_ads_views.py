@@ -1,4 +1,3 @@
-import base64
 import uuid
 from unittest.mock import MagicMock, patch
 
@@ -130,7 +129,7 @@ def test_create_portal_session_fails_without_stripe_customer(auth_client):
 
 
 def test_webhook_returns_200_immediately(api_client):
-    with patch("tasks.stripe_tasks.process_stripe_webhook") as mock_task:
+    with patch("apps.ads.views.AdsService.process_stripe_event") as mock_process:
         response = api_client.post(
             "/api/v1/ads/stripe-webhook/",
             data=b'{"type":"test"}',
@@ -140,11 +139,11 @@ def test_webhook_returns_200_immediately(api_client):
 
     assert response.status_code == 200
     assert response.json() == {"received": True}
-    mock_task.delay.assert_called_once()
+    mock_process.assert_called_once()
 
 
 def test_webhook_alias_ads_webhook_path_returns_200(api_client):
-    with patch("tasks.stripe_tasks.process_stripe_webhook") as mock_task:
+    with patch("apps.ads.views.AdsService.process_stripe_event") as mock_process:
         response = api_client.post(
             "/api/v1/ads/webhook/",
             data=b'{"type":"test"}',
@@ -153,11 +152,11 @@ def test_webhook_alias_ads_webhook_path_returns_200(api_client):
         )
 
     assert response.status_code == 200
-    mock_task.delay.assert_called_once()
+    mock_process.assert_called_once()
 
 
-def test_webhook_dispatches_task_with_raw_payload(api_client):
-    with patch("tasks.stripe_tasks.process_stripe_webhook") as mock_task:
+def test_webhook_processes_raw_payload_synchronously(api_client):
+    with patch("apps.ads.views.AdsService.process_stripe_event") as mock_process:
         response = api_client.post(
             "/api/v1/ads/stripe-webhook/",
             data=b'{"type":"customer.subscription.created"}',
@@ -166,15 +165,14 @@ def test_webhook_dispatches_task_with_raw_payload(api_client):
         )
 
     assert response.status_code == 200
-    mock_task.delay.assert_called_once()
-    call_args = mock_task.delay.call_args[0]
-    raw_body = base64.b64decode(call_args[0])
-    assert b"customer.subscription.created" in raw_body
+    mock_process.assert_called_once()
+    call_args = mock_process.call_args[0]
+    assert b"customer.subscription.created" in call_args[0]
     assert call_args[1] == "t=123,v1=abc"
 
 
 def test_webhook_does_not_require_jwt_auth(api_client):
-    with patch("tasks.stripe_tasks.process_stripe_webhook") as mock_task:
+    with patch("apps.ads.views.AdsService.process_stripe_event") as mock_process:
         response = api_client.post(
             "/api/v1/ads/stripe-webhook/",
             data=b"{}",
@@ -182,7 +180,7 @@ def test_webhook_does_not_require_jwt_auth(api_client):
         )
 
     assert response.status_code == 200
-    mock_task.delay.assert_called_once()
+    mock_process.assert_called_once()
 
 
 def test_revenuecat_webhook_returns_200_immediately(api_client, settings):
@@ -193,7 +191,7 @@ def test_revenuecat_webhook_returns_200_immediately(api_client, settings):
             "app_user_id": str(uuid.uuid4()),
         },
     }
-    with patch("tasks.revenuecat_tasks.process_rc_webhook") as mock_task:
+    with patch("apps.ads.views.AdsService.process_rc_event") as mock_process:
         response = api_client.post(
             "/api/v1/ads/revenuecat-webhook/",
             data=payload,
@@ -202,12 +200,12 @@ def test_revenuecat_webhook_returns_200_immediately(api_client, settings):
 
     assert response.status_code == 200
     assert response.json() == {"received": True}
-    mock_task.delay.assert_called_once()
+    mock_process.assert_called_once()
 
 
 def test_revenuecat_webhook_401_when_secret_mismatch(api_client, settings):
     settings.REVENUECAT_WEBHOOK_SECRET = "rc_expected"
-    with patch("tasks.revenuecat_tasks.process_rc_webhook") as mock_task:
+    with patch("apps.ads.views.AdsService.process_rc_event") as mock_process:
         response = api_client.post(
             "/api/v1/ads/revenuecat-webhook/",
             data={"event": {}},
@@ -216,12 +214,12 @@ def test_revenuecat_webhook_401_when_secret_mismatch(api_client, settings):
         )
 
     assert response.status_code == 401
-    mock_task.delay.assert_not_called()
+    mock_process.assert_not_called()
 
 
 def test_revenuecat_webhook_accepts_bearer_secret(api_client, settings):
     settings.REVENUECAT_WEBHOOK_SECRET = "rc_secret"
-    with patch("tasks.revenuecat_tasks.process_rc_webhook") as mock_task:
+    with patch("apps.ads.views.AdsService.process_rc_event") as mock_process:
         response = api_client.post(
             "/api/v1/ads/revenuecat-webhook/",
             data={"event": {"type": "TEST"}},
@@ -230,12 +228,12 @@ def test_revenuecat_webhook_accepts_bearer_secret(api_client, settings):
         )
 
     assert response.status_code == 200
-    mock_task.delay.assert_called_once()
+    mock_process.assert_called_once()
 
 
 def test_revenuecat_webhook_does_not_require_jwt_auth(api_client, settings):
     settings.REVENUECAT_WEBHOOK_SECRET = ""
-    with patch("tasks.revenuecat_tasks.process_rc_webhook") as mock_task:
+    with patch("apps.ads.views.AdsService.process_rc_event") as mock_process:
         response = api_client.post(
             "/api/v1/ads/revenuecat-webhook/",
             data={"event": {"type": "UNKNOWN"}},
@@ -243,4 +241,101 @@ def test_revenuecat_webhook_does_not_require_jwt_auth(api_client, settings):
         )
 
     assert response.status_code == 200
-    mock_task.delay.assert_called_once()
+    mock_process.assert_called_once()
+
+
+def test_sync_endpoint_returns_status_without_api_key_configured(auth_client, settings):
+    settings.REVENUECAT_API_KEY = ""
+
+    response = auth_client.post("/api/v1/ads/sync/")
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["is_ad_free"] is False
+
+
+def test_sync_endpoint_requires_authentication(api_client):
+    response = api_client.post("/api/v1/ads/sync/")
+    assert response.status_code in (401, 403)
+
+
+def test_sync_endpoint_applies_active_entitlement(auth_client, settings):
+    settings.REVENUECAT_API_KEY = "rc_secret_key"
+    user = auth_client.handler._force_user
+
+    mock_response = MagicMock()
+    mock_response.raise_for_status = MagicMock()
+    mock_response.json.return_value = {
+        "subscriber": {
+            "entitlements": {
+                "ad_free": {
+                    "product_identifier": "com.cau393.rachae.adfree.monthly",
+                    "expires_date": "2999-01-01T00:00:00Z",
+                },
+            },
+        },
+    }
+
+    with patch("apps.ads.services.requests.get", return_value=mock_response) as mock_get:
+        response = auth_client.post("/api/v1/ads/sync/")
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["is_ad_free"] is True
+    assert data["plan_type"] == "monthly"
+    mock_get.assert_called_once()
+    call_kwargs = mock_get.call_args[1]
+    assert call_kwargs["headers"]["Authorization"] == "Bearer rc_secret_key"
+
+    user.refresh_from_db()
+    assert user.is_ad_free is True
+
+
+def test_sync_endpoint_revokes_expired_entitlement(auth_client_subscribed, settings):
+    settings.REVENUECAT_API_KEY = "rc_secret_key"
+
+    mock_response = MagicMock()
+    mock_response.raise_for_status = MagicMock()
+    mock_response.json.return_value = {
+        "subscriber": {
+            "entitlements": {
+                "ad_free": {
+                    "product_identifier": "com.cau393.rachae.adfree.monthly",
+                    "expires_date": "2000-01-01T00:00:00Z",
+                },
+            },
+        },
+    }
+
+    with patch("apps.ads.services.requests.get", return_value=mock_response):
+        response = auth_client_subscribed.post("/api/v1/ads/sync/")
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["is_ad_free"] is False
+    assert data["subscription_status"] == "expired"
+
+
+def test_sync_endpoint_no_entitlement_returns_current_status(auth_client, settings):
+    settings.REVENUECAT_API_KEY = "rc_secret_key"
+
+    mock_response = MagicMock()
+    mock_response.raise_for_status = MagicMock()
+    mock_response.json.return_value = {"subscriber": {"entitlements": {}}}
+
+    with patch("apps.ads.services.requests.get", return_value=mock_response):
+        response = auth_client.post("/api/v1/ads/sync/")
+
+    assert response.status_code == 200
+    assert response.json()["data"]["is_ad_free"] is False
+
+
+def test_sync_endpoint_api_error_returns_current_status(auth_client, settings):
+    settings.REVENUECAT_API_KEY = "rc_secret_key"
+
+    with patch("apps.ads.services.requests.get", side_effect=Exception("network down")):
+        response = auth_client.post("/api/v1/ads/sync/")
+
+    assert response.status_code == 200
+    assert response.json()["data"]["is_ad_free"] is False
+

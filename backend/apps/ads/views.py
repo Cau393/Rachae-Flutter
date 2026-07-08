@@ -1,5 +1,3 @@
-import base64
-
 from django.conf import settings
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
@@ -27,6 +25,20 @@ class AdsStatusView(APIView):
     def get(self, request):
         payload = AdsStatusSerializer(AdsService.get_status(request.user)).data
         return _response_data(payload)
+
+
+class AdsSyncView(APIView):
+    """Actively pulls the caller's entitlement from RevenueCat and applies it
+    synchronously, then returns the fresh status. Used by the app right after
+    a purchase/restore or when resuming from a Stripe Checkout redirect, so
+    the UI does not have to wait for a webhook to land.
+    """
+
+    permission_classes = [ActiveUserPermission]
+
+    def post(self, request):
+        payload = AdsService.sync_revenuecat_status(request.user)
+        return _response_data(AdsStatusSerializer(payload).data)
 
 
 class CreateCheckoutSessionView(APIView):
@@ -67,13 +79,8 @@ class StripeWebhookView(APIView):
     authentication_classes = []
 
     def post(self, request):
-        # JSON-encode raw body for Celery: bytes do not round-trip through the JSON
-        # task serializer, which breaks Stripe signature verification.
-        payload_b64 = base64.b64encode(request.body).decode("ascii")
         sig_header = request.META.get("HTTP_STRIPE_SIGNATURE", "")
-        from tasks.stripe_tasks import process_stripe_webhook
-
-        process_stripe_webhook.delay(payload_b64, sig_header)
+        AdsService.process_stripe_event(request.body, sig_header)
         return Response({"received": True}, status=status.HTTP_200_OK)
 
 
@@ -95,7 +102,5 @@ class RevenueCatWebhookView(APIView):
         if not isinstance(payload, dict):
             payload = {}
 
-        from tasks.revenuecat_tasks import process_rc_webhook
-
-        process_rc_webhook.delay(payload)
+        AdsService.process_rc_event(payload)
         return Response({"received": True}, status=status.HTTP_200_OK)
