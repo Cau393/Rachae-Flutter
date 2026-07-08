@@ -25,6 +25,7 @@ from apps.users.serializers import (
     UserSearchResultSerializer,
 )
 from apps.users.services import AvatarService, BalanceService, FriendService, InvitationService, UserService
+from core.storage import resolve_cloudfront_url
 
 
 class CurrentUserView(APIView):
@@ -143,4 +144,4 @@ class AvatarConfirmView(APIView):
             user = AvatarService.confirm_avatar_upload(request.user, serializer.validated_data["file_key"])
         except ValueError as exc:
             raise ValidationError({"detail": str(exc)}) from exc
-        return Response({"avatar_url": user.avatar_url})
+        return Response({"avatar_url": resolve_cloudfront_url(user.avatar_url)})

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from apps.users.models import FriendInvite, User
+from core.storage import resolve_cloudfront_url
 
 
 class CurrencyField(serializers.CharField):
@@ -16,6 +17,7 @@ class CurrentUserSerializer(serializers.ModelSerializer):
     total_owing = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     net_balance = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     currency = serializers.CharField(read_only=True)
+    avatar_url = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -32,6 +34,9 @@ class CurrentUserSerializer(serializers.ModelSerializer):
             "net_balance",
             "currency",
         ]
+
+    def get_avatar_url(self, obj):
+        return resolve_cloudfront_url(obj.avatar_url)
 
 
 class CurrentUserUpdateSerializer(serializers.ModelSerializer):
@@ -51,6 +56,8 @@ class UserSearchQuerySerializer(serializers.Serializer):
 
 
 class UserSearchResultSerializer(serializers.ModelSerializer):
+    avatar_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = [
@@ -60,9 +67,14 @@ class UserSearchResultSerializer(serializers.ModelSerializer):
             "display_name",
             "avatar_url",
         ]
+
+    def get_avatar_url(self, obj):
+        return resolve_cloudfront_url(obj.avatar_url)
 
 
 class FriendListSerializer(serializers.ModelSerializer):
+    avatar_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = [
@@ -72,6 +84,9 @@ class FriendListSerializer(serializers.ModelSerializer):
             "phone",
             "avatar_url",
         ]
+
+    def get_avatar_url(self, obj):
+        return resolve_cloudfront_url(obj.avatar_url)
 
 
 class AvatarUploadUrlRequestSerializer(serializers.Serializer):

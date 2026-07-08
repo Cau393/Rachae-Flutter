@@ -768,6 +768,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get profileAvatarChangeButton => 'Alterar foto';
 
   @override
+  String get profileAvatarUploadError =>
+      'Não foi possível atualizar sua foto. Tente novamente.';
+
+  @override
   String get profileSignOutButton => 'Sair';
 
   @override
@@ -933,6 +937,10 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get profileIapOfferingsUnavailable =>
       'As opções de assinatura não estão disponíveis no momento. Tente mais tarde.';
+
+  @override
+  String get profileIapNotConfigured =>
+      'As compras no app ainda não foram configuradas. Cadastre os produtos na App Store Connect e vincule-os a um offering no dashboard do RevenueCat.';
 
   @override
   String get profileRevenueCatMissingApiKey =>
@@ -1810,6 +1818,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get profileAvatarChangeButton => 'Alterar foto';
 
   @override
+  String get profileAvatarUploadError =>
+      'Não foi possível atualizar sua foto. Tente novamente.';
+
+  @override
   String get profileSignOutButton => 'Sair';
 
   @override
@@ -1975,6 +1987,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get profileIapOfferingsUnavailable =>
       'As opções de assinatura não estão disponíveis no momento. Tente mais tarde.';
+
+  @override
+  String get profileIapNotConfigured =>
+      'As compras no app ainda não foram configuradas. Cadastre os produtos na App Store Connect e vincule-os a um offering no dashboard do RevenueCat.';
 
   @override
   String get profileRevenueCatMissingApiKey =>

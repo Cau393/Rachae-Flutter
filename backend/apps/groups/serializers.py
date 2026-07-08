@@ -4,6 +4,7 @@ from django.apps import apps
 from rest_framework import serializers
 
 from apps.groups.models import Group, GroupMember, GroupRole, GroupType
+from core.storage import resolve_cloudfront_url
 
 
 class CurrencyField(serializers.CharField):
@@ -17,7 +18,7 @@ class CurrencyField(serializers.CharField):
 class GroupMemberSerializer(serializers.ModelSerializer):
     user_id = serializers.UUIDField(read_only=True)
     display_name = serializers.CharField(source="user.display_name", read_only=True)
-    avatar_url = serializers.CharField(source="user.avatar_url", read_only=True, allow_null=True)
+    avatar_url = serializers.SerializerMethodField()
     invited_by = serializers.UUIDField(source="invited_by_id", read_only=True, allow_null=True)
 
     class Meta:
@@ -30,6 +31,9 @@ class GroupMemberSerializer(serializers.ModelSerializer):
             "joined_at",
             "invited_by",
         ]
+
+    def get_avatar_url(self, obj):
+        return resolve_cloudfront_url(obj.user.avatar_url)
 
 
 class BalanceItemSerializer(serializers.Serializer):

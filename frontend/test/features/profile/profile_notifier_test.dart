@@ -301,6 +301,50 @@ void main() {
       verify(() => mockRepo.confirmAvatarUpload('k')).called(1);
     });
 
+    test(
+      'uploadAvatar returns false and preserves prior profile on failure',
+      () async {
+        final mockRepo = _MockProfileRepository();
+        final mockHttp = _MockHttpClient();
+        when(() => mockRepo.fetchProfile()).thenAnswer((_) async => profile);
+        when(
+          () => mockRepo.fetchAvatarUploadUrl(
+            contentType: any(named: 'contentType'),
+          ),
+        ).thenThrow(Exception('network error'));
+
+        final tmp = await Directory.systemTemp.createTemp('avatar_test_fail');
+        addTearDown(() => tmp.delete(recursive: true));
+        final file = File('${tmp.path}/a.jpg');
+        await file.writeAsBytes(<int>[1]);
+
+        final container = ProviderContainer(
+          overrides: [
+            ...authOverrides(),
+            profileRepositoryProvider.overrideWithValue(mockRepo),
+            httpClientProvider.overrideWithValue(mockHttp),
+          ],
+        );
+        addTearDown(container.dispose);
+        container.listen(profileNotifierProvider, (_, _) {});
+
+        await container.read(profileNotifierProvider.future);
+        final result = await container
+            .read(profileNotifierProvider.notifier)
+            .uploadAvatar(file);
+
+        expect(result, isFalse);
+        // Prior profile state is preserved, not replaced by an AsyncError —
+        // the avatar widget has no error UI, so the caller (a SnackBar) is
+        // responsible for surfacing the failure instead.
+        expect(
+          container.read(profileNotifierProvider).value?.displayName,
+          profile.displayName,
+        );
+        verifyNever(() => mockRepo.confirmAvatarUpload(any()));
+      },
+    );
+
     test('deleteAccount calls repo.deleteAccount', () async {
       final mockRepo = _MockProfileRepository();
       when(() => mockRepo.fetchProfile()).thenAnswer((_) async => profile);

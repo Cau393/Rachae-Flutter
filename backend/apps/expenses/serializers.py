@@ -22,6 +22,8 @@ EXPENSE_CATEGORY_CHOICES = (
 
 
 class UserMiniSerializer(serializers.ModelSerializer):
+    avatar_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = [
@@ -29,6 +31,9 @@ class UserMiniSerializer(serializers.ModelSerializer):
             "display_name",
             "avatar_url",
         ]
+
+    def get_avatar_url(self, obj):
+        return resolve_cloudfront_url(obj.avatar_url)
 
 
 class SplitInputSerializer(serializers.Serializer):
@@ -63,7 +68,7 @@ def _validate_split_users_exist(splits_data: list) -> None:
 class SplitOutputSerializer(serializers.ModelSerializer):
     user_id = serializers.UUIDField(read_only=True)
     display_name = serializers.CharField(source="user.display_name", read_only=True)
-    avatar_url = serializers.CharField(source="user.avatar_url", read_only=True, allow_null=True)
+    avatar_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Split
@@ -76,6 +81,9 @@ class SplitOutputSerializer(serializers.ModelSerializer):
             "share_value",
             "is_settled",
         ]
+
+    def get_avatar_url(self, obj):
+        return resolve_cloudfront_url(obj.user.avatar_url) if obj.user_id else None
 
 
 class ExpenseCreateSerializer(serializers.Serializer):

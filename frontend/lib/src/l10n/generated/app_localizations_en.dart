@@ -763,6 +763,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileAvatarChangeButton => 'Change photo';
 
   @override
+  String get profileAvatarUploadError =>
+      'Could not update your photo. Please try again.';
+
+  @override
   String get profileSignOutButton => 'Sign out';
 
   @override
@@ -926,6 +930,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get profileIapOfferingsUnavailable =>
       'Subscription options are not available right now. Try again later.';
+
+  @override
+  String get profileIapNotConfigured =>
+      'In-app purchases are not configured yet. Create the products in App Store Connect and link them to an offering in the RevenueCat dashboard.';
 
   @override
   String get profileRevenueCatMissingApiKey =>

@@ -11,6 +11,7 @@ from core.storage import resolve_cloudfront_url
 
 class UserMiniSerializer(serializers.ModelSerializer):
     user_id = serializers.UUIDField(source="id", read_only=True)
+    avatar_url = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -19,6 +20,9 @@ class UserMiniSerializer(serializers.ModelSerializer):
             "display_name",
             "avatar_url",
         ]
+
+    def get_avatar_url(self, obj):
+        return resolve_cloudfront_url(obj.avatar_url)
 
 
 class TransactionCreateSerializer(serializers.Serializer):

@@ -2,7 +2,7 @@ import uuid
 from datetime import timedelta
 from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
@@ -405,6 +405,102 @@ class UsersPhaseThreeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.user.refresh_from_db()
         self.assertEqual(self.user.avatar_url, file_key)
+
+    @override_settings(CLOUDFRONT_DOMAIN="cdn.rachae.app")
+    def test_avatar_confirm_returns_resolved_cloudfront_url(self):
+        self.authenticate()
+        file_key = f"avatars/{self.user.id}/avatar.png"
+
+        response = self.client.patch(
+            "/api/v1/users/me/avatar-confirm/",
+            data={"file_key": file_key},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()["avatar_url"],
+            f"https://cdn.rachae.app/{file_key}",
+        )
+        # Raw key is what's stored in the DB, not the resolved URL.
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.avatar_url, file_key)
+
+    @override_settings(CLOUDFRONT_DOMAIN="cdn.rachae.app")
+    def test_users_me_returns_resolved_avatar_url(self):
+        self.authenticate()
+        self.user.avatar_url = f"avatars/{self.user.id}/pic.jpg"
+        self.user.save(update_fields=["avatar_url"])
+
+        response = self.client.get("/api/v1/users/me/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()["avatar_url"],
+            f"https://cdn.rachae.app/avatars/{self.user.id}/pic.jpg",
+        )
+
+    def test_users_me_avatar_url_falls_back_to_raw_key_without_cloudfront_domain(self):
+        self.authenticate()
+        raw_key = f"avatars/{self.user.id}/pic.jpg"
+        self.user.avatar_url = raw_key
+        self.user.save(update_fields=["avatar_url"])
+
+        with override_settings(CLOUDFRONT_DOMAIN=""):
+            response = self.client.get("/api/v1/users/me/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["avatar_url"], raw_key)
+
+    @patch("apps.users.services.delete_s3_object")
+    @override_settings(CLOUDFRONT_DOMAIN="cdn.rachae.app")
+    def test_avatar_confirm_enqueues_deletion_of_previous_avatar_key(self, mock_delete):
+        self.authenticate()
+        old_key = f"avatars/{self.user.id}/old-avatar.png"
+        self.user.avatar_url = old_key
+        self.user.save(update_fields=["avatar_url"])
+
+        new_key = f"avatars/{self.user.id}/new-avatar.png"
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.patch(
+                "/api/v1/users/me/avatar-confirm/",
+                data={"file_key": new_key},
+                format="json",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        mock_delete.delay.assert_called_once_with(old_key)
+
+    @patch("apps.users.services.delete_s3_object")
+    def test_avatar_confirm_does_not_enqueue_deletion_when_no_previous_avatar(self, mock_delete):
+        self.authenticate()
+        self.assertIsNone(self.user.avatar_url)
+
+        new_key = f"avatars/{self.user.id}/first-avatar.png"
+        response = self.client.patch(
+            "/api/v1/users/me/avatar-confirm/",
+            data={"file_key": new_key},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        mock_delete.delay.assert_not_called()
+
+    @patch("apps.users.services.delete_s3_object")
+    def test_avatar_confirm_does_not_enqueue_deletion_for_legacy_http_avatar(self, mock_delete):
+        self.authenticate()
+        self.user.avatar_url = "https://legacy.example.com/old.png"
+        self.user.save(update_fields=["avatar_url"])
+
+        new_key = f"avatars/{self.user.id}/new-avatar.png"
+        response = self.client.patch(
+            "/api/v1/users/me/avatar-confirm/",
+            data={"file_key": new_key},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        mock_delete.delay.assert_not_called()
 
     def test_user_balance_endpoint_returns_pairwise_total(self):
         self.authenticate()

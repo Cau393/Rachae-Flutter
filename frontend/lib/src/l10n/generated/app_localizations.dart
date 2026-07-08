@@ -1491,6 +1491,12 @@ abstract class AppLocalizations {
   /// **'Alterar foto'**
   String get profileAvatarChangeButton;
 
+  /// No description provided for @profileAvatarUploadError.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Não foi possível atualizar sua foto. Tente novamente.'**
+  String get profileAvatarUploadError;
+
   /// No description provided for @profileSignOutButton.
   ///
   /// In pt_BR, this message translates to:
@@ -1790,6 +1796,12 @@ abstract class AppLocalizations {
   /// In pt_BR, this message translates to:
   /// **'As opções de assinatura não estão disponíveis no momento. Tente mais tarde.'**
   String get profileIapOfferingsUnavailable;
+
+  /// No description provided for @profileIapNotConfigured.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'As compras no app ainda não foram configuradas. Cadastre os produtos na App Store Connect e vincule-os a um offering no dashboard do RevenueCat.'**
+  String get profileIapNotConfigured;
 
   /// No description provided for @profileRevenueCatMissingApiKey.
   ///

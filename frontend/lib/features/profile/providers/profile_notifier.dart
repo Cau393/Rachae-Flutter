@@ -37,29 +37,42 @@ class ProfileNotifier extends AsyncNotifier<ProfileModel> {
     }
   }
 
-  Future<void> uploadAvatar(File file) async {
+  /// Uploads a new avatar. Returns `true` on success, `false` on failure.
+  ///
+  /// Errors are surfaced to the caller (rather than only stored in
+  /// [AsyncError] state) so the UI can show a visible failure message —
+  /// the avatar widget itself only ever renders initials or the image, so a
+  /// silent [AsyncError] transition was invisible to the user.
+  Future<bool> uploadAvatar(File file) async {
     final repo = ref.read(profileRepositoryProvider);
     final httpClient = ref.read(httpClientProvider);
+    final previousState = state;
     try {
       final contentType = _contentType(file);
       final url = await repo.fetchAvatarUploadUrl(contentType: contentType);
-      if (!ref.mounted) return;
+      if (!ref.mounted) return false;
       final bytes = await file.readAsBytes();
-      if (!ref.mounted) return;
+      if (!ref.mounted) return false;
       final uri = Uri.parse(url.uploadUrl);
       await httpClient.put(
         uri,
         body: bytes,
         headers: <String, String>{'Content-Type': contentType},
       );
-      if (!ref.mounted) return;
+      if (!ref.mounted) return false;
       final updated = await repo.confirmAvatarUpload(url.fileKey);
-      if (!ref.mounted) return;
+      if (!ref.mounted) return false;
       state = AsyncData(updated);
       ref.invalidate(balanceSummaryProvider);
-    } catch (e, s) {
-      if (!ref.mounted) return;
-      state = AsyncError<ProfileModel>(e, s);
+      return true;
+    } catch (_) {
+      if (ref.mounted) {
+        // Keep showing the previously loaded profile instead of an error
+        // screen; the caller is responsible for surfacing the failure (e.g.
+        // a SnackBar) since the avatar itself has no error UI.
+        state = previousState;
+      }
+      return false;
     }
   }
 

@@ -27,10 +27,19 @@ class _AvatarEditorState extends ConsumerState<AvatarEditor> {
     );
     if (xfile == null || !mounted) return;
 
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
     setState(() => _uploading = true);
     try {
       final file = File(xfile.path);
-      await ref.read(profileNotifierProvider.notifier).uploadAvatar(file);
+      final success =
+          await ref.read(profileNotifierProvider.notifier).uploadAvatar(file);
+      if (!success && mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.profileAvatarUploadError)),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _uploading = false);

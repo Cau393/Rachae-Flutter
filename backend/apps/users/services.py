@@ -21,6 +21,7 @@ from apps.users.queries import (
     search_users,
 )
 from core.storage import generate_presigned_upload_url
+from tasks.s3_tasks import delete_s3_object
 
 
 class UserService:
@@ -154,8 +155,13 @@ class AvatarService:
         if not file_key.startswith(expected_prefix):
             raise ValueError("Avatar file key does not belong to the current user.")
 
+        previous_key = user.avatar_url
         user.avatar_url = file_key
         user.save(update_fields=["avatar_url", "updated_at"])
+
+        if previous_key and previous_key != file_key and not previous_key.startswith(("http://", "https://")):
+            transaction.on_commit(lambda: delete_s3_object.delay(previous_key))
+
         return user
 
     @staticmethod
