@@ -67,6 +67,11 @@ class UserService:
 
                 updated_fields = []
                 for field, value in defaults.items():
+                    if field == "avatar_url" and user.avatar_url:
+                        # Never overwrite an existing avatar with the provider
+                        # (Google) photo: a user-uploaded avatar (S3 key under
+                        # "avatars/") would otherwise be reset on every request.
+                        continue
                     if getattr(user, field) != value:
                         setattr(user, field, value)
                         updated_fields.append(field)
