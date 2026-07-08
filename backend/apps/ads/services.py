@@ -210,6 +210,11 @@ class AdsService:
             return
 
         status = subscription_obj.get("status", "")
+        # Stripe keeps status="active" when the user cancels at period end;
+        # surface it as "canceled" so the app can show the cancelled state
+        # while access remains valid until current_period_end.
+        cancel_at_period_end = bool(subscription_obj.get("cancel_at_period_end"))
+        display_status = "canceled" if (cancel_at_period_end and status in _ACTIVE_STATUSES) else status
         try:
             price_id = subscription_obj["items"]["data"][0]["price"]["id"]
             if price_id == settings.STRIPE_PRICE_MONTHLY:
@@ -225,7 +230,7 @@ class AdsService:
         plan_expires_at = datetime.fromtimestamp(period_end, tz=tz.utc) if period_end and grant else None
 
         user.is_ad_free = grant and (status in _ACTIVE_STATUSES)
-        user.subscription_status = status
+        user.subscription_status = display_status
         user.plan_type = plan_type if grant else None
         user.plan_expires_at = plan_expires_at
         user.save(update_fields=["is_ad_free", "subscription_status", "plan_type", "plan_expires_at"])
@@ -490,6 +495,17 @@ class AdsService:
         )
         entitlement = entitlements.get("ad_free") if isinstance(entitlements, dict) else None
 
+        def _rc_status_for(entitlement_obj: dict) -> str:
+            """Return "canceled" when auto-renew is off but access remains,
+            else "active". RevenueCat exposes this via
+            subscriber.subscriptions[product_id].unsubscribe_detected_at."""
+            subscriptions = body.get("subscriber", {}).get("subscriptions", {})
+            if isinstance(subscriptions, dict):
+                sub = subscriptions.get(entitlement_obj.get("product_identifier") or "")
+                if isinstance(sub, dict) and sub.get("unsubscribe_detected_at"):
+                    return "canceled"
+            return "active"
+
         if isinstance(entitlement, dict) and entitlement.get("expires_date"):
             expires_at = _expires_from_rc_entitlement(entitlement)
             from datetime import datetime, timezone as tz
@@ -499,7 +515,7 @@ class AdsService:
                 AdsService.apply_revenuecat_entitlement(
                     user,
                     grant=True,
-                    subscription_status="active",
+                    subscription_status=_rc_status_for(entitlement),
                     plan_expires_at=expires_at,
                     plan_type=_plan_type_from_rc_entitlement(entitlement),
                 )

@@ -175,12 +175,34 @@ class _ManageSubscriptionButtonState
     final showAppleSubscriptionsLink =
         !showStripePortal && !showIosRevenueCat && !m.stripePortalAvailable;
 
+    final isCanceled = m.subscriptionStatus == 'canceled';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          l10n.profileAdFreeActive,
-          style: Theme.of(context).textTheme.bodyMedium,
+        Row(
+          children: [
+            Icon(
+              isCanceled ? Icons.info_outline : Icons.check_circle_outline,
+              size: 18,
+              color: isCanceled
+                  ? Theme.of(context).colorScheme.error
+                  : Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                isCanceled
+                    ? l10n.profileAdFreeCanceled
+                    : l10n.profileAdFreeActive,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: isCanceled
+                          ? Theme.of(context).colorScheme.error
+                          : null,
+                    ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         Text(
@@ -190,9 +212,13 @@ class _ManageSubscriptionButtonState
         if (expires != null) ...[
           const SizedBox(height: 8),
           Text(
-            l10n.profileAdFreeExpires(
-              DateFormat.yMMMd().format(expires.toLocal()),
-            ),
+            isCanceled
+                ? l10n.profileAdFreeAccessUntil(
+                    DateFormat.yMMMd().format(expires.toLocal()),
+                  )
+                : l10n.profileAdFreeRenews(
+                    DateFormat.yMMMd().format(expires.toLocal()),
+                  ),
           ),
         ],
         const SizedBox(height: 12),

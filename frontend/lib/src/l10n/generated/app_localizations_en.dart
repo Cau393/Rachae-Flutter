@@ -810,6 +810,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileAdFreeActive => 'Plan active — thank you for your support!';
 
   @override
+  String get profileAdFreeCanceled => 'Plan cancelled — auto-renew is off';
+
+  @override
+  String profileAdFreeAccessUntil(String date) {
+    return 'You keep ad-free access until $date';
+  }
+
+  @override
+  String profileAdFreeRenews(String date) {
+    return 'Renews on $date';
+  }
+
+  @override
   String profileAdFreeExpires(String date) {
     return 'Valid until $date';
   }

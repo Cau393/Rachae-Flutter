@@ -1581,6 +1581,24 @@ abstract class AppLocalizations {
   /// **'Plano ativo — obrigado pelo suporte!'**
   String get profileAdFreeActive;
 
+  /// No description provided for @profileAdFreeCanceled.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Plano cancelado — renovação automática desativada'**
+  String get profileAdFreeCanceled;
+
+  /// No description provided for @profileAdFreeAccessUntil.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Você mantém o acesso sem anúncios até {date}'**
+  String profileAdFreeAccessUntil(String date);
+
+  /// No description provided for @profileAdFreeRenews.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Renova em {date}'**
+  String profileAdFreeRenews(String date);
+
   /// No description provided for @profileAdFreeExpires.
   ///
   /// In pt_BR, this message translates to:

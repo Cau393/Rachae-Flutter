@@ -815,6 +815,20 @@ class AppLocalizationsPt extends AppLocalizations {
   String get profileAdFreeActive => 'Plano ativo — obrigado pelo suporte!';
 
   @override
+  String get profileAdFreeCanceled =>
+      'Plano cancelado — renovação automática desativada';
+
+  @override
+  String profileAdFreeAccessUntil(String date) {
+    return 'Você mantém o acesso sem anúncios até $date';
+  }
+
+  @override
+  String profileAdFreeRenews(String date) {
+    return 'Renova em $date';
+  }
+
+  @override
   String profileAdFreeExpires(String date) {
     return 'Válido até $date';
   }
@@ -1893,6 +1907,20 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get profileAdFreeActive => 'Plano ativo — obrigado pelo suporte!';
+
+  @override
+  String get profileAdFreeCanceled =>
+      'Plano cancelado — renovação automática desativada';
+
+  @override
+  String profileAdFreeAccessUntil(String date) {
+    return 'Você mantém o acesso sem anúncios até $date';
+  }
+
+  @override
+  String profileAdFreeRenews(String date) {
+    return 'Renova em $date';
+  }
 
   @override
   String profileAdFreeExpires(String date) {
