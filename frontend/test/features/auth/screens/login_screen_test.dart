@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/theme/app_theme.dart';
 import 'package:frontend/features/auth/auth_notifier.dart';
 import 'package:frontend/features/auth/auth_state.dart';
+import 'package:frontend/features/auth/pending_friend_invite_token_provider.dart';
 import 'package:frontend/features/auth/screens/login_screen.dart';
 import 'package:frontend/features/auth/widgets/auth_loading_overlay.dart';
 import 'package:frontend/features/auth/widgets/rachae_logo.dart';
@@ -31,6 +32,16 @@ class ThrowingGoogleAuthNotifier extends AuthNotifier {
   }
 }
 
+class ThrowingAppleAuthNotifier extends AuthNotifier {
+  @override
+  Future<AuthState> build() async => const AuthState.unauthenticated();
+
+  @override
+  Future<void> signInWithApple({String? inviteToken}) async {
+    throw Exception('oauth');
+  }
+}
+
 /// Holds [signInWithGoogle] until [hang] completes — for overlay-in-flight tests.
 class HangingGoogleAuthNotifier extends AuthNotifier {
   HangingGoogleAuthNotifier(this._hang);
@@ -42,6 +53,21 @@ class HangingGoogleAuthNotifier extends AuthNotifier {
   @override
   Future<void> signInWithGoogle({String? inviteToken}) async {
     await _hang.future;
+  }
+}
+
+/// Records the [inviteToken] passed to [signInWithApple] for parity tests.
+class RecordingAppleAuthNotifier extends AuthNotifier {
+  String? lastInviteToken;
+  bool called = false;
+
+  @override
+  Future<AuthState> build() async => const AuthState.unauthenticated();
+
+  @override
+  Future<void> signInWithApple({String? inviteToken}) async {
+    called = true;
+    lastInviteToken = inviteToken;
   }
 }
 
@@ -101,7 +127,9 @@ void main() {
       },
     );
 
-    testWidgets('iOS: logo, titles, Google sign-in only', (tester) async {
+    testWidgets('iOS: logo, titles, Google + Apple sign-in, Apple first', (
+      tester,
+    ) async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       await pumpLogin(tester, const AuthState.unauthenticated());
       clearTestPlatform();
@@ -111,7 +139,12 @@ void main() {
       expect(find.text(l10n.loginTitle), findsOneWidget);
       expect(find.text(l10n.loginSubtitle), findsOneWidget);
       expect(find.text(l10n.signInWithGoogle), findsOneWidget);
-      expect(find.text(l10n.signInWithApple), findsNothing);
+      expect(find.text(l10n.signInWithApple), findsOneWidget);
+
+      // Apple must be shown first (above Google) per Apple HIG / Guideline 4.8.
+      final appleTop = tester.getTopLeft(find.text(l10n.signInWithApple)).dy;
+      final googleTop = tester.getTopLeft(find.text(l10n.signInWithGoogle)).dy;
+      expect(appleTop, lessThan(googleTop));
     });
   });
 
@@ -212,6 +245,46 @@ void main() {
         clearTestPlatform();
       },
     );
+
+    testWidgets(
+      'signInWithApple throws — SnackBar with oauthFailed; no navigation',
+      (tester) async {
+        debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+
+        final container = ProviderContainer(
+          overrides: [
+            authNotifierProvider.overrideWith(ThrowingAppleAuthNotifier.new),
+          ],
+        );
+        addTearDown(container.dispose);
+        await container.read(authNotifierProvider.future);
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp(
+              theme: AppTheme.light,
+              locale: const Locale('pt', 'BR'),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: const LoginScreen(),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        final l10n = l10nFrom(tester);
+        await tester.tap(find.bySemanticsLabel(l10n.signInWithApple));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump();
+
+        expect(find.text(l10n.oauthFailed), findsOneWidget);
+        expect(find.text(l10n.signInWithApple), findsOneWidget);
+        clearTestPlatform();
+      },
+    );
   });
 
   group('LoginScreen platform guard', () {
@@ -242,6 +315,7 @@ void main() {
         l10n.loginTitle,
         l10n.loginSubtitle,
         l10n.signInWithGoogle,
+        l10n.signInWithApple,
         l10n.unsupportedPlatformMessage,
       };
 
@@ -283,7 +357,7 @@ void main() {
 
   group('LoginScreen accessibility', () {
     testWidgets(
-      'Google button exposes l10n label to semantics tree',
+      'Google and Apple buttons expose l10n labels to semantics tree',
       (tester) async {
         debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
         await pumpLogin(tester, const AuthState.unauthenticated());
@@ -291,9 +365,54 @@ void main() {
         final l10n = l10nFrom(tester);
 
         expect(find.bySemanticsLabel(l10n.signInWithGoogle), findsOneWidget);
-        expect(find.bySemanticsLabel(l10n.signInWithApple), findsNothing);
+        expect(find.bySemanticsLabel(l10n.signInWithApple), findsOneWidget);
       },
     );
+  });
 
+  group('LoginScreen Apple invite-token parity', () {
+    testWidgets(
+      'tapping Apple sign-in passes the pending invite token, like Google',
+      (tester) async {
+        debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+        final recorder = RecordingAppleAuthNotifier();
+        final container = ProviderContainer(
+          overrides: [
+            authNotifierProvider.overrideWith(() => recorder),
+          ],
+        );
+        addTearDown(container.dispose);
+        await container.read(authNotifierProvider.future);
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp(
+              theme: AppTheme.light,
+              locale: const Locale('pt', 'BR'),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: const LoginScreen(),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        container
+            .read(pendingFriendInviteTokenProvider.notifier)
+            .setToken('invite-abc');
+        await tester.pump();
+
+        final l10n = l10nFrom(tester);
+        await tester.tap(find.bySemanticsLabel(l10n.signInWithApple));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        expect(recorder.called, isTrue);
+        expect(recorder.lastInviteToken, 'invite-abc');
+        clearTestPlatform();
+      },
+    );
   });
 }

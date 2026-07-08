@@ -11,6 +11,7 @@ import 'package:frontend/features/auth/auth_state.dart';
 import 'package:frontend/features/auth/invite_handoff.dart';
 import 'package:frontend/features/auth/pending_friend_invite_token_provider.dart';
 import 'package:frontend/features/auth/pending_friend_invite_token_storage.dart';
+import 'package:frontend/features/auth/widgets/apple_sign_in_button.dart';
 import 'package:frontend/features/auth/widgets/auth_loading_overlay.dart';
 import 'package:frontend/features/auth/widgets/google_sign_in_button.dart';
 import 'package:frontend/features/auth/widgets/rachae_logo.dart';
@@ -238,10 +239,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ],
                       const SizedBox(height: 40),
                       if (kIsWeb || defaultTargetPlatform == TargetPlatform.iOS)
-                        GoogleSignInButton(
-                          isLoading: _isLoading,
-                          onPressed: _handleGoogleSignIn,
-                        )
+                        ..._buildSignInButtons()
                       else
                         Text(
                           l10n.unsupportedPlatformMessage,
@@ -257,6 +255,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
       ),
     );
+  }
+
+  /// Sign-in buttons for the "supported" branch (web or iOS). On iOS, Apple
+  /// is shown first per Apple HIG (Sign in with Apple must have equal or
+  /// greater prominence than other third-party login options — Guideline 4.8).
+  List<Widget> _buildSignInButtons() {
+    final apple = AppleSignInButton(
+      isLoading: _isLoading,
+      onPressed: _handleAppleSignIn,
+    );
+    final google = GoogleSignInButton(
+      isLoading: _isLoading,
+      onPressed: _handleGoogleSignIn,
+    );
+    final spacer = const SizedBox(height: 12);
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      return [apple, spacer, google];
+    }
+    return [google, spacer, apple];
   }
 
   Future<void> _openExternal(String url) async {
@@ -277,6 +294,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref
           .read(authNotifierProvider.notifier)
           .signInWithGoogle(inviteToken: token);
+    } catch (_) {
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context)!;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.oauthFailed)));
+    }
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+  }
+
+  Future<void> _handleAppleSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      final uriToken = _inviteTokenFromCurrentUrl();
+      final pending = ref.read(pendingFriendInviteTokenProvider);
+      final token = (pending != null && pending.isNotEmpty)
+          ? pending
+          : uriToken;
+      await ref
+          .read(authNotifierProvider.notifier)
+          .signInWithApple(inviteToken: token);
     } catch (_) {
       if (!mounted) return;
       final l10n = AppLocalizations.of(context)!;

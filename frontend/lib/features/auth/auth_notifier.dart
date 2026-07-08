@@ -68,9 +68,10 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     );
   }
 
-  Future<void> signInWithApple() async {
+  Future<void> signInWithApple({String? inviteToken}) async {
     final client = ref.read(supabaseClientProvider);
     final redirect = AppConfig.oauthRedirectUri();
+    persistPendingFriendInviteToken(inviteToken);
     await client.auth.signInWithOAuth(
       supa.OAuthProvider.apple,
       redirectTo: redirect,
