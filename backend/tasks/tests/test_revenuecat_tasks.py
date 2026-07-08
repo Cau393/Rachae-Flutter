@@ -115,13 +115,19 @@ def test_process_rc_webhook_expiration_revokes(django_user_model):
     assert user.plan_expires_at is None
 
 
-def test_process_rc_webhook_cancellation_revokes(django_user_model):
+def test_process_rc_webhook_cancellation_keeps_access_until_expiry(django_user_model):
+    """CANCELLATION = auto-renew off; access stays until EXPIRATION arrives."""
+    from datetime import datetime, timezone as tz
+
+    expires = datetime(2030, 1, 1, tzinfo=tz.utc)
     user = django_user_model.objects.create(
         supabase_uid=uuid.uuid4(),
         email="rc_cancel@example.com",
         display_name="RC Cancel",
         is_ad_free=True,
         subscription_status="active",
+        plan_type="monthly",
+        plan_expires_at=expires,
     )
     process_rc_webhook.apply(
         args=[
@@ -135,8 +141,65 @@ def test_process_rc_webhook_cancellation_revokes(django_user_model):
         throw=True,
     )
     user.refresh_from_db()
-    assert user.is_ad_free is False
+    assert user.is_ad_free is True
     assert user.subscription_status == "canceled"
+    assert user.plan_expires_at == expires
+    assert user.plan_type == "monthly"
+
+
+def test_process_rc_webhook_expiration_revokes(django_user_model):
+    user = django_user_model.objects.create(
+        supabase_uid=uuid.uuid4(),
+        email="rc_expire@example.com",
+        display_name="RC Expire",
+        is_ad_free=True,
+        subscription_status="canceled",
+        plan_type="monthly",
+    )
+    process_rc_webhook.apply(
+        args=[
+            {
+                "event": {
+                    "type": "EXPIRATION",
+                    "app_user_id": str(user.id),
+                },
+            },
+        ],
+        throw=True,
+    )
+    user.refresh_from_db()
+    assert user.is_ad_free is False
+    assert user.subscription_status == "expired"
+    assert user.plan_type is None
+
+
+def test_process_rc_webhook_product_change_updates_plan(django_user_model):
+    """PRODUCT_CHANGE must pick the NEW product id, not the old one."""
+    user = django_user_model.objects.create(
+        supabase_uid=uuid.uuid4(),
+        email="rc_change@example.com",
+        display_name="RC Change",
+        is_ad_free=True,
+        subscription_status="active",
+        plan_type="monthly",
+    )
+    process_rc_webhook.apply(
+        args=[
+            {
+                "event": {
+                    "type": "PRODUCT_CHANGE",
+                    "app_user_id": str(user.id),
+                    "product_id": "com.cau393.rachae.adfree.monthly",
+                    "new_product_id": "com.cau393.rachae.adfree.yearly",
+                    "expiration_at_ms": 1893456000000,
+                },
+            },
+        ],
+        throw=True,
+    )
+    user.refresh_from_db()
+    assert user.is_ad_free is True
+    assert user.plan_type == "yearly"
 
 
 def test_process_rc_webhook_unknown_user_is_no_op():

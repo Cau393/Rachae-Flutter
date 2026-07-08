@@ -62,7 +62,9 @@ def _resolve_stripe_customer_id_from_session(session: dict, stripe_module):
 
 
 def _plan_type_from_rc_event(event: dict) -> str | None:
-    pid = str(event.get("product_id") or "").lower()
+    # PRODUCT_CHANGE carries the OLD product in `product_id` and the new one in
+    # `new_product_id` — prefer the new product so plan switches persist.
+    pid = str(event.get("new_product_id") or event.get("product_id") or "").lower()
     if any(
         s in pid
         for s in (
@@ -434,12 +436,22 @@ class AdsService:
                 plan_expires_at=expires,
                 plan_type=plan_type,
             )
+        elif event_type == "CANCELLATION":
+            # CANCELLATION only means auto-renew was turned off. The entitlement
+            # stays valid until the paid period ends (RevenueCat sends EXPIRATION
+            # then). Keep ad-free until the expiry date.
+            AdsService.apply_revenuecat_entitlement(
+                user,
+                grant=True,
+                subscription_status="canceled",
+                plan_expires_at=expires or user.plan_expires_at,
+                plan_type=plan_type or user.plan_type,
+            )
         elif event_type in _RC_REVOKE_TYPES:
-            sub_status = "canceled" if event_type == "CANCELLATION" else "expired"
             AdsService.apply_revenuecat_entitlement(
                 user,
                 grant=False,
-                subscription_status=sub_status,
+                subscription_status="expired",
                 plan_expires_at=None,
                 plan_type=None,
             )

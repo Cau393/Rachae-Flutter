@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -48,9 +50,23 @@ class _ManageSubscriptionButtonState
     if (state == AppLifecycleState.resumed && _portalPending) {
       if (!mounted) return;
       setState(() => _portalPending = false);
-      ref.invalidate(adsStatusProvider);
-      ref.invalidate(profileNotifierProvider);
+      unawaited(_syncAndRefresh());
     }
+  }
+
+  /// Pulls fresh entitlement state from the backend's RevenueCat sync
+  /// endpoint (plan changes/cancellations made in the App Store sheet or
+  /// Stripe portal are otherwise only reflected after a webhook arrives),
+  /// then refreshes the providers.
+  Future<void> _syncAndRefresh() async {
+    try {
+      await ref.read(adsRepositoryProvider).syncAdsStatus();
+    } catch (_) {
+      // Fall back to whatever the regular status fetch returns.
+    }
+    if (!mounted) return;
+    ref.invalidate(adsStatusProvider);
+    ref.invalidate(profileNotifierProvider);
   }
 
   String _planName(AppLocalizations l10n, AdsStatusModel m) {
@@ -127,8 +143,7 @@ class _ManageSubscriptionButtonState
     try {
       await revenueCatPresentCustomerCenter();
       if (!mounted) return;
-      ref.invalidate(adsStatusProvider);
-      ref.invalidate(profileNotifierProvider);
+      await _syncAndRefresh();
     } catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
