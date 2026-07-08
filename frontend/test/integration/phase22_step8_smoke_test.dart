@@ -238,7 +238,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(ManageSubscriptionButton), findsOneWidget);
-      expect(find.textContaining('Valid until'), findsOneWidget);
+      // Active (non-canceled) subscriptions show the renewal date.
+      expect(find.textContaining('Renews on'), findsOneWidget);
     });
 
     testWidgets('ProfileScreen: notification toggle calls updatePreferences',

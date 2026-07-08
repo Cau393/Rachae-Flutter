@@ -32,8 +32,18 @@ class _FakeAuthenticatedAuth extends AuthNotifier {
   _FakeAuthenticatedAuth(this._user);
   final User _user;
 
+  int signOutCalls = 0;
+
   @override
   Future<AuthState> build() async => AuthState.authenticated(user: _user);
+
+  // `deleteAccount` signs out after deletion; the real implementation
+  // touches Supabase.instance, which isn't initialized in unit tests.
+  @override
+  Future<void> signOut() async {
+    signOutCalls++;
+    state = AsyncData(AuthState.unauthenticated());
+  }
 }
 
 void main() {
