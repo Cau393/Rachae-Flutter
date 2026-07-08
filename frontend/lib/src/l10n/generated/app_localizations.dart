@@ -1671,6 +1671,18 @@ abstract class AppLocalizations {
   /// **'Exportar dados'**
   String get profileExportButton;
 
+  /// No description provided for @profileTermsOfUseButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Termos de Uso (EULA)'**
+  String get profileTermsOfUseButton;
+
+  /// No description provided for @profilePrivacyPolicyButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Política de Privacidade'**
+  String get profilePrivacyPolicyButton;
+
   /// No description provided for @exportTitle.
   ///
   /// In pt_BR, this message translates to:

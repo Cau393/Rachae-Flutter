@@ -24,6 +24,7 @@ import 'package:frontend/features/profile/repositories/ads_repository.dart';
 import 'package:frontend/features/profile/repositories/profile_repository.dart';
 import 'package:frontend/features/profile/screens/profile_screen.dart';
 import 'package:frontend/features/profile/widgets/ad_free_upgrade_card.dart';
+import 'package:frontend/features/profile/widgets/legal_links_section.dart';
 import 'package:frontend/features/profile/widgets/manage_subscription_button.dart';
 import 'package:frontend/features/profile/widgets/notification_prefs_section.dart';
 import 'package:frontend/src/l10n/generated/app_localizations.dart';
@@ -403,6 +404,33 @@ void main() {
           'push_expense_created': false,
         }),
       ).called(1);
+    });
+
+    testWidgets('shows Terms of Use (EULA) and Privacy Policy links',
+        (tester) async {
+      final profileRepo = _MockProfileRepository();
+      final adsRepo = _MockAdsRepository();
+      final notifRepo = _MockNotificationsRepository();
+
+      tester.view.physicalSize = const ui.Size(400, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await pumpProfile(
+        tester,
+        overrides: baseOverrides(
+          profileRepo: profileRepo,
+          adsRepo: adsRepo,
+          notifRepo: notifRepo,
+        ),
+      );
+
+      expect(find.byType(LegalLinksSection), findsOneWidget);
+      expect(find.text('Terms of Use (EULA)'), findsOneWidget);
+      expect(find.text('Privacy Policy'), findsOneWidget);
     });
   });
 }

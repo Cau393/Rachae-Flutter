@@ -863,6 +863,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileExportButton => 'Export data';
 
   @override
+  String get profileTermsOfUseButton => 'Terms of Use (EULA)';
+
+  @override
+  String get profilePrivacyPolicyButton => 'Privacy Policy';
+
+  @override
   String get exportTitle => 'Export data';
 
   @override

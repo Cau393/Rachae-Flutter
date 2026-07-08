@@ -868,6 +868,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get profileExportButton => 'Exportar dados';
 
   @override
+  String get profileTermsOfUseButton => 'Termos de Uso (EULA)';
+
+  @override
+  String get profilePrivacyPolicyButton => 'Política de Privacidade';
+
+  @override
   String get exportTitle => 'Exportar dados';
 
   @override
@@ -1902,6 +1908,12 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get profileExportButton => 'Exportar dados';
+
+  @override
+  String get profileTermsOfUseButton => 'Termos de Uso (EULA)';
+
+  @override
+  String get profilePrivacyPolicyButton => 'Política de Privacidade';
 
   @override
   String get exportTitle => 'Exportar dados';

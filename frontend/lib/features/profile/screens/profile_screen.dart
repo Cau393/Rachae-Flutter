@@ -10,6 +10,7 @@ import 'package:frontend/features/profile/providers/profile_notifier.dart';
 import 'package:frontend/features/profile/widgets/ad_free_upgrade_card.dart';
 import 'package:frontend/features/profile/widgets/avatar_editor.dart';
 import 'package:frontend/features/profile/widgets/danger_zone_section.dart';
+import 'package:frontend/features/profile/widgets/legal_links_section.dart';
 import 'package:frontend/features/profile/widgets/manage_subscription_button.dart';
 import 'package:frontend/features/profile/widgets/notification_prefs_section.dart';
 import 'package:frontend/src/l10n/generated/app_localizations.dart';
@@ -128,6 +129,9 @@ class ProfileScreen extends ConsumerWidget {
                 title: Text(l10n.profileExportButton),
                 onTap: () => context.push('/profile/export'),
               ),
+              const Divider(),
+              const LegalLinksSection(),
+              const Divider(),
               ListTile(
                 leading: const Icon(Icons.logout),
                 title: Text(l10n.profileSignOutButton),

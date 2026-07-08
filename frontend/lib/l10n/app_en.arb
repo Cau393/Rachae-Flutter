@@ -338,6 +338,8 @@
   "profileUpgradeButton": "Remove ads",
   "profileManageSubscriptionButton": "Manage subscription",
   "profileExportButton": "Export data",
+  "profileTermsOfUseButton": "Terms of Use (EULA)",
+  "profilePrivacyPolicyButton": "Privacy Policy",
 
   "exportTitle": "Export data",
   "exportDateFromLabel": "From date",
