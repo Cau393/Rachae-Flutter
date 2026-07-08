@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 
@@ -38,10 +39,19 @@ Future<RevenueCatPaywallFlowResult> revenueCatPresentPaywall() async {
   try {
     final current = await _currentOffering();
     if (current == null) {
-      return RevenueCatPaywallFlowResult.error;
+      return RevenueCatPaywallFlowResult.notConfigured;
     }
     final r = await RevenueCatUI.presentPaywall(offering: current);
     return _mapPaywallResult(r);
+  } on PlatformException catch (e) {
+    if (PurchasesErrorHelper.getErrorCode(e) ==
+        PurchasesErrorCode.configurationError) {
+      debugPrint('[RevenueCat] presentPaywall: offerings not configured '
+          '(no App Store products in RevenueCat dashboard).');
+      return RevenueCatPaywallFlowResult.notConfigured;
+    }
+    debugPrint('[RevenueCat] presentPaywall failed: $e');
+    return RevenueCatPaywallFlowResult.error;
   } catch (e, st) {
     debugPrint('[RevenueCat] presentPaywall failed: $e\n$st');
     return RevenueCatPaywallFlowResult.error;
@@ -55,13 +65,22 @@ Future<RevenueCatPaywallFlowResult> revenueCatPresentPaywallIfNeeded() async {
   try {
     final current = await _currentOffering();
     if (current == null) {
-      return RevenueCatPaywallFlowResult.error;
+      return RevenueCatPaywallFlowResult.notConfigured;
     }
     final r = await RevenueCatUI.presentPaywallIfNeeded(
       kRachaeProEntitlementId,
       offering: current,
     );
     return _mapPaywallResult(r);
+  } on PlatformException catch (e) {
+    if (PurchasesErrorHelper.getErrorCode(e) ==
+        PurchasesErrorCode.configurationError) {
+      debugPrint('[RevenueCat] presentPaywallIfNeeded: offerings not '
+          'configured (no App Store products in RevenueCat dashboard).');
+      return RevenueCatPaywallFlowResult.notConfigured;
+    }
+    debugPrint('[RevenueCat] presentPaywallIfNeeded failed: $e');
+    return RevenueCatPaywallFlowResult.error;
   } catch (e, st) {
     debugPrint('[RevenueCat] presentPaywallIfNeeded failed: $e\n$st');
     return RevenueCatPaywallFlowResult.error;

@@ -74,13 +74,18 @@ class ApiClient {
   ApiClient({SupabaseClient? supabaseClient}) {
     final client = supabaseClient ?? Supabase.instance.client;
     final baseUrl = _resolveApiBaseUrl();
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    if (baseUrl.contains('ngrok-free.dev') || baseUrl.contains('ngrok.io')) {
+      // ngrok free tier returns an HTML interstitial unless this header is set.
+      headers['ngrok-skip-browser-warning'] = 'true';
+    }
     dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
         // Dev/slow networks often exceed 10s (e.g. cold Django, debugger); avoid false timeouts.
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 30),
-        headers: {'Content-Type': 'application/json'},
+        headers: headers,
       ),
     );
     dio.interceptors.add(SupabaseTokenInterceptor(client));

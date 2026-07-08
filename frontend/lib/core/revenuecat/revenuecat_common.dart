@@ -26,6 +26,12 @@ enum RevenueCatPaywallFlowResult {
   error,
   purchased,
   restored,
+
+  /// Offerings have no products configured in the RevenueCat / App Store Connect
+  /// dashboards (CONFIGURATION_ERROR, or `offerings.current` is null). This is a
+  /// permanent setup problem, not a transient failure — the UI should tell the
+  /// user that IAP isn't configured yet, not "try again later".
+  notConfigured,
 }
 
 /// Outcome of a native purchase attempt (for UI branching only).

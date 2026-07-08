@@ -1,0 +1,8 @@
+// Debug-only dart-defines for Xcode runs (Product → Run does not pass
+// --dart-define-from-file). Sync values with assets/config/public.env when
+// API_BASE_URL or REVENUECAT_IOS_API_KEY change.
+//
+// Each entry is base64("KEY=value"):
+//   API_BASE_URL=https://unforeseeably-lamiaceous-amaya.ngrok-free.dev/api/v1/
+//   REVENUECAT_IOS_API_KEY=appl_kfdIbwsGxXmNzVxJBwFBkTufgcY
+DART_DEFINES=$(DART_DEFINES),QVBJX0JBU0VfVVJMPWh0dHBzOi8vdW5mb3Jlc2VlYWJseS1sYW1pYWNlb3VzLWFtYXlhLm5ncm9rLWZyZWUuZGV2L2FwaS92MS8=,UkVWRU5VRUNBVF9JT1NfQVBJX0tFWT1hcHBsX2tmZElid3NHeFhtTnpWeEpCd0ZCa1R1ZmdjWQ==

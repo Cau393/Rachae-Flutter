@@ -41,6 +41,7 @@ build/
 # iOS
 ios/Runner/GoogleService-Info.plist
 *.xcuserstate
+oauth_apple_jwt_generator.py
 
 # IDE
 .idea/
@@ -63,3 +64,6 @@ openspec/
 # Claude
 .claude/
 *CLAUDE.md
+
+# tokensave MCP local cache
+.tokensave/

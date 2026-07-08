@@ -31,6 +31,8 @@ dependencies:
   purchases_flutter: ^9.16.0
   purchases_ui_flutter: ^9.16.0
   flutter_dotenv: ^6.0.0
+  sign_in_with_apple: ^6.1.0
+  crypto: ^3.0.0
 
 dev_dependencies:
   flutter_test:
@@ -48,3 +50,4 @@ flutter:
     - assets/branding/logo.png
     - assets/branding/google.svg
     - assets/branding/apple.svg
+    - assets/config/public.env
