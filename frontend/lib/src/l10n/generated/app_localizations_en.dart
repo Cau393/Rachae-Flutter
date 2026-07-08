@@ -1033,6 +1033,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adFreeCancelAnytime => 'Cancel anytime.';
 
   @override
+  String adFreeYearlySavingsBadge(int percent) {
+    return 'Save $percent%';
+  }
+
+  @override
+  String get adFreeYearlyBestValueBadge => 'Best value';
+
+  @override
+  String get adFreeSuccessTitle => 'You\'re ad-free!';
+
+  @override
+  String get adFreeSuccessMessage =>
+      'Enjoy Rachae without interruptions. Thanks for your support!';
+
+  @override
+  String get adFreeRestorePurchasesButton => 'Restore purchases';
+
+  @override
+  String get adFreeRestorePurchasesSuccess =>
+      'Purchases restored — you\'re ad-free!';
+
+  @override
+  String get adFreeRestorePurchasesNotFound =>
+      'No active subscription found to restore.';
+
+  @override
+  String get profileManageSubscriptionAppleUrlError =>
+      'Could not open subscription management. Try again.';
+
+  @override
   String get stageOneReady => 'Stage 1 foundation is ready.';
 
   @override

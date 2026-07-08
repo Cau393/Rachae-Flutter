@@ -1989,6 +1989,54 @@ abstract class AppLocalizations {
   /// **'Cancele quando quiser.'**
   String get adFreeCancelAnytime;
 
+  /// No description provided for @adFreeYearlySavingsBadge.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Economize {percent}%'**
+  String adFreeYearlySavingsBadge(int percent);
+
+  /// No description provided for @adFreeYearlyBestValueBadge.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Melhor custo-benefício'**
+  String get adFreeYearlyBestValueBadge;
+
+  /// No description provided for @adFreeSuccessTitle.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Você está sem anúncios!'**
+  String get adFreeSuccessTitle;
+
+  /// No description provided for @adFreeSuccessMessage.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Aproveite o Rachae sem interrupções. Obrigado pelo seu apoio!'**
+  String get adFreeSuccessMessage;
+
+  /// No description provided for @adFreeRestorePurchasesButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Restaurar compras'**
+  String get adFreeRestorePurchasesButton;
+
+  /// No description provided for @adFreeRestorePurchasesSuccess.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Compras restauradas — você está sem anúncios!'**
+  String get adFreeRestorePurchasesSuccess;
+
+  /// No description provided for @adFreeRestorePurchasesNotFound.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Nenhuma assinatura ativa encontrada para restaurar.'**
+  String get adFreeRestorePurchasesNotFound;
+
+  /// No description provided for @profileManageSubscriptionAppleUrlError.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Não foi possível abrir o gerenciamento de assinatura. Tente novamente.'**
+  String get profileManageSubscriptionAppleUrlError;
+
   /// No description provided for @stageOneReady.
   ///
   /// In pt_BR, this message translates to:

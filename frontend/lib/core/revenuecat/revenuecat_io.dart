@@ -159,3 +159,17 @@ Future<RevenueCatPurchaseResult> revenueCatPurchasePro(
     rethrow;
   }
 }
+
+/// Restores prior App Store purchases for the current App Store account and
+/// returns whether the ad-free entitlement is active afterwards. No-op off
+/// iOS or when the SDK has not been configured with a public API key.
+Future<bool> revenueCatRestorePurchases() async {
+  if (kIsWeb || !Platform.isIOS) return false;
+  if (AppConfig.revenueCatIosApiKey.trim().isEmpty) return false;
+  final customerInfo = await Purchases.restorePurchases();
+  final entitled = _hasRachaePro(customerInfo);
+  if (entitled) {
+    _emitCustomerInfoChanged();
+  }
+  return entitled;
+}

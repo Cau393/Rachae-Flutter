@@ -6,10 +6,18 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:frontend/core/network/api_client.dart';
 import 'package:frontend/core/revenuecat/revenuecat.dart';
+import 'package:frontend/features/profile/models/ads_status_model.dart';
 import 'package:frontend/features/profile/providers/ads_repository_provider.dart';
 import 'package:frontend/features/profile/providers/ads_status_provider.dart';
 import 'package:frontend/features/profile/providers/profile_notifier.dart';
 import 'package:frontend/src/l10n/generated/app_localizations.dart';
+
+/// Yearly-vs-monthly savings shown as a badge on the yearly plan chip
+/// (Stripe/web plan selector only). Derived from the static prices baked
+/// into [AppLocalizations.adFreeMonthlyPlanOption] /
+/// `adFreeYearlyPlanOption` (R$ 4.99/mo, R$ 29.99/yr) — keep this in sync if
+/// those prices ever change.
+const int _yearlyPlanSavingsPercent = 50;
 
 class AdFreeUpgradeCard extends ConsumerStatefulWidget {
   const AdFreeUpgradeCard({super.key});
@@ -23,6 +31,7 @@ class _AdFreeUpgradeCardState extends ConsumerState<AdFreeUpgradeCard>
   String _plan = 'monthly';
   bool _isLoading = false;
   bool _isCheckoutPending = false;
+  bool _isRestoring = false;
 
   @override
   void initState() {
@@ -48,12 +57,17 @@ class _AdFreeUpgradeCardState extends ConsumerState<AdFreeUpgradeCard>
     }
   }
 
-  Future<void> _syncAdsStatusAndRefresh() async {
+  /// Syncs entitlement with the backend after a purchase/restore, then
+  /// invalidates the ads/profile providers so the rest of the screen picks
+  /// up the fresh state. Returns the synced status (or null if the sync
+  /// call failed — the periodic [adsStatusProvider] fetch and any pending
+  /// webhook will still reconcile state eventually).
+  Future<AdsStatusModel?> _syncAdsStatusAndRefresh() async {
+    AdsStatusModel? status;
     try {
-      await ref.read(adsRepositoryProvider).syncAdsStatus();
+      status = await ref.read(adsRepositoryProvider).syncAdsStatus();
     } catch (_) {
-      // Sync is best-effort here — the periodic adsStatusProvider fetch and
-      // any pending webhook will still reconcile state eventually.
+      // Best-effort — see doc comment above.
     } finally {
       ref.invalidate(adsStatusProvider);
       ref.invalidate(profileNotifierProvider);
@@ -61,6 +75,17 @@ class _AdFreeUpgradeCardState extends ConsumerState<AdFreeUpgradeCard>
         setState(() => _isLoading = false);
       }
     }
+    return status;
+  }
+
+  Future<void> _celebrateIfAdFree(
+    BuildContext context,
+    AppLocalizations l10n,
+    AdsStatusModel? status,
+  ) async {
+    if (status == null || !status.isAdFree) return;
+    if (!context.mounted) return;
+    await _showAdFreeSuccessDialog(context, l10n);
   }
 
   String _checkoutErrorMessage(AppLocalizations l10n, Object error) {
@@ -96,7 +121,9 @@ class _AdFreeUpgradeCardState extends ConsumerState<AdFreeUpgradeCard>
         switch (result) {
           case RevenueCatPaywallFlowResult.purchased:
           case RevenueCatPaywallFlowResult.restored:
-            await _syncAdsStatusAndRefresh();
+            final status = await _syncAdsStatusAndRefresh();
+            if (!context.mounted) return;
+            await _celebrateIfAdFree(context, l10n, status);
             break;
           case RevenueCatPaywallFlowResult.cancelled:
           case RevenueCatPaywallFlowResult.notPresented:
@@ -155,6 +182,48 @@ class _AdFreeUpgradeCardState extends ConsumerState<AdFreeUpgradeCard>
     }
   }
 
+  Future<void> _onRestorePressed(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
+    if (!mounted) return;
+    if (!revenueCatNativeIosSdkReady) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text(l10n.profileRevenueCatMissingApiKey)),
+      );
+      return;
+    }
+    setState(() => _isRestoring = true);
+    try {
+      final restored = await revenueCatRestorePurchases();
+      if (!context.mounted) return;
+      if (restored) {
+        final status = await _syncAdsStatusAndRefresh();
+        if (!context.mounted) return;
+        if (status != null && status.isAdFree) {
+          await _showAdFreeSuccessDialog(context, l10n);
+        } else {
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+            SnackBar(content: Text(l10n.adFreeRestorePurchasesSuccess)),
+          );
+        }
+      } else {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(content: Text(l10n.adFreeRestorePurchasesNotFound)),
+        );
+      }
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text(l10n.unknownError)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isRestoring = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -188,9 +257,23 @@ class _AdFreeUpgradeCardState extends ConsumerState<AdFreeUpgradeCard>
                 l10n.adFreeCancelAnytime,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: (_isLoading || _isRestoring)
+                    ? null
+                    : () => _onRestorePressed(context, l10n),
+                child: _isRestoring
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(l10n.adFreeRestorePurchasesButton),
+              ),
             ] else ...[
               Wrap(
                 spacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   ChoiceChip(
                     label: Text(l10n.adFreeMonthlyPlanOption),
@@ -205,6 +288,11 @@ class _AdFreeUpgradeCardState extends ConsumerState<AdFreeUpgradeCard>
                     onSelected: _isLoading
                         ? null
                         : (_) => setState(() => _plan = 'yearly'),
+                  ),
+                  _YearlySavingsBadge(
+                    label: l10n.adFreeYearlySavingsBadge(
+                      _yearlyPlanSavingsPercent,
+                    ),
                   ),
                 ],
               ),
@@ -229,4 +317,85 @@ class _AdFreeUpgradeCardState extends ConsumerState<AdFreeUpgradeCard>
       ),
     );
   }
+}
+
+/// Small "Save X%" chip highlighting the yearly plan's discount versus
+/// paying monthly.
+class _YearlySavingsBadge extends StatelessWidget {
+  const _YearlySavingsBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: colorScheme.tertiaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: colorScheme.onTertiaryContainer,
+              fontWeight: FontWeight.w600,
+            ),
+      ),
+    );
+  }
+}
+
+/// Celebratory confirmation shown right after a purchase/restore syncs as
+/// ad-free — an animated checkmark plus "You're ad-free!" copy, instead of
+/// the screen silently swapping to the manage-subscription state.
+Future<void> _showAdFreeSuccessDialog(
+  BuildContext context,
+  AppLocalizations l10n,
+) {
+  return showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 450),
+            curve: Curves.elasticOut,
+            builder: (context, value, child) => Transform.scale(
+              scale: value.clamp(0, 1.2),
+              child: Opacity(
+                opacity: value.clamp(0, 1),
+                child: child,
+              ),
+            ),
+            child: Icon(
+              Icons.check_circle,
+              color: Theme.of(context).colorScheme.primary,
+              size: 64,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            l10n.adFreeSuccessTitle,
+            style: Theme.of(context).textTheme.titleLarge,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.adFreeSuccessMessage,
+            style: Theme.of(context).textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+      actions: [
+        FilledButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: Text(l10n.doneLabel),
+        ),
+      ],
+    ),
+  );
 }

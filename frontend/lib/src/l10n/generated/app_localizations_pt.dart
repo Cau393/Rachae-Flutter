@@ -1040,6 +1040,36 @@ class AppLocalizationsPt extends AppLocalizations {
   String get adFreeCancelAnytime => 'Cancele quando quiser.';
 
   @override
+  String adFreeYearlySavingsBadge(int percent) {
+    return 'Economize $percent%';
+  }
+
+  @override
+  String get adFreeYearlyBestValueBadge => 'Melhor custo-benefício';
+
+  @override
+  String get adFreeSuccessTitle => 'Você está sem anúncios!';
+
+  @override
+  String get adFreeSuccessMessage =>
+      'Aproveite o Rachae sem interrupções. Obrigado pelo seu apoio!';
+
+  @override
+  String get adFreeRestorePurchasesButton => 'Restaurar compras';
+
+  @override
+  String get adFreeRestorePurchasesSuccess =>
+      'Compras restauradas — você está sem anúncios!';
+
+  @override
+  String get adFreeRestorePurchasesNotFound =>
+      'Nenhuma assinatura ativa encontrada para restaurar.';
+
+  @override
+  String get profileManageSubscriptionAppleUrlError =>
+      'Não foi possível abrir o gerenciamento de assinatura. Tente novamente.';
+
+  @override
   String get stageOneReady => 'Base da fase 1 pronta.';
 
   @override
@@ -2088,6 +2118,36 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get adFreeCancelAnytime => 'Cancele quando quiser.';
+
+  @override
+  String adFreeYearlySavingsBadge(int percent) {
+    return 'Economize $percent%';
+  }
+
+  @override
+  String get adFreeYearlyBestValueBadge => 'Melhor custo-benefício';
+
+  @override
+  String get adFreeSuccessTitle => 'Você está sem anúncios!';
+
+  @override
+  String get adFreeSuccessMessage =>
+      'Aproveite o Rachae sem interrupções. Obrigado pelo seu apoio!';
+
+  @override
+  String get adFreeRestorePurchasesButton => 'Restaurar compras';
+
+  @override
+  String get adFreeRestorePurchasesSuccess =>
+      'Compras restauradas — você está sem anúncios!';
+
+  @override
+  String get adFreeRestorePurchasesNotFound =>
+      'Nenhuma assinatura ativa encontrada para restaurar.';
+
+  @override
+  String get profileManageSubscriptionAppleUrlError =>
+      'Não foi possível abrir o gerenciamento de assinatura. Tente novamente.';
 
   @override
   String get stageOneReady => 'Base da fase 1 pronta.';

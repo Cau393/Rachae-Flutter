@@ -28,6 +28,9 @@ class _ManageSubscriptionButtonState
   bool _isLoading = false;
   bool _portalPending = false;
 
+  static final Uri _appleSubscriptionsUri =
+      Uri.parse('https://apps.apple.com/account/subscriptions');
+
   @override
   void initState() {
     super.initState();
@@ -80,6 +83,35 @@ class _ManageSubscriptionButtonState
     }
   }
 
+  /// Opens Apple's "Manage Subscriptions" page — used when the current plan
+  /// was purchased via the App Store (no Stripe customer) and the RevenueCat
+  /// Customer Center UI is unavailable or not applicable.
+  Future<void> _openAppleSubscriptions(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
+    final canLaunch = await canLaunchUrl(_appleSubscriptionsUri);
+    if (!context.mounted) return;
+    if (!canLaunch) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text(l10n.profileManageSubscriptionAppleUrlError)),
+      );
+      return;
+    }
+    setState(() => _portalPending = true);
+    final launched = await launchUrl(
+      _appleSubscriptionsUri,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!context.mounted) return;
+    if (!launched) {
+      setState(() => _portalPending = false);
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text(l10n.profileManageSubscriptionAppleUrlError)),
+      );
+    }
+  }
+
   Future<void> _openCustomerCenter(
     BuildContext context,
     AppLocalizations l10n,
@@ -121,6 +153,12 @@ class _ManageSubscriptionButtonState
     final showStripePortal =
         m.stripePortalAvailable && !revenueCatNativeIos;
     final showIosRevenueCat = revenueCatNativeIos;
+    // Off native iOS, a subscription with no Stripe customer (no portal
+    // available) can only have come from the App Store — offer Apple's
+    // subscription management page directly instead of leaving the user
+    // stuck on "managed elsewhere".
+    final showAppleSubscriptionsLink =
+        !showStripePortal && !showIosRevenueCat && !m.stripePortalAvailable;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -174,7 +212,18 @@ class _ManageSubscriptionButtonState
               child: Center(child: CircularProgressIndicator()),
             ),
         ],
-        if (!showStripePortal && !showIosRevenueCat)
+        if (showAppleSubscriptionsLink) ...[
+          OutlinedButton(
+            onPressed: () => _openAppleSubscriptions(context, l10n),
+            child: Text(l10n.profileManageSubscriptionButton),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.profileIosSubscriptionChangeFootnote,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+        if (!showStripePortal && !showIosRevenueCat && !showAppleSubscriptionsLink)
           Text(
             l10n.profileSubscriptionManagedElsewhere,
             style: Theme.of(context).textTheme.bodySmall,

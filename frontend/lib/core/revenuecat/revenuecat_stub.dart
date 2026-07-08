@@ -18,3 +18,7 @@ Future<RevenueCatPurchaseResult> revenueCatPurchasePro(
     userCancelled: true,
   );
 }
+
+/// Restores prior App Store purchases and returns whether the ad-free
+/// entitlement is active afterwards. No-op off iOS.
+Future<bool> revenueCatRestorePurchases() async => false;

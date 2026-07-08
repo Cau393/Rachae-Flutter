@@ -19,3 +19,5 @@ Future<RevenueCatPurchaseResult> revenueCatPurchasePro(
   RevenueCatBillingPlan plan,
 ) =>
     impl.revenueCatPurchasePro(plan);
+
+Future<bool> revenueCatRestorePurchases() => impl.revenueCatRestorePurchases();
