@@ -1,3 +1,5 @@
+import hmac
+
 from django.conf import settings
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
@@ -90,13 +92,22 @@ class RevenueCatWebhookView(APIView):
 
     def post(self, request):
         secret = (getattr(settings, "REVENUECAT_WEBHOOK_SECRET", None) or "").strip()
-        if secret:
-            auth = (request.META.get("HTTP_AUTHORIZATION") or "").strip()
-            if auth != f"Bearer {secret}" and auth != secret:
-                return Response(
-                    {"detail": "Unauthorized"},
-                    status=status.HTTP_401_UNAUTHORIZED,
-                )
+        if not secret:
+            # Fail closed: without a configured secret this endpoint would
+            # accept unauthenticated grants/revokes for arbitrary users.
+            return Response(
+                {"detail": "Webhook not configured"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        auth = (request.META.get("HTTP_AUTHORIZATION") or "").strip()
+        if not (
+            hmac.compare_digest(auth, f"Bearer {secret}")
+            or hmac.compare_digest(auth, secret)
+        ):
+            return Response(
+                {"detail": "Unauthorized"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
 
         payload = dict(request.data) if hasattr(request.data, "keys") else request.data
         if not isinstance(payload, dict):

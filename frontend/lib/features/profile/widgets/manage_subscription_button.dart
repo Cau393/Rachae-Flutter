@@ -254,21 +254,16 @@ class _ManageSubscriptionButtonState
             ),
         ],
         if (showAppleSubscriptionsLink) ...[
-          OutlinedButton(
-            onPressed: () => _openAppleSubscriptions(context, l10n),
-            child: Text(l10n.profileManageSubscriptionButton),
+          Text(
+            l10n.profileManageSubscriptionAppleInfo,
+            style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 8),
-          Text(
-            l10n.profileIosSubscriptionChangeFootnote,
-            style: Theme.of(context).textTheme.bodySmall,
+          OutlinedButton(
+            onPressed: () => _openAppleSubscriptions(context, l10n),
+            child: Text(l10n.profileManageSubscriptionAppleButton),
           ),
         ],
-        if (!showStripePortal && !showIosRevenueCat && !showAppleSubscriptionsLink)
-          Text(
-            l10n.profileSubscriptionManagedElsewhere,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
       ],
     );
   }

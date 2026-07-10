@@ -856,10 +856,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileSeeRachaeProPlansButton => 'See plans';
 
   @override
-  String get profileSubscriptionManagedElsewhere =>
-      'Subscription changes are not available in the app. Contact support if you need help.';
-
-  @override
   String profileAdFreePlanExpires(String date) {
     return 'Valid until $date';
   }
@@ -1074,6 +1070,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get profileManageSubscriptionAppleUrlError =>
       'Could not open subscription management. Try again.';
+
+  @override
+  String get profileManageSubscriptionAppleInfo =>
+      'Your subscription is billed through Apple, so it can\'t be managed here. Use your Apple account\'s subscription settings instead.';
+
+  @override
+  String get profileManageSubscriptionAppleButton => 'Manage in the App Store';
 
   @override
   String get stageOneReady => 'Stage 1 foundation is ready.';

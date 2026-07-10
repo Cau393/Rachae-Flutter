@@ -442,6 +442,18 @@ class AdsService:
                 plan_type=plan_type,
             )
         elif event_type == "CANCELLATION":
+            if user.stripe_customer_id:
+                # A stale Apple/sandbox cancellation must not flip a
+                # Stripe-billed user's status to "canceled" — Stripe webhooks
+                # are the authority once a Stripe customer exists. (RC grants
+                # stay allowed: blocking them would strand a user who paid via
+                # Apple after their Stripe subscription lapsed.)
+                logger.info(
+                    "[AdsService] RevenueCat CANCELLATION ignored for user=%s "
+                    "with Stripe customer",
+                    user.id,
+                )
+                return
             # CANCELLATION only means auto-renew was turned off. The entitlement
             # stays valid until the paid period ends (RevenueCat sends EXPIRATION
             # then). Keep ad-free until the expiry date.
@@ -453,6 +465,16 @@ class AdsService:
                 plan_type=plan_type or user.plan_type,
             )
         elif event_type in _RC_REVOKE_TYPES:
+            if user.stripe_customer_id:
+                # Stripe-billed user: an expired Apple/sandbox entitlement must
+                # not clobber Stripe-granted state — Stripe webhooks are the
+                # authority once a Stripe customer exists.
+                logger.info(
+                    "[AdsService] RevenueCat %s ignored for user=%s with Stripe customer",
+                    event_type,
+                    user.id,
+                )
+                return
             AdsService.apply_revenuecat_entitlement(
                 user,
                 grant=False,
@@ -518,6 +540,15 @@ class AdsService:
                     subscription_status=_rc_status_for(entitlement),
                     plan_expires_at=expires_at,
                     plan_type=_plan_type_from_rc_entitlement(entitlement),
+                )
+            elif user.stripe_customer_id:
+                # Stripe-billed user: an expired Apple/sandbox entitlement must
+                # not clobber Stripe-granted state — Stripe webhooks are the
+                # authority once a Stripe customer exists.
+                logger.info(
+                    "[AdsService] sync_revenuecat_status: expired RC entitlement "
+                    "ignored for user=%s with Stripe customer",
+                    user.id,
                 )
             else:
                 AdsService.apply_revenuecat_entitlement(

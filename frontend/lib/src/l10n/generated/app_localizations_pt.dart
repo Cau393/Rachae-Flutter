@@ -862,10 +862,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get profileSeeRachaeProPlansButton => 'Ver planos';
 
   @override
-  String get profileSubscriptionManagedElsewhere =>
-      'Alterações de assinatura não estão disponíveis no app. Entre em contato com o suporte se precisar de ajuda.';
-
-  @override
   String profileAdFreePlanExpires(String date) {
     return 'Válido até $date';
   }
@@ -1082,6 +1078,13 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get profileManageSubscriptionAppleUrlError =>
       'Não foi possível abrir o gerenciamento de assinatura. Tente novamente.';
+
+  @override
+  String get profileManageSubscriptionAppleInfo =>
+      'Sua assinatura é cobrada pela Apple, então não pode ser gerenciada aqui. Use as configurações de assinatura da sua conta Apple.';
+
+  @override
+  String get profileManageSubscriptionAppleButton => 'Gerenciar na App Store';
 
   @override
   String get stageOneReady => 'Base da fase 1 pronta.';
@@ -1956,10 +1959,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get profileSeeRachaeProPlansButton => 'Ver planos';
 
   @override
-  String get profileSubscriptionManagedElsewhere =>
-      'Alterações de assinatura não estão disponíveis no app. Entre em contato com o suporte se precisar de ajuda.';
-
-  @override
   String profileAdFreePlanExpires(String date) {
     return 'Válido até $date';
   }
@@ -2176,6 +2175,13 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get profileManageSubscriptionAppleUrlError =>
       'Não foi possível abrir o gerenciamento de assinatura. Tente novamente.';
+
+  @override
+  String get profileManageSubscriptionAppleInfo =>
+      'Sua assinatura é cobrada pela Apple, então não pode ser gerenciada aqui. Use as configurações de assinatura da sua conta Apple.';
+
+  @override
+  String get profileManageSubscriptionAppleButton => 'Gerenciar na App Store';
 
   @override
   String get stageOneReady => 'Base da fase 1 pronta.';

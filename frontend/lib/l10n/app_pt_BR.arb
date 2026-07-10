@@ -336,7 +336,6 @@
   "profilePlanChangeStripePortalFootnote": "Use Gerenciar assinatura para mudar o plano. O Stripe aplica upgrades, downgrades e a cobrança conforme as regras da sua assinatura.",
   "profileIosSubscriptionChangeFootnote": "Para mudar o período de cobrança ou cancelar, use Gerenciar assinatura. A Apple faz upgrade/downgrade na mesma assinatura—evite comprar outro plano pelo paywall enquanto já estiver assinando.",
   "profileSeeRachaeProPlansButton": "Ver planos",
-  "profileSubscriptionManagedElsewhere": "Alterações de assinatura não estão disponíveis no app. Entre em contato com o suporte se precisar de ajuda.",
   "profileAdFreePlanExpires": "Válido até {date}",
   "@profileAdFreePlanExpires": { "placeholders": { "date": { "type": "String" } } },
   "profileUpgradeMonthlyButton": "Assinar plano mensal",
@@ -413,6 +412,8 @@
   "adFreeRestorePurchasesSuccess": "Compras restauradas — você está sem anúncios!",
   "adFreeRestorePurchasesNotFound": "Nenhuma assinatura ativa encontrada para restaurar.",
   "profileManageSubscriptionAppleUrlError": "Não foi possível abrir o gerenciamento de assinatura. Tente novamente.",
+  "profileManageSubscriptionAppleInfo": "Sua assinatura é cobrada pela Apple, então não pode ser gerenciada aqui. Use as configurações de assinatura da sua conta Apple.",
+  "profileManageSubscriptionAppleButton": "Gerenciar na App Store",
 
   "stageOneReady": "Base da fase 1 pronta.",
   "homeTitle": "Início",

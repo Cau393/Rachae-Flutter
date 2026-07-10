@@ -336,7 +336,6 @@
   "profilePlanChangeStripePortalFootnote": "Use Manage subscription to change your plan. Stripe applies upgrades, downgrades, and billing timing according to your subscription.",
   "profileIosSubscriptionChangeFootnote": "To change your billing period or cancel, use Manage subscription. Apple applies upgrades and downgrades in one subscription—avoid buying a second plan from the paywall while already subscribed.",
   "profileSeeRachaeProPlansButton": "See plans",
-  "profileSubscriptionManagedElsewhere": "Subscription changes are not available in the app. Contact support if you need help.",
   "profileAdFreePlanExpires": "Valid until {date}",
   "@profileAdFreePlanExpires": { "placeholders": { "date": { "type": "String" } } },
   "profileUpgradeMonthlyButton": "Subscribe to monthly plan",
@@ -413,6 +412,8 @@
   "adFreeRestorePurchasesSuccess": "Purchases restored — you're ad-free!",
   "adFreeRestorePurchasesNotFound": "No active subscription found to restore.",
   "profileManageSubscriptionAppleUrlError": "Could not open subscription management. Try again.",
+  "profileManageSubscriptionAppleInfo": "Your subscription is billed through Apple, so it can't be managed here. Use your Apple account's subscription settings instead.",
+  "profileManageSubscriptionAppleButton": "Manage in the App Store",
 
   "stageOneReady": "Stage 1 foundation is ready.",
   "homeTitle": "Home",

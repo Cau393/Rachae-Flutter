@@ -12,6 +12,10 @@ DATABASES = {
 
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
+
+# Repo .env now carries production values (e.g. CLOUDFRONT_DOMAIN); tests must
+# not inherit them or media URLs grow a CDN prefix and assertions break.
+CLOUDFRONT_DOMAIN = ""
 ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1"]
 FRONTEND_INVITE_URL = "http://localhost:3000/login"
 CACHES = {

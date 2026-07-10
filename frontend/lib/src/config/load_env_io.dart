@@ -13,7 +13,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 /// Configuration testing).
 Future<void> loadRepoDotenv() async {
   final cwd = Directory.current.path;
+  // `.env.local` (developer-local overrides, gitignored) wins over the
+  // committed-convention `.env`, which now holds production values.
   final candidates = [
+    File('$cwd/../.env.local'),
+    File('$cwd/.env.local'),
     File('$cwd/../.env'),
     File('$cwd/.env'),
   ];

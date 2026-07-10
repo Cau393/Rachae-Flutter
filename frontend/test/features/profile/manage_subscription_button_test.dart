@@ -38,7 +38,7 @@ void main() {
   group('ManageSubscriptionButton — App Store subscriptions without a '
       'Stripe portal', () {
     testWidgets(
-        'shows a Manage subscription button that links to Apple '
+        'shows Apple billing info and an explicit App Store button '
         'when stripePortalAvailable is false and not on native iOS',
         (tester) async {
       const model = AdsStatusModel(
@@ -49,12 +49,12 @@ void main() {
 
       await pumpButton(tester, model);
 
-      expect(find.text('Manage subscription'), findsOneWidget);
+      expect(find.text('Manage in the App Store'), findsOneWidget);
       expect(
-        find.text('Subscription changes are not available in the app. '
-            'Contact support if you need help.'),
-        findsNothing,
+        find.textContaining('Your subscription is billed through Apple'),
+        findsOneWidget,
       );
+      expect(find.text('Manage subscription'), findsNothing);
     });
 
     testWidgets(

@@ -1653,12 +1653,6 @@ abstract class AppLocalizations {
   /// **'Ver planos'**
   String get profileSeeRachaeProPlansButton;
 
-  /// No description provided for @profileSubscriptionManagedElsewhere.
-  ///
-  /// In pt_BR, this message translates to:
-  /// **'Alterações de assinatura não estão disponíveis no app. Entre em contato com o suporte se precisar de ajuda.'**
-  String get profileSubscriptionManagedElsewhere;
-
   /// No description provided for @profileAdFreePlanExpires.
   ///
   /// In pt_BR, this message translates to:
@@ -2054,6 +2048,18 @@ abstract class AppLocalizations {
   /// In pt_BR, this message translates to:
   /// **'Não foi possível abrir o gerenciamento de assinatura. Tente novamente.'**
   String get profileManageSubscriptionAppleUrlError;
+
+  /// No description provided for @profileManageSubscriptionAppleInfo.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Sua assinatura é cobrada pela Apple, então não pode ser gerenciada aqui. Use as configurações de assinatura da sua conta Apple.'**
+  String get profileManageSubscriptionAppleInfo;
+
+  /// No description provided for @profileManageSubscriptionAppleButton.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'Gerenciar na App Store'**
+  String get profileManageSubscriptionAppleButton;
 
   /// No description provided for @stageOneReady.
   ///

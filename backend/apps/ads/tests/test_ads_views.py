@@ -184,7 +184,7 @@ def test_webhook_does_not_require_jwt_auth(api_client):
 
 
 def test_revenuecat_webhook_returns_200_immediately(api_client, settings):
-    settings.REVENUECAT_WEBHOOK_SECRET = ""
+    settings.REVENUECAT_WEBHOOK_SECRET = "rc_secret"
     payload = {
         "event": {
             "type": "INITIAL_PURCHASE",
@@ -196,11 +196,25 @@ def test_revenuecat_webhook_returns_200_immediately(api_client, settings):
             "/api/v1/ads/revenuecat-webhook/",
             data=payload,
             format="json",
+            HTTP_AUTHORIZATION="Bearer rc_secret",
         )
 
     assert response.status_code == 200
     assert response.json() == {"received": True}
     mock_process.assert_called_once()
+
+
+def test_revenuecat_webhook_401_when_secret_not_configured(api_client, settings):
+    settings.REVENUECAT_WEBHOOK_SECRET = ""
+    with patch("apps.ads.views.AdsService.process_rc_event") as mock_process:
+        response = api_client.post(
+            "/api/v1/ads/revenuecat-webhook/",
+            data={"event": {"type": "INITIAL_PURCHASE"}},
+            format="json",
+        )
+
+    assert response.status_code == 401
+    mock_process.assert_not_called()
 
 
 def test_revenuecat_webhook_401_when_secret_mismatch(api_client, settings):
@@ -232,12 +246,13 @@ def test_revenuecat_webhook_accepts_bearer_secret(api_client, settings):
 
 
 def test_revenuecat_webhook_does_not_require_jwt_auth(api_client, settings):
-    settings.REVENUECAT_WEBHOOK_SECRET = ""
+    settings.REVENUECAT_WEBHOOK_SECRET = "rc_secret"
     with patch("apps.ads.views.AdsService.process_rc_event") as mock_process:
         response = api_client.post(
             "/api/v1/ads/revenuecat-webhook/",
             data={"event": {"type": "UNKNOWN"}},
             format="json",
+            HTTP_AUTHORIZATION="Bearer rc_secret",
         )
 
     assert response.status_code == 200
@@ -291,7 +306,9 @@ def test_sync_endpoint_applies_active_entitlement(auth_client, settings):
     assert user.is_ad_free is True
 
 
-def test_sync_endpoint_revokes_expired_entitlement(auth_client_subscribed, settings):
+def test_sync_endpoint_expired_entitlement_ignored_with_stripe_customer(
+    auth_client_subscribed, settings
+):
     settings.REVENUECAT_API_KEY = "rc_secret_key"
 
     mock_response = MagicMock()
@@ -309,6 +326,38 @@ def test_sync_endpoint_revokes_expired_entitlement(auth_client_subscribed, setti
 
     with patch("apps.ads.services.requests.get", return_value=mock_response):
         response = auth_client_subscribed.post("/api/v1/ads/sync/")
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["is_ad_free"] is True
+    assert data["subscription_status"] == "active"
+
+
+def test_sync_endpoint_revokes_expired_entitlement_without_stripe_customer(
+    auth_client, settings
+):
+    settings.REVENUECAT_API_KEY = "rc_secret_key"
+    user = auth_client.handler._force_user
+    user.is_ad_free = True
+    user.subscription_status = "active"
+    user.plan_type = "monthly"
+    user.save()
+
+    mock_response = MagicMock()
+    mock_response.raise_for_status = MagicMock()
+    mock_response.json.return_value = {
+        "subscriber": {
+            "entitlements": {
+                "ad_free": {
+                    "product_identifier": "com.cau393.rachae.adfree.monthly",
+                    "expires_date": "2000-01-01T00:00:00Z",
+                },
+            },
+        },
+    }
+
+    with patch("apps.ads.services.requests.get", return_value=mock_response):
+        response = auth_client.post("/api/v1/ads/sync/")
 
     assert response.status_code == 200
     data = response.json()["data"]

@@ -160,3 +160,70 @@ def test_apply_subscription_event_missing_customer_id_no_op(settings):
     user.refresh_from_db()
     assert user.is_ad_free is False
 
+
+
+def test_process_rc_event_expiration_ignored_with_stripe_customer(subscribed_user):
+    from apps.ads.services import AdsService
+
+    AdsService.process_rc_event(
+        {"event": {"type": "EXPIRATION", "app_user_id": str(subscribed_user.id)}}
+    )
+
+    subscribed_user.refresh_from_db()
+    assert subscribed_user.is_ad_free is True
+    assert subscribed_user.subscription_status == "active"
+
+
+def test_process_rc_event_expiration_revokes_without_stripe_customer():
+    from apps.ads.services import AdsService
+
+    user = User.objects.create(
+        supabase_uid=uuid.uuid4(),
+        email="rc-only@rachae.app",
+        display_name="RC Only",
+        is_ad_free=True,
+        subscription_status="active",
+        plan_type="monthly",
+    )
+
+    AdsService.process_rc_event(
+        {"event": {"type": "EXPIRATION", "app_user_id": str(user.id)}}
+    )
+
+    user.refresh_from_db()
+    assert user.is_ad_free is False
+    assert user.subscription_status == "expired"
+    assert user.plan_type is None
+
+
+def test_process_rc_event_cancellation_ignored_with_stripe_customer(subscribed_user):
+    from apps.ads.services import AdsService
+
+    AdsService.process_rc_event(
+        {"event": {"type": "CANCELLATION", "app_user_id": str(subscribed_user.id)}}
+    )
+
+    subscribed_user.refresh_from_db()
+    assert subscribed_user.is_ad_free is True
+    assert subscribed_user.subscription_status == "active"
+
+
+def test_process_rc_event_cancellation_marks_canceled_without_stripe_customer():
+    from apps.ads.services import AdsService
+
+    user = User.objects.create(
+        supabase_uid=uuid.uuid4(),
+        email="rc-cancel@rachae.app",
+        display_name="RC Cancel",
+        is_ad_free=True,
+        subscription_status="active",
+        plan_type="monthly",
+    )
+
+    AdsService.process_rc_event(
+        {"event": {"type": "CANCELLATION", "app_user_id": str(user.id)}}
+    )
+
+    user.refresh_from_db()
+    assert user.is_ad_free is True
+    assert user.subscription_status == "canceled"
