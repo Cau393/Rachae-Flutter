@@ -388,3 +388,70 @@ def test_sync_endpoint_api_error_returns_current_status(auth_client, settings):
     assert response.status_code == 200
     assert response.json()["data"]["is_ad_free"] is False
 
+
+
+def _rc_signature(raw_body: bytes, secret: str, timestamp: int) -> str:
+    import hashlib
+    import hmac as hmac_lib
+
+    digest = hmac_lib.new(
+        secret.encode(), f"{timestamp}.".encode() + raw_body, hashlib.sha256
+    ).hexdigest()
+    return f"t={timestamp},v1={digest}"
+
+
+def test_revenuecat_webhook_accepts_valid_hmac_signature(api_client, settings):
+    import time
+
+    settings.REVENUECAT_WEBHOOK_SECRET = "rc_signing_secret"
+    raw = b'{"event": {"type": "TEST"}}'
+    header = _rc_signature(raw, "rc_signing_secret", int(time.time()))
+
+    with patch("apps.ads.views.AdsService.process_rc_event") as mock_process:
+        response = api_client.post(
+            "/api/v1/ads/revenuecat-webhook/",
+            data=raw,
+            content_type="application/json",
+            HTTP_X_REVENUECAT_WEBHOOK_SIGNATURE=header,
+        )
+
+    assert response.status_code == 200
+    mock_process.assert_called_once()
+
+
+def test_revenuecat_webhook_rejects_bad_hmac_signature(api_client, settings):
+    import time
+
+    settings.REVENUECAT_WEBHOOK_SECRET = "rc_signing_secret"
+    raw = b'{"event": {"type": "TEST"}}'
+    header = _rc_signature(raw, "wrong_secret", int(time.time()))
+
+    with patch("apps.ads.views.AdsService.process_rc_event") as mock_process:
+        response = api_client.post(
+            "/api/v1/ads/revenuecat-webhook/",
+            data=raw,
+            content_type="application/json",
+            HTTP_X_REVENUECAT_WEBHOOK_SIGNATURE=header,
+        )
+
+    assert response.status_code == 401
+    mock_process.assert_not_called()
+
+
+def test_revenuecat_webhook_rejects_stale_hmac_timestamp(api_client, settings):
+    import time
+
+    settings.REVENUECAT_WEBHOOK_SECRET = "rc_signing_secret"
+    raw = b'{"event": {"type": "TEST"}}'
+    header = _rc_signature(raw, "rc_signing_secret", int(time.time()) - 3600)
+
+    with patch("apps.ads.views.AdsService.process_rc_event") as mock_process:
+        response = api_client.post(
+            "/api/v1/ads/revenuecat-webhook/",
+            data=raw,
+            content_type="application/json",
+            HTTP_X_REVENUECAT_WEBHOOK_SIGNATURE=header,
+        )
+
+    assert response.status_code == 401
+    mock_process.assert_not_called()

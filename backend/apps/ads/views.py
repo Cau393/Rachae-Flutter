@@ -1,4 +1,6 @@
+import hashlib
 import hmac
+import time
 
 from django.conf import settings
 from rest_framework import status
@@ -86,6 +88,29 @@ class StripeWebhookView(APIView):
         return Response({"received": True}, status=status.HTTP_200_OK)
 
 
+def _valid_rc_hmac_signature(raw_body: bytes, header: str, secret: str) -> bool:
+    """Verify RevenueCat's HMAC webhook signing header.
+
+    Format: ``t=<unix_timestamp>,v1=<hex hmac_sha256("{t}.{raw_body}")>``,
+    signed with the integration's signing secret. The raw body bytes must be
+    used as received — re-serialized JSON would not match.
+    """
+    parts = dict(p.split("=", 1) for p in header.split(",") if "=" in p)
+    timestamp = parts.get("t", "")
+    signature = parts.get("v1", "")
+    if not timestamp or not signature:
+        return False
+    try:
+        if abs(time.time() - int(timestamp)) > 300:
+            return False
+    except ValueError:
+        return False
+    expected = hmac.new(
+        secret.encode(), f"{timestamp}.".encode() + raw_body, hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+
 class RevenueCatWebhookView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
@@ -99,11 +124,22 @@ class RevenueCatWebhookView(APIView):
                 {"detail": "Webhook not configured"},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+        # One secret, two accepted mechanisms: the dashboard "Authorization
+        # header value" (static bearer) or HMAC webhook signing. `request.body`
+        # must be read before `request.data` parses the stream.
+        raw_body = request.body
         auth = (request.META.get("HTTP_AUTHORIZATION") or "").strip()
-        if not (
-            hmac.compare_digest(auth, f"Bearer {secret}")
-            or hmac.compare_digest(auth, secret)
-        ):
+        sig_header = (
+            request.META.get("HTTP_X_REVENUECAT_WEBHOOK_SIGNATURE") or ""
+        ).strip()
+        authorized = (
+            auth
+            and (
+                hmac.compare_digest(auth, f"Bearer {secret}")
+                or hmac.compare_digest(auth, secret)
+            )
+        ) or (sig_header and _valid_rc_hmac_signature(raw_body, sig_header, secret))
+        if not authorized:
             return Response(
                 {"detail": "Unauthorized"},
                 status=status.HTTP_401_UNAUTHORIZED,
