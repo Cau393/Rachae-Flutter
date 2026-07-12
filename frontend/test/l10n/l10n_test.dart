@@ -79,6 +79,31 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('profileIapNotConfiguredDetail interpolates the diagnostic',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) {
+            final l10n = AppLocalizations.of(context)!;
+            final message = l10n.profileIapNotConfiguredDetail(
+              'offerings=2 current=null storeProducts=0/2',
+            );
+            expect(
+              message,
+              contains('offerings=2 current=null storeProducts=0/2'),
+            );
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+  });
+
   test('pt_BR and en have identical key counts', () {
     final enCount = _arbMessageKeyCount(
       File('lib/l10n/app_en.arb'),

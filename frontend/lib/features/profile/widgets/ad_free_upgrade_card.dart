@@ -129,8 +129,15 @@ class _AdFreeUpgradeCardState extends ConsumerState<AdFreeUpgradeCard>
           case RevenueCatPaywallFlowResult.notPresented:
             break;
           case RevenueCatPaywallFlowResult.notConfigured:
+            final detail = revenueCatLastPaywallDiagnostic;
             ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-              SnackBar(content: Text(l10n.profileIapNotConfigured)),
+              SnackBar(
+                content: Text(
+                  detail == null
+                      ? l10n.profileIapNotConfigured
+                      : l10n.profileIapNotConfiguredDetail(detail),
+                ),
+              ),
             );
             break;
           case RevenueCatPaywallFlowResult.error:

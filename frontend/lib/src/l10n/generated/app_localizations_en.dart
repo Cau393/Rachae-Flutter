@@ -945,6 +945,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'In-app purchases are not configured yet. Create the products in App Store Connect and link them to an offering in the RevenueCat dashboard.';
 
   @override
+  String profileIapNotConfiguredDetail(String detail) {
+    return 'In-app purchases are not configured yet. Create the products in App Store Connect and link them to an offering in the RevenueCat dashboard. ($detail)';
+  }
+
+  @override
   String get profileRevenueCatMissingApiKey =>
       'In-app purchases are not configured in this build. Run the app with REVENUECAT_IOS_API_KEY (e.g. flutter run --dart-define-from-file=../.env from the frontend folder), then set up products in App Store Connect and RevenueCat.';
 

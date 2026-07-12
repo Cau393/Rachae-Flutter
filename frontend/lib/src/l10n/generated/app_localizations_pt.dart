@@ -953,6 +953,11 @@ class AppLocalizationsPt extends AppLocalizations {
       'As compras no app ainda não foram configuradas. Cadastre os produtos na App Store Connect e vincule-os a um offering no dashboard do RevenueCat.';
 
   @override
+  String profileIapNotConfiguredDetail(String detail) {
+    return 'As compras no app ainda não foram configuradas. Cadastre os produtos na App Store Connect e vincule-os a um offering no dashboard do RevenueCat. ($detail)';
+  }
+
+  @override
   String get profileRevenueCatMissingApiKey =>
       'Compras no app não estão configuradas nesta build. Execute com REVENUECAT_IOS_API_KEY (ex.: flutter run --dart-define-from-file=../.env na pasta frontend) e configure produtos na App Store Connect e no RevenueCat.';
 
@@ -2048,6 +2053,11 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get profileIapNotConfigured =>
       'As compras no app ainda não foram configuradas. Cadastre os produtos na App Store Connect e vincule-os a um offering no dashboard do RevenueCat.';
+
+  @override
+  String profileIapNotConfiguredDetail(String detail) {
+    return 'As compras no app ainda não foram configuradas. Cadastre os produtos na App Store Connect e vincule-os a um offering no dashboard do RevenueCat. ($detail)';
+  }
 
   @override
   String get profileRevenueCatMissingApiKey =>

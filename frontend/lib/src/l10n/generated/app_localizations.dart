@@ -1815,6 +1815,12 @@ abstract class AppLocalizations {
   /// **'As compras no app ainda não foram configuradas. Cadastre os produtos na App Store Connect e vincule-os a um offering no dashboard do RevenueCat.'**
   String get profileIapNotConfigured;
 
+  /// No description provided for @profileIapNotConfiguredDetail.
+  ///
+  /// In pt_BR, this message translates to:
+  /// **'As compras no app ainda não foram configuradas. Cadastre os produtos na App Store Connect e vincule-os a um offering no dashboard do RevenueCat. ({detail})'**
+  String profileIapNotConfiguredDetail(String detail);
+
   /// No description provided for @profileRevenueCatMissingApiKey.
   ///
   /// In pt_BR, this message translates to:

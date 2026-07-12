@@ -365,6 +365,12 @@
   "profileCheckoutCannotOpenUrl": "Não foi possível abrir a página de pagamento. Tente novamente.",
   "profileIapOfferingsUnavailable": "As opções de assinatura não estão disponíveis no momento. Tente mais tarde.",
   "profileIapNotConfigured": "As compras no app ainda não foram configuradas. Cadastre os produtos na App Store Connect e vincule-os a um offering no dashboard do RevenueCat.",
+  "profileIapNotConfiguredDetail": "As compras no app ainda não foram configuradas. Cadastre os produtos na App Store Connect e vincule-os a um offering no dashboard do RevenueCat. ({detail})",
+  "@profileIapNotConfiguredDetail": {
+    "placeholders": {
+      "detail": { "type": "String" }
+    }
+  },
   "profileRevenueCatMissingApiKey": "Compras no app não estão configuradas nesta build. Execute com REVENUECAT_IOS_API_KEY (ex.: flutter run --dart-define-from-file=../.env na pasta frontend) e configure produtos na App Store Connect e no RevenueCat.",
   "exportPdfDocumentTitle": "Rachae - relatório de despesas",
   "exportPdfEmptyReport": "Sem dados para os filtros selecionados.",
