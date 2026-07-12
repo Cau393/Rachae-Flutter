@@ -227,3 +227,23 @@ def test_process_rc_event_cancellation_marks_canceled_without_stripe_customer():
     user.refresh_from_db()
     assert user.is_ad_free is True
     assert user.subscription_status == "canceled"
+
+
+def test_create_checkout_session_stripe_error_raises_value_error(settings, mock_stripe_api):
+    import stripe as stripe_lib
+
+    from apps.ads.services import AdsService
+
+    user = User.objects.create(
+        supabase_uid=uuid.uuid4(),
+        email="checkout-fail@rachae.app",
+        display_name="Checkout Fail",
+    )
+    mock_stripe_api.checkout.Session.create.side_effect = (
+        stripe_lib.error.InvalidRequestError(
+            "No valid payment method types for this Checkout Session.", None
+        )
+    )
+
+    with pytest.raises(ValueError):
+        AdsService.create_checkout_session(user, plan="monthly")

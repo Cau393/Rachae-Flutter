@@ -161,16 +161,27 @@ class AdsService:
             raise ValueError(f"STRIPE_PRICE_{plan.upper()} is not configured in settings.")
 
         frontend_url = getattr(settings, "FRONTEND_URL", "https://app.rachae.app")
-        session = stripe.checkout.Session.create(
-            customer=user.stripe_customer_id or None,
-            customer_email=None if user.stripe_customer_id else user.email,
-            mode="subscription",
-            line_items=[{"price": price_id, "quantity": 1}],
-            success_url=f"{frontend_url}/profile?subscription=success",
-            cancel_url=f"{frontend_url}/profile?subscription=canceled",
-            client_reference_id=str(user.id),
-            metadata={"user_id": str(user.id), "plan": plan},
-        )
+        try:
+            session = stripe.checkout.Session.create(
+                customer=user.stripe_customer_id or None,
+                customer_email=None if user.stripe_customer_id else user.email,
+                mode="subscription",
+                line_items=[{"price": price_id, "quantity": 1}],
+                success_url=f"{frontend_url}/profile?subscription=success",
+                cancel_url=f"{frontend_url}/profile?subscription=canceled",
+                client_reference_id=str(user.id),
+                metadata={"user_id": str(user.id), "plan": plan},
+            )
+        except stripe.error.StripeError as exc:
+            # e.g. live account not activated yet ("No valid payment method
+            # types") — a config problem, not a server fault: surface as 400.
+            logger.exception(
+                "[AdsService] create_checkout_session: Stripe rejected the "
+                "request for user=%s plan=%s",
+                user.id,
+                plan,
+            )
+            raise ValueError("Could not start checkout with the payment provider.") from exc
         return {"checkout_url": session.url}
 
     @staticmethod
@@ -179,10 +190,18 @@ class AdsService:
             raise ValueError("No active subscription found.")
 
         frontend_url = getattr(settings, "FRONTEND_URL", "https://app.rachae.app")
-        session = stripe.billing_portal.Session.create(
-            customer=user.stripe_customer_id,
-            return_url=f"{frontend_url}/profile",
-        )
+        try:
+            session = stripe.billing_portal.Session.create(
+                customer=user.stripe_customer_id,
+                return_url=f"{frontend_url}/profile",
+            )
+        except stripe.error.StripeError as exc:
+            logger.exception(
+                "[AdsService] create_portal_session: Stripe rejected the "
+                "request for user=%s",
+                user.id,
+            )
+            raise ValueError("Could not open the subscription portal.") from exc
         return {"portal_url": session.url}
 
     @staticmethod
