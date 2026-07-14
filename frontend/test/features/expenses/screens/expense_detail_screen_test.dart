@@ -10,7 +10,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
 import 'package:frontend/core/theme/app_theme.dart';
-import 'package:frontend/core/widgets/ad_banner.dart' show AdBanner;
 import 'package:frontend/features/auth/auth_notifier.dart';
 import 'package:frontend/features/auth/auth_state.dart';
 import 'package:frontend/features/expenses/models/expense_detail_model.dart';
@@ -283,18 +282,6 @@ void main() {
         findsOneWidget,
       );
       expect(find.text(l.expenseDetailDeleteSuccess), findsOneWidget);
-    });
-
-    testWidgets('no AdBanner in tree', (tester) async {
-      final mockRepo = _MockExpenseRepository();
-      when(() => mockRepo.fetchExpenseDetail(any())).thenAnswer(
-        (_) async => _expenseDetail(createdByUserId: _uid),
-      );
-
-      final router = buildRouter(initialLocation: '/expenses/$_expenseId');
-      await pumpScreen(tester, router: router, overrides: baseOverrides(mockRepo));
-
-      expect(find.byType(AdBanner), findsNothing);
     });
 
     testWidgets('AppBar title is expenseDetailTitle', (tester) async {

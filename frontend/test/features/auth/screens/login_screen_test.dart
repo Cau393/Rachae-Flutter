@@ -340,21 +340,6 @@ void main() {
     });
   });
 
-  group('LoginScreen no ads', () {
-    testWidgets('no AdBanner or BannerAd in tree', (tester) async {
-      debugDefaultTargetPlatformOverride = TargetPlatform.android;
-      await pumpLogin(tester, const AuthState.unauthenticated());
-      clearTestPlatform();
-      expect(
-        find.byWidgetPredicate((w) {
-          final name = '${w.runtimeType}';
-          return name == 'AdBanner' || name == 'BannerAd';
-        }),
-        findsNothing,
-      );
-    });
-  });
-
   group('LoginScreen accessibility', () {
     testWidgets(
       'Google and Apple buttons expose l10n labels to semantics tree',

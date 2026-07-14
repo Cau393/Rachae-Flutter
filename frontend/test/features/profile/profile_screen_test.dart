@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,22 +15,15 @@ import 'package:frontend/features/currencies/providers/currency_providers.dart';
 import 'package:frontend/features/notifications/models/notification_preference_model.dart';
 import 'package:frontend/features/notifications/providers/notifications_repository_provider.dart';
 import 'package:frontend/features/notifications/repositories/notifications_repository.dart';
-import 'package:frontend/features/profile/models/ads_status_model.dart';
 import 'package:frontend/features/profile/models/profile_model.dart';
-import 'package:frontend/features/profile/providers/ads_repository_provider.dart';
 import 'package:frontend/features/profile/providers/profile_repository_provider.dart';
-import 'package:frontend/features/profile/repositories/ads_repository.dart';
 import 'package:frontend/features/profile/repositories/profile_repository.dart';
 import 'package:frontend/features/profile/screens/profile_screen.dart';
-import 'package:frontend/features/profile/widgets/ad_free_upgrade_card.dart';
 import 'package:frontend/features/profile/widgets/legal_links_section.dart';
-import 'package:frontend/features/profile/widgets/manage_subscription_button.dart';
 import 'package:frontend/features/profile/widgets/notification_prefs_section.dart';
 import 'package:frontend/src/l10n/generated/app_localizations.dart';
 
 class _MockProfileRepository extends Mock implements ProfileRepository {}
-
-class _MockAdsRepository extends Mock implements AdsRepository {}
 
 class _MockNotificationsRepository extends Mock
     implements NotificationsRepository {}
@@ -101,19 +93,13 @@ void main() {
 
   List<Override> baseOverrides({
     required _MockProfileRepository profileRepo,
-    required _MockAdsRepository adsRepo,
     required _MockNotificationsRepository notifRepo,
     Future<ProfileModel>? fetchProfileFuture,
-    AdsStatusModel? adsStatus,
   }) {
     when(() => profileRepo.fetchProfile()).thenAnswer(
       (_) => fetchProfileFuture ?? Future<ProfileModel>.value(profile),
     );
     when(() => profileRepo.updateProfile(any())).thenAnswer((_) async => profile);
-    when(() => adsRepo.fetchAdsStatus()).thenAnswer(
-      (_) async =>
-          adsStatus ?? const AdsStatusModel(isAdFree: false),
-    );
     when(() => notifRepo.fetchPreferences()).thenAnswer((_) async => prefs);
     when(() => notifRepo.updatePreferences(any())).thenAnswer((_) async {});
 
@@ -122,7 +108,6 @@ void main() {
         () => _FakeAuthenticatedAuth(authUser),
       ),
       profileRepositoryProvider.overrideWithValue(profileRepo),
-      adsRepositoryProvider.overrideWithValue(adsRepo),
       notificationsRepositoryProvider.overrideWithValue(notifRepo),
       currencyListProvider.overrideWith((ref) async {
         return [
@@ -137,7 +122,6 @@ void main() {
     testWidgets('shows loading indicator while profile loads',
         (tester) async {
       final profileRepo = _MockProfileRepository();
-      final adsRepo = _MockAdsRepository();
       final notifRepo = _MockNotificationsRepository();
       final c = Completer<ProfileModel>();
       when(() => profileRepo.fetchProfile()).thenAnswer((_) => c.future);
@@ -146,7 +130,6 @@ void main() {
         tester,
         overrides: baseOverrides(
           profileRepo: profileRepo,
-          adsRepo: adsRepo,
           notifRepo: notifRepo,
           fetchProfileFuture: c.future,
         ),
@@ -162,14 +145,12 @@ void main() {
     testWidgets('shows display name from email local part when loaded',
         (tester) async {
       final profileRepo = _MockProfileRepository();
-      final adsRepo = _MockAdsRepository();
       final notifRepo = _MockNotificationsRepository();
 
       await pumpProfile(
         tester,
         overrides: baseOverrides(
           profileRepo: profileRepo,
-          adsRepo: adsRepo,
           notifRepo: notifRepo,
         ),
       );
@@ -180,7 +161,6 @@ void main() {
     testWidgets('shows avatar with fallback initials when no URL',
         (tester) async {
       final profileRepo = _MockProfileRepository();
-      final adsRepo = _MockAdsRepository();
       final notifRepo = _MockNotificationsRepository();
       const bob = ProfileModel(
         id: 'b',
@@ -193,9 +173,6 @@ void main() {
       );
       when(() => profileRepo.fetchProfile()).thenAnswer((_) async => bob);
       when(() => profileRepo.updateProfile(any())).thenAnswer((_) async => bob);
-      when(() => adsRepo.fetchAdsStatus()).thenAnswer(
-        (_) async => const AdsStatusModel(isAdFree: false),
-      );
       when(() => notifRepo.fetchPreferences()).thenAnswer((_) async => prefs);
       when(() => notifRepo.updatePreferences(any())).thenAnswer((_) async {});
 
@@ -206,7 +183,6 @@ void main() {
               () => _FakeAuthenticatedAuth(authUser),
             ),
             profileRepositoryProvider.overrideWithValue(profileRepo),
-            adsRepositoryProvider.overrideWithValue(adsRepo),
             notificationsRepositoryProvider.overrideWithValue(notifRepo),
             currencyListProvider.overrideWith((ref) async {
               return [CurrencyModel.brl()];
@@ -225,87 +201,8 @@ void main() {
       expect(find.text('B'), findsOneWidget);
     });
 
-    testWidgets('shows AdFreeUpgradeCard when isAdFree=false', (tester) async {
-      final profileRepo = _MockProfileRepository();
-      final adsRepo = _MockAdsRepository();
-      final notifRepo = _MockNotificationsRepository();
-
-      await pumpProfile(
-        tester,
-        overrides: baseOverrides(
-          profileRepo: profileRepo,
-          adsRepo: adsRepo,
-          notifRepo: notifRepo,
-        ),
-      );
-
-      expect(find.byType(AdFreeUpgradeCard), findsOneWidget);
-      expect(find.byType(ManageSubscriptionButton), findsNothing);
-    });
-
-    testWidgets('shows ManageSubscriptionButton when isAdFree=true',
-        (tester) async {
-      final profileRepo = _MockProfileRepository();
-      final adsRepo = _MockAdsRepository();
-      final notifRepo = _MockNotificationsRepository();
-      when(() => adsRepo.createPortalSession()).thenAnswer(
-        (_) async => 'https://portal.example',
-      );
-
-      await pumpProfile(
-        tester,
-        overrides: baseOverrides(
-          profileRepo: profileRepo,
-          adsRepo: adsRepo,
-          notifRepo: notifRepo,
-          adsStatus: const AdsStatusModel(
-            isAdFree: true,
-            planType: 'monthly',
-            stripePortalAvailable: true,
-          ),
-        ),
-      );
-
-      expect(find.byType(ManageSubscriptionButton), findsOneWidget);
-      expect(find.byType(AdFreeUpgradeCard), findsNothing);
-      expect(find.textContaining('Current plan'), findsOneWidget);
-      expect(find.text('Manage subscription'), findsOneWidget);
-    });
-
-    testWidgets(
-        'on iOS, ManageSubscription uses RevenueCat even when '
-        'stripePortalAvailable is true',
-        (tester) async {
-      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-      try {
-        final profileRepo = _MockProfileRepository();
-        final adsRepo = _MockAdsRepository();
-        final notifRepo = _MockNotificationsRepository();
-
-        await pumpProfile(
-          tester,
-          overrides: baseOverrides(
-            profileRepo: profileRepo,
-            adsRepo: adsRepo,
-            notifRepo: notifRepo,
-            adsStatus: const AdsStatusModel(
-              isAdFree: true,
-              planType: 'monthly',
-              stripePortalAvailable: true,
-            ),
-          ),
-        );
-
-        expect(find.byType(ManageSubscriptionButton), findsOneWidget);
-        expect(find.text('Manage subscription'), findsOneWidget);
-      } finally {
-        debugDefaultTargetPlatformOverride = null;
-      }
-    });
-
     testWidgets('tapping sign out shows confirmation dialog', (tester) async {
       final profileRepo = _MockProfileRepository();
-      final adsRepo = _MockAdsRepository();
       final notifRepo = _MockNotificationsRepository();
 
       tester.view.physicalSize = const ui.Size(400, 1200);
@@ -319,7 +216,6 @@ void main() {
         tester,
         overrides: baseOverrides(
           profileRepo: profileRepo,
-          adsRepo: adsRepo,
           notifRepo: notifRepo,
         ),
       );
@@ -333,14 +229,12 @@ void main() {
 
     testWidgets('delete account shows danger dialog', (tester) async {
       final profileRepo = _MockProfileRepository();
-      final adsRepo = _MockAdsRepository();
       final notifRepo = _MockNotificationsRepository();
 
       await pumpProfile(
         tester,
         overrides: baseOverrides(
           profileRepo: profileRepo,
-          adsRepo: adsRepo,
           notifRepo: notifRepo,
         ),
       );
@@ -356,14 +250,12 @@ void main() {
     testWidgets('notification prefs section shows all five toggles',
         (tester) async {
       final profileRepo = _MockProfileRepository();
-      final adsRepo = _MockAdsRepository();
       final notifRepo = _MockNotificationsRepository();
 
       await pumpProfile(
         tester,
         overrides: baseOverrides(
           profileRepo: profileRepo,
-          adsRepo: adsRepo,
           notifRepo: notifRepo,
         ),
       );
@@ -380,14 +272,12 @@ void main() {
     testWidgets('toggling a notification pref calls updatePreferences',
         (tester) async {
       final profileRepo = _MockProfileRepository();
-      final adsRepo = _MockAdsRepository();
       final notifRepo = _MockNotificationsRepository();
 
       await pumpProfile(
         tester,
         overrides: baseOverrides(
           profileRepo: profileRepo,
-          adsRepo: adsRepo,
           notifRepo: notifRepo,
         ),
       );
@@ -409,7 +299,6 @@ void main() {
     testWidgets('shows Terms of Use (EULA) and Privacy Policy links',
         (tester) async {
       final profileRepo = _MockProfileRepository();
-      final adsRepo = _MockAdsRepository();
       final notifRepo = _MockNotificationsRepository();
 
       tester.view.physicalSize = const ui.Size(400, 1400);
@@ -423,7 +312,6 @@ void main() {
         tester,
         overrides: baseOverrides(
           profileRepo: profileRepo,
-          adsRepo: adsRepo,
           notifRepo: notifRepo,
         ),
       );

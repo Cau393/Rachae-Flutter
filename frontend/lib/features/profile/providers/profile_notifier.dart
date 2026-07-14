@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/core/providers/core_providers.dart';
-import 'package:frontend/core/revenuecat/revenuecat.dart';
 import 'package:frontend/features/auth/auth_notifier.dart';
 import 'package:frontend/features/auth/auth_state.dart';
 import 'package:frontend/features/dashboard/providers/balance_summary_provider.dart';
@@ -22,7 +21,6 @@ class ProfileNotifier extends AsyncNotifier<ProfileModel> {
       throw StateError('Profile requires an authenticated session');
     }
     final profile = await ref.watch(profileRepositoryProvider).fetchProfile();
-    await revenueCatLogIn(profile.id);
     return profile;
   }
 

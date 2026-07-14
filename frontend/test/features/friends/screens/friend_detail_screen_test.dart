@@ -10,7 +10,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
 import 'package:frontend/core/theme/app_theme.dart';
-import 'package:frontend/core/widgets/ad_banner.dart';
 import 'package:frontend/features/auth/auth_notifier.dart';
 import 'package:frontend/features/auth/auth_state.dart';
 import 'package:frontend/features/expenses/models/expense_list_model.dart';
@@ -468,18 +467,5 @@ void main() {
     expect(find.text('No shared expenses.'), findsOneWidget);
   });
 
-  testWidgets('no AdBanner in tree', (tester) async {
-    await pumpDetail(
-      tester,
-      router: buildRouter(),
-      overrides: baseOverrides(
-        friends: [friendModel()],
-        balance: balanceJson('0.00'),
-        pending: [],
-        expenses: [],
-      ),
-    );
-
-    expect(find.byType(AdBanner), findsNothing);
-  });
 }
+

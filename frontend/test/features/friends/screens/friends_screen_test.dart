@@ -8,7 +8,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:frontend/core/theme/app_theme.dart';
-import 'package:frontend/core/widgets/ad_banner.dart';
 import 'package:frontend/features/friends/models/friend_model.dart';
 import 'package:frontend/features/friends/providers/friends_provider.dart';
 import 'package:frontend/features/friends/screens/friends_screen.dart';
@@ -167,19 +166,6 @@ void main() {
     );
 
     expect(find.byIcon(Icons.person_add), findsOneWidget);
-  });
-
-  testWidgets('AdBanner is present', (tester) async {
-    final router = buildRouter();
-    await pumpFriends(
-      tester,
-      router: router,
-      overrides: [
-        friendsProvider.overrideWith((ref) async => []),
-      ],
-    );
-
-    expect(find.byType(AdBanner), findsOneWidget);
   });
 
   testWidgets('filter by name: one card when query matches single friend',

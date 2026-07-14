@@ -10,9 +10,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
 import 'package:frontend/core/theme/app_theme.dart';
-import 'package:frontend/core/widgets/ad_banner.dart' show AdBanner;
-import 'package:frontend/features/profile/models/ads_status_model.dart';
-import 'package:frontend/features/profile/providers/ads_status_provider.dart';
 import 'package:frontend/features/auth/auth_notifier.dart';
 import 'package:frontend/features/auth/auth_state.dart';
 import 'package:frontend/features/dashboard/providers/balance_summary_provider.dart';
@@ -116,9 +113,6 @@ void main() {
       authNotifierProvider.overrideWith(() => FakeAuthNotifier(authState)),
       dashboardRepositoryProvider.overrideWithValue(mockDashboard),
       expenseRepositoryProvider.overrideWithValue(mockExpenseRepo),
-      adsStatusProvider.overrideWith(
-        (ref) async => const AdsStatusModel(isAdFree: false),
-      ),
     ];
   }
 
@@ -197,7 +191,7 @@ void main() {
   });
 
   group('GroupDetailScreen', () {
-    testWidgets('default tab is Expenses: GroupExpenseList and AdBanner',
+    testWidgets('default tab is Expenses: GroupExpenseList present',
         (tester) async {
       final detail = detailForRole(adminUid, 'ADMIN');
       final router = buildRouter();
@@ -212,7 +206,6 @@ void main() {
       );
 
       expect(find.byType(GroupExpenseList), findsOneWidget);
-      expect(find.byType(AdBanner), findsOneWidget);
     });
 
     testWidgets('loading shows spinner in body', (tester) async {
@@ -363,34 +356,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(FloatingActionButton), findsNothing);
-    });
-
-    testWidgets('AdBanner on Expenses only; absent on Balances and Members',
-        (tester) async {
-      final detail = detailForRole(adminUid, 'ADMIN');
-      final router = buildRouter();
-      await pumpDetail(
-        tester,
-        router: router,
-        overrides: baseOverrides(
-          detail: detail,
-          members: detail.members,
-          authState: AuthState.authenticated(user: mockUser),
-        ),
-      );
-
-      expect(find.byType(AdBanner), findsOneWidget);
-
-      final l10n = AppLocalizations.of(
-        tester.element(find.byType(GroupDetailScreen)),
-      )!;
-      await tester.tap(find.text(l10n.groupDetailTabBalances));
-      await tester.pumpAndSettle();
-      expect(find.byType(AdBanner), findsNothing);
-
-      await tester.tap(find.text(l10n.groupDetailTabMembers));
-      await tester.pumpAndSettle();
-      expect(find.byType(AdBanner), findsNothing);
     });
 
     testWidgets(

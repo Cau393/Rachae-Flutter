@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'oauth_redirect_uri.dart';
 
@@ -40,38 +39,6 @@ class AppConfig {
   static const productionApiBaseUrl =
       'https://rachae-flutter-production-11b3.up.railway.app/api/v1/';
 
-  /// RevenueCat public SDK key (Apple / iOS).
-  ///
-  /// **Physical device / simulator:** repo `../.env` is on the Mac, not on the
-  /// device, so [loadRepoDotenv] usually cannot read `REVENUECAT_IOS_API_KEY`
-  /// there. Use either:
-  /// - `flutter run --dart-define-from-file=../.env` (from `frontend/`), or
-  /// - `flutter run --dart-define=REVENUECAT_IOS_API_KEY=your_public_sdk_key`
-  ///
-  /// **Desktop / tests** when the process cwd is `frontend/`, [loadRepoDotenv]
-  /// may load repo-root `.env` into [dotenv] as a fallback.
-  static String get revenueCatIosApiKey {
-    const fromDefine = String.fromEnvironment(
-      'REVENUECAT_IOS_API_KEY',
-      defaultValue: '',
-    );
-    final trimmedDefine = fromDefine.trim();
-    if (trimmedDefine.isNotEmpty) {
-      return trimmedDefine;
-    }
-    try {
-      if (dotenv.isInitialized) {
-        final v = dotenv.maybeGet('REVENUECAT_IOS_API_KEY')?.trim();
-        if (v != null && v.isNotEmpty) {
-          return v;
-        }
-      }
-    } catch (_) {
-      // dotenv not loaded or not initialized
-    }
-    return '';
-  }
-
   /// Public app listing URLs (optional overrides via `--dart-define`).
   static const iosAppStoreListingUrl = String.fromEnvironment(
     'IOS_APP_STORE_URL',
@@ -81,20 +48,4 @@ class AppConfig {
     'ANDROID_PLAY_STORE_URL',
     defaultValue: 'https://play.google.com/',
   );
-
-  /// AdSense publisher id (`ca-pub-…`). Override via `--dart-define=AD_SENSE_CLIENT=…`.
-  /// Must match the `client` query on `adsbygoogle.js` in [web/index.html] for releases.
-  static const adSenseClient = String.fromEnvironment(
-    'AD_SENSE_CLIENT',
-    defaultValue: 'ca-pub-7543427210522470',
-  );
-
-  /// AdSense display unit slot id. `--dart-define=AD_SENSE_SLOT=…`
-  static const adSenseSlot = String.fromEnvironment(
-    'AD_SENSE_SLOT',
-    defaultValue: '1298705263',
-  );
-
-  /// Reserved strip height for the responsive AdSense unit on web.
-  static const double adSenseBannerHeight = 100;
 }

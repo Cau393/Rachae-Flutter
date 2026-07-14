@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:frontend/core/widgets/ad_banner.dart';
 import 'package:frontend/features/friends/models/friend_model.dart';
 import 'package:frontend/features/friends/providers/friends_provider.dart';
 import 'package:frontend/features/friends/widgets/friend_card.dart';
@@ -127,7 +126,6 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
               ),
             ),
           ),
-          const AdBanner(),
         ],
       ),
     );

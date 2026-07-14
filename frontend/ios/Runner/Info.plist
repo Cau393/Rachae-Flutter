@@ -79,17 +79,6 @@
 			</array>
 		</dict>
 	</array>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>Rachae uses this identifier to deliver relevant ads and measure ad performance. You can change this choice anytime in Settings.</string>
-	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-7543427210522470~9086796991</string>
-	<key>SKAdNetworkItems</key>
-	<array>
-		<dict>
-			<key>SKAdNetworkIdentifier</key>
-			<string>cstr6suwn9.skadnetwork</string>
-		</dict>
-	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>NSAppTransportSecurity</key>

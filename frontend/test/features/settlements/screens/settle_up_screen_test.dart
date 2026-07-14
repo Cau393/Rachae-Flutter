@@ -9,7 +9,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
 import 'package:frontend/core/theme/app_theme.dart';
-import 'package:frontend/core/widgets/ad_banner.dart';
 import 'package:frontend/features/auth/auth_notifier.dart';
 import 'package:frontend/features/auth/auth_state.dart';
 import 'package:frontend/features/friends/models/friend_model.dart';
@@ -332,19 +331,4 @@ void main() {
     expect(find.text('Settle up'), findsOneWidget);
   });
 
-  testWidgets('no AdBanner in tree', (tester) async {
-    final router = GoRouter(
-      initialLocation:
-          '/settle?receiver_id=$receiverId&amount=1&currency=BRL',
-      routes: [
-        GoRoute(
-          path: '/settle',
-          builder: (_, _) => const SettleUpScreen(),
-        ),
-      ],
-    );
-    await pumpSettle(tester, router: router);
-
-    expect(find.byType(AdBanner), findsNothing);
-  });
 }

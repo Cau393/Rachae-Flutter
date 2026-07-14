@@ -9,7 +9,6 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supa;
 
 import 'package:frontend/core/providers/core_providers.dart';
-import 'package:frontend/core/revenuecat/revenuecat.dart';
 import 'package:frontend/src/config/app_config.dart';
 
 import 'auth_state.dart';
@@ -54,7 +53,6 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   Future<void> signOut() async {
     state = AsyncLoading<AuthState>();
     final client = ref.read(supabaseClientProvider);
-    unawaited(revenueCatLogOut());
     await client.auth.signOut(scope: supa.SignOutScope.global);
     state = AsyncData(AuthState.unauthenticated());
   }

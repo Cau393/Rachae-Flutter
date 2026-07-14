@@ -8,7 +8,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:frontend/core/theme/app_theme.dart';
-import 'package:frontend/core/widgets/ad_banner.dart';
 import 'package:frontend/features/groups/models/group_summary_model.dart';
 import 'package:frontend/features/groups/providers/group_list_provider.dart';
 import 'package:frontend/features/groups/screens/group_list_screen.dart';
@@ -201,7 +200,7 @@ void main() {
       expect(fab.tooltip, l10n.groupsCreateFab);
     });
 
-    testWidgets('AdBanner and RefreshIndicator present', (tester) async {
+    testWidgets('RefreshIndicator present', (tester) async {
       final router = buildRouter();
       await pumpScreen(
         tester,
@@ -211,7 +210,6 @@ void main() {
         ],
       );
 
-      expect(find.byType(AdBanner), findsOneWidget);
       expect(find.byType(RefreshIndicator), findsOneWidget);
     });
 

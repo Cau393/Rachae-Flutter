@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:frontend/core/widgets/ad_banner.dart';
 import 'package:frontend/features/auth/auth_state.dart';
 import 'package:frontend/features/auth/auth_notifier.dart';
 import 'package:frontend/features/groups/models/group_detail_model.dart';
@@ -101,12 +100,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
         slivers: [
           SliverFillRemaining(
             hasScrollBody: true,
-            child: Column(
-              children: [
-                Expanded(child: GroupExpenseList(groupId: _groupId)),
-                const AdBanner(),
-              ],
-            ),
+            child: GroupExpenseList(groupId: _groupId),
           ),
         ],
       ),

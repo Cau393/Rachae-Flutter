@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:frontend/core/widgets/ad_banner.dart';
 import 'package:frontend/features/dashboard/dashboard_refresh.dart';
 import 'package:frontend/features/dashboard/models/balance_summary_model.dart';
 import 'package:frontend/features/dashboard/providers/balance_summary_provider.dart';
 import 'package:frontend/features/dashboard/providers/dashboard_shortcuts_providers.dart';
 import 'package:frontend/features/dashboard/widgets/activity_feed.dart';
 import 'package:frontend/features/dashboard/widgets/balance_summary_card.dart';
-import 'package:frontend/features/profile/providers/ads_status_provider.dart';
 import 'package:frontend/src/l10n/generated/app_localizations.dart';
 
 extension DashboardScreenL10n on BuildContext {
@@ -43,21 +41,9 @@ class DashboardScreen extends ConsumerWidget {
               child: _buildBody(context, ref, balanceAsync),
             ),
           ),
-          _dashboardAdSlot(ref),
         ],
       ),
     );
-  }
-
-  /// Only mount [AdBanner] when ads status is known and user is not ad-free, so
-  /// premium users have no [AdBanner] in the subtree (see placement guard tests).
-  /// On web, [AdBanner] itself reserves no space (see ad_banner_widget.dart).
-  Widget _dashboardAdSlot(WidgetRef ref) {
-    return ref.watch(adsStatusProvider).maybeWhen(
-          data: (status) =>
-              status.isAdFree ? const SizedBox.shrink() : const AdBanner(),
-          orElse: () => const SizedBox.shrink(),
-        );
   }
 
   Widget _buildBody(

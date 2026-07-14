@@ -160,16 +160,4 @@ void main() {
     });
   });
 
-  group('SplashScreen no ads', () {
-    testWidgets('tree has no AdBanner or BannerAd widgets', (tester) async {
-      await pumpSplashWithAuth(tester, const AuthState.loading());
-      expect(
-        find.byWidgetPredicate((w) {
-          final t = '${w.runtimeType}';
-          return t == 'AdBanner' || t == 'BannerAd';
-        }),
-        findsNothing,
-      );
-    });
-  });
 }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:frontend/core/widgets/ad_banner.dart';
 import 'package:frontend/features/groups/models/group_summary_model.dart';
 import 'package:frontend/features/groups/providers/group_list_provider.dart';
 import 'package:frontend/features/groups/widgets/group_card.dart';
@@ -74,7 +73,6 @@ class GroupListScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const AdBanner(),
         ],
       ),
     );

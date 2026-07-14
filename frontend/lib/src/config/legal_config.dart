@@ -1,5 +1,5 @@
 /// Public legal document URLs, used wherever the app must link to them
-/// (Profile/Settings screen, RevenueCat paywall footer, App Store metadata).
+/// (Profile/Settings screen, App Store metadata).
 ///
 /// Keeping these in one place avoids duplicated literals drifting apart —
 /// see `docs/app-review-rejection-plan-2026-07-07.md` Issue 3.

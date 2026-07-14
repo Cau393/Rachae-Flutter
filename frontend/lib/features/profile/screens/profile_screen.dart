@@ -4,14 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import 'package:frontend/features/auth/auth_notifier.dart';
 import 'package:frontend/features/groups/widgets/currency_dropdown.dart';
-import 'package:frontend/features/profile/providers/ads_status_provider.dart';
-import 'package:frontend/features/profile/providers/revenuecat_ads_sync_provider.dart';
 import 'package:frontend/features/profile/providers/profile_notifier.dart';
-import 'package:frontend/features/profile/widgets/ad_free_upgrade_card.dart';
 import 'package:frontend/features/profile/widgets/avatar_editor.dart';
 import 'package:frontend/features/profile/widgets/danger_zone_section.dart';
 import 'package:frontend/features/profile/widgets/legal_links_section.dart';
-import 'package:frontend/features/profile/widgets/manage_subscription_button.dart';
 import 'package:frontend/features/profile/widgets/notification_prefs_section.dart';
 import 'package:frontend/src/l10n/generated/app_localizations.dart';
 
@@ -20,10 +16,8 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(revenueCatAdsSyncProvider);
     final l10n = AppLocalizations.of(context)!;
     final profileAsync = ref.watch(profileNotifierProvider);
-    final adsAsync = ref.watch(adsStatusProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.profileTitle)),
@@ -88,41 +82,6 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ),
               const NotificationPrefsSection(),
-              const Divider(),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: Text(
-                  l10n.profileAdFreeSection,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: adsAsync.when(
-                  data: (ads) {
-                    if (ads.isAdFree) {
-                      return ManageSubscriptionButton(model: ads);
-                    }
-                    return const AdFreeUpgradeCard();
-                  },
-                  loading: () => const LinearProgressIndicator(),
-                  error: (e, _) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        l10n.profileAdsLoadError,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      OutlinedButton(
-                        onPressed: () =>
-                            ref.invalidate(adsStatusProvider),
-                        child: Text(l10n.retryLabel),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.download),

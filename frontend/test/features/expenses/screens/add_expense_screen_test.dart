@@ -12,7 +12,6 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
 import 'package:frontend/core/network/api_client.dart';
 import 'package:frontend/core/theme/app_theme.dart';
-import 'package:frontend/core/widgets/ad_banner.dart' show AdBanner;
 import 'package:frontend/features/auth/auth_notifier.dart';
 import 'package:frontend/features/auth/auth_state.dart';
 import 'package:frontend/features/currencies/models/currency_model.dart';
@@ -266,21 +265,6 @@ void main() {
         );
       },
     );
-
-    testWidgets('no AdBanner in tree', (tester) async {
-      final mockRepo = _MockExpenseRepository();
-      final detail = _groupDetail();
-      final router = buildRouter(
-        initialLocation: '/expenses/new?group_id=${detail.id}',
-      );
-      await pumpScreen(
-        tester,
-        router: router,
-        overrides: baseOverrides(mockRepo, detail),
-      );
-
-      expect(find.byType(AdBanner), findsNothing);
-    });
 
     testWidgets('isSubmitting disables save and shows progress', (
       tester,
