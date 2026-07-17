@@ -148,21 +148,19 @@ REDIS_URL = _normalize_redis_url(os.environ.get("REDIS_URL", "redis://localhost:
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-_default_cache = {
-    "BACKEND": "django.core.cache.backends.redis.RedisCache",
-    "LOCATION": REDIS_URL,
-    "KEY_PREFIX": "rachae",
-    "TIMEOUT": 300,
-    # NOTE: Django's built-in RedisCache forwards OPTIONS to redis-py, which
-    # does NOT accept django-redis's IGNORE_EXCEPTIONS — passing it raised
-    # TypeError on every cache access (only surfaced once throttling made the
-    # cache a per-request hot path). Restoring "degrade a Redis blip to a DB
-    # read" needs the django-redis backend; tracked as a follow-up.
-    "OPTIONS": {},
+# Default cache backs DRF throttling. It uses a process-local LocMemCache
+# rather than the Upstash Redis (rediss://) used for Celery: the built-in
+# RedisCache can't complete Upstash's TLS handshake (redis-py 7+), and this
+# cache was never actually functional in prod. Per-worker throttle counters
+# are an acceptable rate-limit floor; a shared cache via django-redis for a
+# hard global ceiling is a tracked follow-up.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "rachae-default-cache",
+        "TIMEOUT": 300,
+    }
 }
-if REDIS_URL.startswith("rediss://"):
-    _default_cache["OPTIONS"]["ssl_cert_reqs"] = "none"
-CACHES = {"default": _default_cache}
 if TESTING:
     CACHES = {
         "default": {
