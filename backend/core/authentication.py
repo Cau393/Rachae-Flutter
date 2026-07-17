@@ -30,8 +30,8 @@ def verify_supabase_token(token: str) -> dict:
             signing_key.key,
             algorithms=["ES256", "RS256"],
             issuer=settings.SUPABASE_ISSUER,
-            options={"verify_aud": False},
-            leeway=120,
+            audience=settings.SUPABASE_JWT_AUDIENCE,
+            leeway=30,
         )
         UUID(payload["sub"])
         return payload

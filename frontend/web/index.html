@@ -20,6 +20,29 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
 
+  <!--
+    Shrinks the XSS surface now that the Supabase session lives in memory
+    only on web (see `lib/main.dart` / audit finding H-2): even if a script
+    got injected, this blocks it from loading, connecting out, or exfiltrating
+    via inline handlers. `unsafe-inline`/`unsafe-eval` for script-src are
+    required by the Flutter web engine's bootstrap/canvaskit loader; tighten
+    further only after confirming a stricter policy doesn't break app boot.
+    Update `connect-src`/`img-src` hosts if the Railway API domain, Supabase
+    project ref, or CDN hosts change.
+  -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' 'unsafe-eval';
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' data: blob: https:;
+    font-src 'self' data:;
+    connect-src 'self' https://*.supabase.co wss://*.supabase.co https://rachae-flutter-production-11b3.up.railway.app https://*.railway.app;
+    frame-src 'self' https://*.supabase.co;
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+  ">
+
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">

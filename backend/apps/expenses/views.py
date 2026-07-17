@@ -1,3 +1,4 @@
+from django.db.models import Exists, OuterRef, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import status
@@ -20,7 +21,8 @@ from apps.expenses.serializers import (
     ReceiptUploadURLQuerySerializer,
 )
 from apps.expenses.services import ExpenseService, ReceiptService
-from apps.groups.models import GroupRole
+from apps.groups.models import GroupMember, GroupRole
+from apps.splits.models import Split
 from apps.users.permissions import ActiveUserPermission
 def _response_data(payload, *, status_code=status.HTTP_200_OK):
     return Response({"data": payload}, status=status_code)
@@ -52,10 +54,31 @@ class ExpenseBaseView(APIView):
 
     def get_expense(self, expense_id, *, include_deleted=False):
         manager = Expense.all_objects if include_deleted else Expense.objects
+        user = self.request.user
+        is_group_member = GroupMember.objects.filter(
+            group_id=OuterRef("group_id"), user=user, is_deleted=False
+        )
+        is_own_split = Split.objects.filter(
+            expense_id=OuterRef("pk"), user=user, is_deleted=False
+        )
+        # Mirrors ExpenseService._is_user_involved exactly: group membership
+        # grants access to group expenses, but payer/creator/split
+        # participant grant access regardless of group — a user who created
+        # or paid a group expense and later left the group must still be
+        # able to reach it. Folds authZ into the fetch so a stranger's pk
+        # 404s instead of fetch-then-403 — per-action checks
+        # (require_object_permission / require_group_admin) still apply on
+        # top for write operations.
+        involved = (
+            (Q(group_id__isnull=False) & Exists(is_group_member))
+            | Q(paid_by=user)
+            | Q(created_by=user)
+            | Exists(is_own_split)
+        )
         return get_object_or_404(
-            manager.select_related("paid_by", "created_by", "group").prefetch_related(
-                "splits__user"
-            ),
+            manager.select_related("paid_by", "created_by", "group")
+            .prefetch_related("splits__user")
+            .filter(involved),
             id=expense_id,
         )
 

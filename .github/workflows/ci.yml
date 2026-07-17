@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.9"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DJANGO_SETTINGS_MODULE: config.test_settings
+      # Dummies for the settings.py env() calls that have no default.
+      # test_settings uses SQLite and eager Celery, so no services or
+      # secrets are needed; DATABASE_URL is never read under pytest.
+      DJANGO_SECRET_KEY: ci-only-not-a-secret
+      DJANGO_DEBUG: "False"
+      DJANGO_ALLOWED_HOSTS: "localhost,testserver"
+      CORS_ALLOWED_ORIGINS: "http://localhost:3000"
+      CORS_ALLOWED_ORIGIN_REGEXES: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r requirements.txt
+      # pytest is a local-venv-only dep by convention, not in requirements.txt;
+      # versions pinned to match the venv this suite is known green on.
+      - run: pip install pytest==9.0.2 pytest-django==4.12.0
+      - run: python -m pytest -q

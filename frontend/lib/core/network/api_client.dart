@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:frontend/core/network/cert_pinning.dart';
 import 'package:frontend/src/config/api_base_url.dart';
 import 'package:frontend/src/config/app_config.dart';
 
@@ -89,6 +90,9 @@ class ApiClient {
         headers: headers,
       ),
     );
+    // Disabled by default — see `cert_pinning.dart` for why and the
+    // rotation plan required before enabling in production.
+    configureCertPinning(dio);
     dio.interceptors.add(SupabaseTokenInterceptor(client));
   }
 

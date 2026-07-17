@@ -1,0 +1,28 @@
+name: Production health check
+
+on:
+  schedule:
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: API health endpoint
+        run: |
+          curl -fsS --max-time 30 \
+            https://rachae-flutter-production-11b3.up.railway.app/api/v1/health/
+      - name: Web bundle sanity
+        run: |
+          bundle=$(mktemp)
+          curl -fsS --max-time 60 \
+            https://web-beige-zeta-71.vercel.app/main.dart.js -o "$bundle"
+          if grep -q 'http://localhost:8000' "$bundle"; then
+            echo '::error::deployed web bundle references http://localhost:8000'
+            exit 1
+          fi
+          if ! grep -q 'railway' "$bundle"; then
+            echo '::error::deployed web bundle does not reference the railway API host'
+            exit 1
+          fi

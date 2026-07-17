@@ -17,5 +17,28 @@ def logging_exception_handler(exc, context):
     if response is not None and 400 <= response.status_code < 500:
         request = context.get("request")
         path = getattr(request, "path", "unknown")
-        logger.warning("%s %s -> %s", path, response.status_code, response.data)
+        logger.warning(
+            "%s %s -> %s",
+            path,
+            response.status_code,
+            _error_codes(response.data),
+        )
     return response
+
+
+def _error_codes(data) -> list:
+    """Extract DRF error `code`s from a response body, dropping the raw
+    (user-submitted) field values so PII never reaches the log sink.
+    """
+    codes: list = []
+    if isinstance(data, dict):
+        for value in data.values():
+            codes.extend(_error_codes(value))
+    elif isinstance(data, list):
+        for item in data:
+            codes.extend(_error_codes(item))
+    elif hasattr(data, "code"):
+        codes.append(str(data.code))
+    else:
+        codes.append("error")
+    return codes

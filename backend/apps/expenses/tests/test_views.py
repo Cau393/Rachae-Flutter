@@ -462,6 +462,47 @@ class ExpenseViewTests(ExpenseTestMixin, TestCase):
         self.assertEqual(response.status_code, 204)
         self.assertEqual(expense.receipt_urls, [])
     
+    def test_creator_who_left_group_can_still_patch_expense_they_paid(self):
+        """Regression: get_expense must mirror _is_user_involved for group expenses.
+
+        A user who created/paid a group expense keeps access even after
+        leaving the group (their GroupMember row is soft-deleted) — narrowing
+        the involved-scope filter to group_id__isnull=True for the
+        paid_by/created_by/split clauses would 404 this request.
+        """
+        expense = self.create_expense(
+            group=self.group,
+            paid_by=self.member_user,
+            created_by=self.member_user,
+            description="Snacks",
+        )
+        membership = self.group.members.get(user=self.member_user)
+        membership.is_deleted = True
+        membership.save(update_fields=["is_deleted"])
+
+        self.authenticate(self.member_user)
+
+        response = self.client.patch(
+            f"/api/v1/expenses/{expense.id}/",
+            data={"description": "Snacks (updated)"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_uninvolved_user_gets_not_found_patching_group_expense(self):
+        expense = self.create_expense(group=self.group, description="Snacks")
+
+        self.authenticate(self.other_user)
+
+        response = self.client.patch(
+            f"/api/v1/expenses/{expense.id}/",
+            data={"description": "Hacked"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 404)
+
     def test_non_creator_cannot_update_expense(self):
         expense = self.create_expense(group=self.group)
 

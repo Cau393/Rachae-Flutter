@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -162,7 +163,13 @@ class TransactionProofConfirmView(TransactionBaseView):
 
 class TransactionConfirmView(TransactionBaseView):
     def patch(self, request, transaction_id):
-        transaction = get_object_or_404(Transaction, id=transaction_id)
+        # Scope the fetch to transactions the caller is party to (payer or
+        # receiver) so a stranger's pk gets a 404, not a fetch-then-403.
+        # TransactionService.confirm still enforces receiver-only below.
+        transaction = get_object_or_404(
+            Transaction.objects.filter(Q(payer=request.user) | Q(receiver=request.user)),
+            id=transaction_id,
+        )
 
         try:
             transaction = TransactionService.confirm(transaction, request.user)
@@ -176,7 +183,11 @@ class TransactionConfirmView(TransactionBaseView):
 
 class TransactionDisputeView(TransactionBaseView):
     def patch(self, request, transaction_id):
-        transaction = get_object_or_404(Transaction, id=transaction_id)
+        # Same scoping as TransactionConfirmView — see comment there.
+        transaction = get_object_or_404(
+            Transaction.objects.filter(Q(payer=request.user) | Q(receiver=request.user)),
+            id=transaction_id,
+        )
 
         try:
             transaction = TransactionService.dispute(transaction, request.user)

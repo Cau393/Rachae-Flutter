@@ -23,7 +23,14 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 DEBUG = env("DJANGO_DEBUG")
 ALLOWED_HOSTS = [host.strip() for host in env("DJANGO_ALLOWED_HOSTS").split(",") if host.strip()]
 CORS_ALLOWED_ORIGINS = [origin.strip() for origin in env("CORS_ALLOWED_ORIGINS").split(",") if origin.strip()]
-CORS_ALLOWED_ORIGIN_REGEXES = [pattern.strip() for pattern in env("CORS_ALLOWED_ORIGIN_REGEXES").split(",") if pattern.strip()]
+# The 192.168.x.x LAN regex is a dev-only convenience (testing from a phone
+# on the same Wi-Fi as `flutter run`). Never let it reach production — gate
+# it behind DEBUG so a misconfigured/missing env override can't ship it.
+CORS_ALLOWED_ORIGIN_REGEXES = (
+    [pattern.strip() for pattern in env("CORS_ALLOWED_ORIGIN_REGEXES").split(",") if pattern.strip()]
+    if DEBUG
+    else []
+)
 CORS_ALLOW_HEADERS = [
     "accept",
     "accept-encoding",
@@ -240,9 +247,26 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
     "EXCEPTION_HANDLER": "core.exceptions.logging_exception_handler",
+    # NOTE: throttling counters live in CACHES["default"] — RedisCache in
+    # prod/staging, LocMemCache under TESTING. LocMem is per-process and
+    # would under-throttle behind multiple gunicorn workers, but Railway
+    # prod already runs on the shared Redis cache above, so this is fine.
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.UserRateThrottle",
+        "rest_framework.throttling.AnonRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "user": "1000/day",
+        "anon": "60/hour",
+        "search": "30/min",
+    },
 }
 
 SUPABASE_ISSUER = f"{SUPABASE_URL}/auth/v1"
+# Supabase GoTrue sets `aud: "authenticated"` on every access token issued to
+# a logged-in user. Pinning it here rejects tokens minted for any other
+# audience (defense-in-depth on top of signature + issuer checks).
+SUPABASE_JWT_AUDIENCE = os.environ.get("SUPABASE_JWT_AUDIENCE", "authenticated")
 
 # Emit unhandled 500 tracebacks to stderr (→ Railway logs). Django's default
 # routes django.request errors to mail_admins only, so with DEBUG=False and no
@@ -302,6 +326,20 @@ CELERY_TASK_EAGER_PROPAGATES = env.bool("CELERY_TASK_EAGER_PROPAGATES", default=
 EMAIL_FROM = env("EMAIL_FROM", default="")
 EMAIL_FROM_NAME = env("EMAIL_FROM_NAME", default="Rachae")
 FRONTEND_INVITE_URL = env("FRONTEND_INVITE_URL", default="http://localhost:3000/login")
+
+# Production transport/security headers. The app terminates TLS at Railway's
+# proxy, so SECURE_PROXY_SSL_HEADER must come first — without it,
+# request.is_secure() is always False and SECURE_SSL_REDIRECT would loop.
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    X_FRAME_OPTIONS = "DENY"
 
 if SENTRY_DSN:
     import sentry_sdk

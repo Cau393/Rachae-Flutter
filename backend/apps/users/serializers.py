@@ -49,6 +49,10 @@ class CurrentUserUpdateSerializer(serializers.ModelSerializer):
             "avatar_url",
             "default_currency",
         ]
+        # avatar_url is set only via AvatarUploadUrlView + AvatarConfirmView
+        # (S3 presigned upload, confirmed by file_key) — never accepted
+        # directly on PATCH users/me/.
+        read_only_fields = ["avatar_url"]
 
 
 class UserSearchQuerySerializer(serializers.Serializer):
