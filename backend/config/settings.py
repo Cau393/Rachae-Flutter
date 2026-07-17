@@ -333,6 +333,10 @@ FRONTEND_INVITE_URL = env("FRONTEND_INVITE_URL", default="http://localhost:3000/
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = True
+    # Railway probes the container directly over HTTP (no X-Forwarded-Proto),
+    # so the health check must be exempt or SSL redirect 301s it and the
+    # deploy's healthcheck fails.
+    SECURE_REDIRECT_EXEMPT = [r"^api/v1/health/$"]
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
