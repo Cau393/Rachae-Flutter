@@ -153,9 +153,12 @@ _default_cache = {
     "LOCATION": REDIS_URL,
     "KEY_PREFIX": "rachae",
     "TIMEOUT": 300,
-    # A Redis blip must degrade to a DB read (e.g. get_exchange_rate), not
-    # raise and fail the whole request — cache is an optimization here.
-    "OPTIONS": {"IGNORE_EXCEPTIONS": True},
+    # NOTE: Django's built-in RedisCache forwards OPTIONS to redis-py, which
+    # does NOT accept django-redis's IGNORE_EXCEPTIONS — passing it raised
+    # TypeError on every cache access (only surfaced once throttling made the
+    # cache a per-request hot path). Restoring "degrade a Redis blip to a DB
+    # read" needs the django-redis backend; tracked as a follow-up.
+    "OPTIONS": {},
 }
 if REDIS_URL.startswith("rediss://"):
     _default_cache["OPTIONS"]["ssl_cert_reqs"] = "none"
